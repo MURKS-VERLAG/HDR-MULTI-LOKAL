@@ -1,14 +1,14 @@
-/* Renchtal — Neubau 01. Keine externen Bibliotheken, Musik oder fremden Hitboxen.
+/* Renchtal — Neubau 02: Laufanimationen und Brücken-Feinabstimmung. Keine externen Bibliotheken, Musik oder fremden Hitboxen.
  * Weltkoordinaten 10000 x 6667: identisch zur Oberkirch-Referenz.
  * Karte: Anhang 2048 x 1365, nach 12288 x 8190 hochskaliert (keine neuen Details).
  * Die zwei Uferpolygone wurden an diesem Kartenanhang neu nachgezeichnet.
- * Brückengeometrie und Verdeckung stammen unverändert aus der alten game.js.
+ * Brücken aus der Referenz, jetzt beidseitig gekürzt; zweiter Steinbogen +2 Weltpixel.
  */
 (() => {
   "use strict";
   const WORLD = Object.freeze({ width: 10000, height: 6667 });
   const PLAYER = Object.freeze({ width: 420, height: 630, speed: 520 });
-  const STONE_BRIDGE_PATH = Object.freeze([
+  const STONE_BRIDGE_REFERENCE = Object.freeze([
     Object.freeze([3490, 5871]),
     Object.freeze([3855, 5791]),
     Object.freeze([4220, 5725]),
@@ -22,11 +22,34 @@
     Object.freeze([7016, 5966])
   ]);
 
+  // Trim along arc length, not just X: precisely 3 WORLD pixels at each end.
+  function trimPathEnds(path, amount) {
+    const lengths=path.slice(1).map((p,i)=>Math.hypot(p[0]-path[i][0],p[1]-path[i][1]));
+    const total=lengths.reduce((a,b)=>a+b,0),result=[];
+    const at=d=>{
+      let start=0;
+      for(let i=0;i<lengths.length;i++) {
+        if(d<=start+lengths[i] || i===lengths.length-1) {
+          const t=(d-start)/lengths[i];
+          return [path[i][0]+(path[i+1][0]-path[i][0])*t,path[i][1]+(path[i+1][1]-path[i][1])*t];
+        }
+        start+=lengths[i];
+      }
+    };
+    result.push(at(amount));
+    let d=0;
+    for(let i=1;i<path.length-1;i++){d+=lengths[i-1];if(d>amount && d<total-amount)result.push(path[i]);}
+    result.push(at(total-amount));
+    return Object.freeze(result.map(p=>Object.freeze([...p])));
+  }
+  const STONE_BRIDGE_PATH=trimPathEnds(STONE_BRIDGE_REFERENCE,3);
+  const STONE_BRIDGE_LOWER_PATH=Object.freeze(STONE_BRIDGE_PATH.map(([x,y])=>Object.freeze([x,y+2])));
+
   const COVERED_BRIDGE_PATH = Object.freeze([
     // FINAL: only the short straight bridge corridor is forced.
     // The road junctions inside the blue circles stay completely free.
-    Object.freeze([3500, 1305]),
-    Object.freeze([6020, 1305])
+    Object.freeze([3505, 1305]),
+    Object.freeze([6015, 1305])
   ]);
 
   const BRIDGE_CONFIG = Object.freeze({
@@ -47,10 +70,10 @@
     // FINAL R9: capture zones exist only immediately before the bridge.
     // They no longer reach into either blue-circled road junction.
     coveredCaptureLeft: Object.freeze({
-      x1: 3435, y1: 1080, x2: 3735, y2: 1535
+      x1: 3440, y1: 1080, x2: 3735, y2: 1535
     }),
     coveredCaptureRight: Object.freeze({
-      x1: 5700, y1: 1080, x2: 6050, y2: 1535
+      x1: 5700, y1: 1080, x2: 6045, y2: 1535
     })
   });
 
@@ -113,6 +136,7 @@
       const bridge=bridgeDefinition(id);
       if(closestPointOnBridgePath(x,y,bridge.path).distance<=bridge.corridor) return false;
     }
+    if(closestPointOnBridgePath(x,y,STONE_BRIDGE_LOWER_PATH).distance<=BRIDGE_CONFIG.stoneCorridor) return false;
     return RIVER_BLOCK_ZONES.some(polygon=>worldPointInPolygon(x,y,polygon));
   }
   function tryEngageBridge(player,dx,dy) {
@@ -125,17 +149,21 @@
       if(feeder && !leaving) return {id:'covered',path:bridge.path,distance:closest.pathDistance,snapping:true};
     }
     if(!horizontal) return null;
-    const closest=closestPointOnBridgePath(player.x,player.y,STONE_BRIDGE_PATH);
+    const upper=closestPointOnBridgePath(player.x,player.y,STONE_BRIDGE_PATH);
+    // Select once on entry. No lane-switching/bobbing during the crossing.
+    const lower=player.y>upper.y;
+    const path=lower?STONE_BRIDGE_LOWER_PATH:STONE_BRIDGE_PATH;
+    const closest=closestPointOnBridgePath(player.x,player.y,path);
     if(closest.distance>BRIDGE_CONFIG.engageDistance) return null;
     if((closest.progress<=.035 && horizontal<0)||(closest.progress>=.965 && horizontal>0)) return null;
-    return {id:'stone',path:STONE_BRIDGE_PATH,distance:closest.pathDistance,snapping:true};
+    return {id:'stone',path,distance:closest.pathDistance,snapping:true,snapRate:lower?4:10};
   }
   function moveAlongActiveBridge(player,bridge,horizontal,dt) {
     const anchor=pointAtBridgeDistance(bridge.path,bridge.distance);
     if(bridge.snapping) {
       const dx=anchor.x-player.x,dy=anchor.y-player.y;
       if(Math.hypot(dx,dy)>5) {
-        const pull=Math.min(1,10*dt);
+        const pull=Math.min(1,(bridge.snapRate || 10)*dt);
         player.x+=dx*pull; player.y+=dy*pull;
         return bridge;
       }
@@ -175,9 +203,33 @@
     const scale=Math.max(width/WORLD.width,height/WORLD.height);
     return {scale,x:clamp(x,width/scale/2,WORLD.width-width/scale/2),y:clamp(y,height/scale/2,WORLD.height-height/scale/2)};
   }
-  // Geometry can be verified directly in Node without a browser or asset stubs.
+
+  // Opaque bounds measured from the supplied PNG alpha channel. The original
+  // artwork is retained; layout corrects transparent margins, height and soles.
+  const SPRITE_BOUNDS={"stand-down":{"top":3,"bottom":1498},"stand-left":{"top":41,"bottom":1491},"stand-right":{"top":41,"bottom":1491},"stand-up":{"top":281,"bottom":1518},"walk-01":{"top":45,"bottom":1523},"walk-02":{"top":44,"bottom":1524},"walk-03":{"top":45,"bottom":1524},"walk-04":{"top":45,"bottom":1524},"walk-05":{"top":44,"bottom":1524},"walk-06":{"top":45,"bottom":1524},"walk-07":{"top":45,"bottom":1524},"walk-08":{"top":44,"bottom":1524},"walk-09":{"top":46,"bottom":1524},"walk-10":{"top":44,"bottom":1523},"walk-11":{"top":45,"bottom":1523}};
+  const WALK_SEQUENCES=Object.freeze({down:[1,2,3,2],up:[4,5,6,7],right:[8,10,9,11],left:[8,10,9,11]});
+  const WALK_FRAME_MS=120;
+  const TARGET_VISIBLE_HEIGHT=(1498-3)/1536*PLAYER.height;
+  function spriteLayout(key) {
+    const bounds=SPRITE_BOUNDS[key];
+    const scale=TARGET_VISIBLE_HEIGHT/(bounds.bottom-bounds.top);
+    return {width:1024*scale,height:1536*scale,bottom:-(1536-bounds.bottom)*scale,visibleHeight:(bounds.bottom-bounds.top)*scale};
+  }
+  function directionForInput(dx,dy) {return dy<0?'up':dy>0?'down':dx<0?'left':'right';}
+  function advanceWalkAnimation(animation,direction,moving,dt) {
+    if(!moving){animation.moving=false;animation.index=0;animation.elapsed=0;animation.direction=direction;return `stand-${direction}`;}
+    if(!animation.moving || animation.direction!==direction){animation.index=0;animation.elapsed=0;}
+    else {
+      animation.elapsed+=Math.max(0,dt)*1000;
+      while(animation.elapsed>=WALK_FRAME_MS){animation.elapsed-=WALK_FRAME_MS;animation.index=(animation.index+1)%WALK_SEQUENCES[direction].length;}
+    }
+    animation.moving=true;animation.direction=direction;
+    return `walk-${String(WALK_SEQUENCES[direction][animation.index]).padStart(2,'0')}`;
+  }
+
+  // Geometry and animation can be verified directly in Node without asset stubs.
   if(typeof module!=='undefined' && module.exports) {
-    module.exports={WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
+    module.exports={SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
     return;
   }
 
@@ -189,6 +241,23 @@
   const camera={x:5000,y:3333.5,scale:1};
   const pointer={x:0,y:0,inside:false};
   const keys=new Set(),images={};
+  const animation={moving:false,index:0,elapsed:0,direction:'down'};
+  let activeSpriteKey='',activeMirror=false;
+  function showPlayerSprite(key,mirror=false) {
+    if(activeSpriteKey===key && activeMirror===mirror) return;
+    const layout=spriteLayout(key);
+    sprite.style.position='absolute';sprite.style.left='50%';
+    sprite.style.width=`${layout.width}px`;sprite.style.height=`${layout.height}px`;
+    sprite.style.bottom=`${layout.bottom}px`;
+    sprite.style.transform=`translateX(-50%) scaleX(${mirror?-1:1})`;
+    sprite.style.transformOrigin='50% 100%';
+    sprite.src=images[key].src;
+    activeSpriteKey=key;activeMirror=mirror;
+  }
+  function updateAnimation(moving,dt) {
+    const key=advanceWalkAnimation(animation,state.player.facing,moving,dt);
+    showPlayerSprite(key,moving && state.player.facing==='left');
+  }
   let width=innerWidth,height=innerHeight,lastTime=0;
 
   function waitForImage(image) {
@@ -211,11 +280,7 @@
     playerEl.style.opacity=playerInsideCoveredBridgeInterior(state.player,state.bridge)?'0':'1';
   }
   function face(dx,dy) {
-    // Same vertical priority as the reference; no walk frames until next step.
-    const direction=dy<0?'up':dy>0?'down':dx<0?'left':'right';
-    if(state.player.facing!==direction) {
-      state.player.facing=direction;sprite.src=images[direction].src;
-    }
+    state.player.facing=directionForInput(dx,dy);
   }
   function updateCamera(dx,dy,dt) {
     const c=coverCamera(width,height,camera.x,camera.y),s=c.scale;
@@ -239,9 +304,12 @@
     if(state.playing && !document.hidden) {
       const dx=Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft'));
       const dy=Number(keys.has('KeyS')||keys.has('ArrowDown'))-Number(keys.has('KeyW')||keys.has('ArrowUp'));
+      const oldX=state.player.x,oldY=state.player.y;
       if(dx || dy) {
         face(dx,dy);state.bridge=movePlayer(state.player,state.bridge,dx,dy,dt);
       }
+      const moved=Math.hypot(state.player.x-oldX,state.player.y-oldY)>.00001;
+      updateAnimation(moved,dt);
       updateCamera(dx,dy,dt);render();
     }
     requestAnimationFrame(frame);
@@ -253,10 +321,16 @@
       const jobs=[waitForImage(map)];
       for(const direction of ['down','left','right','up']) {
         const image=new Image();image.src=`assets/player/stand-${direction}.png`;
-        images[direction]=image;jobs.push(waitForImage(image));
+        images[`stand-${direction}`]=image;jobs.push(waitForImage(image));
       }
+      for(let i=1;i<=11;i++) {
+        const number=String(i).padStart(2,'0'),image=new Image();
+        image.src=`assets/player/walk/frame-${number}.png`;
+        images[`walk-${number}`]=image;jobs.push(waitForImage(image));
+      }
+      // All frames stay resident and decoded before control is enabled.
       await Promise.all(jobs);
-      sprite.src=images.down.src;
+      updateAnimation(false,0);
       menu.hidden=true;game.hidden=false;state.playing=true;keys.clear();
       resize();game.focus({preventScroll:true});
     } catch(error) {
@@ -270,8 +344,11 @@
       event.preventDefault();keys.add(event.code);
     }
   },{passive:false});
-  addEventListener('keyup',event=>keys.delete(event.code));
-  function resetInput(){keys.clear();pointer.inside=false;lastTime=0;}
+  addEventListener('keyup',event=>{
+    keys.delete(event.code);
+    if(state.playing && !['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].some(k=>keys.has(k))) updateAnimation(false,0);
+  });
+  function resetInput(){keys.clear();pointer.inside=false;lastTime=0;if(state.playing)updateAnimation(false,0);}
   addEventListener('blur',resetInput);
   document.addEventListener('visibilitychange',resetInput);
   game.addEventListener('pointermove',event=>{pointer.x=event.clientX;pointer.y=event.clientY;pointer.inside=event.pointerType!=='touch';});
@@ -286,7 +363,7 @@
       const shape=document.createElementNS(svg.namespaceURI,'polygon');
       shape.setAttribute('points',polygon.map(p=>p.join(',')).join(' '));shape.setAttribute('fill','#f003');shape.setAttribute('stroke','#f55');shape.setAttribute('stroke-width','7');svg.append(shape);
     }
-    for(const path of [STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH]) {
+    for(const path of [STONE_BRIDGE_PATH,STONE_BRIDGE_LOWER_PATH,COVERED_BRIDGE_PATH]) {
       const line=document.createElementNS(svg.namespaceURI,'polyline');
       line.setAttribute('points',path.map(p=>p.join(',')).join(' '));line.setAttribute('fill','none');line.setAttribute('stroke','#ffe600');line.setAttribute('stroke-width','10');svg.append(line);
     }
