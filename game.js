@@ -1,4 +1,4 @@
-/* Renchtal — Neubau 04: begehbare Steinbrückenbreite und figurenzentrierte Kamera. Keine externen Bibliotheken, Musik oder fremden Hitboxen.
+/* Renchtal — Neubau 05: weiche Kamera, Schwertcursor, bewegungsabhängiges Baumlaub. Keine externen Bibliotheken, Musik oder fremden Hitboxen.
  * Weltkoordinaten 10000 x 6667: identisch zur Oberkirch-Referenz.
  * Karte: Anhang 2048 x 1365, nach 12288 x 8190 hochskaliert (keine neuen Details).
  * Die zwei Uferpolygone wurden an diesem Kartenanhang neu nachgezeichnet.
@@ -253,30 +253,32 @@
     return {scale,x:clamp(x,width/scale/2,WORLD.width-width/scale/2),y:clamp(y,height/scale/2,WORLD.height-height/scale/2)};
   }
 
-  function trackCamera(camera,player,dx,dy,pointer,width,height,dt) {
-    const scale=coverCamera(width,height,camera.x,camera.y).scale;
+  function trackCamera(camera,player,dx,dy,unusedPointer,width,height,dt) {
+    const c=coverCamera(width,height,camera.x,camera.y),scale=c.scale;
     const focus={x:player.x,y:player.y-PLAYER.height*.5};
-    // Small dead zone around the character centre, not the viewport border.
     const rx=Math.min(110,width*.09)/scale,ry=Math.min(78,height*.09)/scale;
-    if(dx||dy) {
-      camera.x=clamp(camera.x,focus.x-rx,focus.x+rx);
-      camera.y=clamp(camera.y,focus.y-ry,focus.y+ry);
-    } else if(pointer.inside) {
-      const px=width/2+(focus.x-camera.x)*scale,py=height/2+(focus.y-camera.y)*scale;
-      const vx=pointer.x-px,vy=pointer.y-py,length=Math.hypot(vx,vy);
-      const dead=Math.min(110,Math.min(width,height)*.12);
-      if(length>dead) {
-        const amount=Math.min(1,(length-dead)/dead)*620/scale*dt;
-        camera.x+=vx/length*amount;camera.y+=vy/length*amount;
-        // A short look around the character; map edges are clamped below.
-        const peek=Math.min(165,Math.min(width,height)*.18)/scale;
-        camera.x=clamp(camera.x,focus.x-peek,focus.x+peek);
-        camera.y=clamp(camera.y,focus.y-peek,focus.y+peek);
-      }
-    }
+    const target=coverCamera(width,height,
+      clamp(camera.x,focus.x-rx,focus.x+rx),
+      clamp(camera.y,focus.y-ry,focus.y+ry));
+    // Exponential smoothing preserves camera position on direction changes and
+    // has the same response at 30/60/144 Hz. Pointer position has no effect.
+    const blend=1-Math.exp(-6*Math.max(0,Math.min(.05,dt)));
+    camera.x+=(target.x-camera.x)*blend;
+    camera.y+=(target.y-camera.y)*blend;
     Object.assign(camera,coverCamera(width,height,camera.x,camera.y));
     return camera;
   }
+
+  // Only the red-marked crowns in the supplied Oberkirch screenshot.
+  // Original map/WORLD registration: viewport X/1609, viewport Y+87.
+  const TREE_AREAS=Object.freeze([[8,90,22,39],[94,95,32,60],[210,43,23,30],[543,47,45,29],[956,47,41,30],[1223,38,31,29],[1507,204,39,59],[30,270,32,57],[201,292,31,57],[488,201,22,49],[541,199,29,74],[948,226,42,98],[1434,423,36,59],[1519,502,31,35],[309,560,43,53],[43,757,40,41],[575,735,31,65],[981,662,45,65],[1040,754,59,63],[1346,733,29,42],[1269,892,59,50],[331,870,35,55],[227,883,30,34]].map(([x,y,rx,ry])=>Object.freeze({
+    x:x/1609*WORLD.width,y:(y+87)/1609*WORLD.width,
+    rx:(rx-3)/1609*WORLD.width,ry:(ry-3)/1609*WORLD.width
+  })));
+  function treeAreaAt(x,y) {
+    return TREE_AREAS.findIndex(t=>((x-t.x)/t.rx)**2+((y-t.y)/t.ry)**2<=1);
+  }
+  function shouldPlayTreeEffects(player,moved) {return Boolean(moved && treeAreaAt(player.x,player.y)>=0);}
 
   // Opaque bounds measured from the supplied PNG alpha channel. The original
   // artwork is retained; layout corrects transparent margins, height and soles.
@@ -309,7 +311,7 @@
 
   // Geometry and animation can be verified directly in Node without asset stubs.
   if(typeof module!=='undefined' && module.exports) {
-    module.exports={STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
+    module.exports={TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
     return;
   }
 
@@ -327,7 +329,7 @@
   const startButton=document.getElementById('singleplayer'),status=document.getElementById('status');
   const state={playing:false,starting:false,player:{x:4950,y:3750,facing:'down'},bridge:null};
   const camera={x:5000,y:3333.5,scale:1};
-  const pointer={x:0,y:0,inside:false};
+
   const keys=new Set(),images={};
   const animation={moving:false,index:0,elapsed:0,direction:'down'};
   let activeSpriteKey='',activeMirror=false;
@@ -347,6 +349,73 @@
   function updateAnimation(moving,dt) {
     const key=advanceWalkAnimation(animation,state.player.facing,moving,dt);
     showPlayerSprite(key,moving && state.player.facing==='left');
+  }
+
+  const cursorStyle=document.createElement('style');
+  cursorStyle.textContent='html, body, body * { cursor: url("assets/ui/sword-cursor.svg") 2 2, auto !important; }';
+  document.head.appendChild(cursorStyle);
+  // The cursor hotspot is precisely the sword tip (2,2). No game click action.
+  const leafLayer=document.createElement('div');
+  Object.assign(leafLayer.style,{position:'absolute',left:'0',top:'0',width:'100%',height:'100%',pointerEvents:'none',overflow:'visible',zIndex:'12'});
+  leafLayer.setAttribute('aria-hidden','true');world.appendChild(leafLayer);
+  const treeSound=new Audio('assets/audio/tree-rustle.mp3');
+  treeSound.preload='auto';treeSound.loop=false;treeSound.volume=1;
+  const treeFX={active:false,elapsed:0,leaves:new Set()};
+  let treeAudioPending=false;
+  function playTreeSound() {
+    if(!treeFX.active || document.hidden || treeAudioPending || (!treeSound.paused && !treeSound.ended)) return;
+    treeSound.currentTime=0;treeAudioPending=true;
+    const result=treeSound.play();
+    if(result && typeof result.then==='function') result.then(()=>{treeAudioPending=false;},()=>{treeAudioPending=false;});
+    else treeAudioPending=false;
+  }
+  treeSound.addEventListener('ended',()=>{if(treeFX.active && !document.hidden)playTreeSound();});
+  function stopTreeLeaves() {
+    treeFX.active=false;treeFX.elapsed=0;
+    for(const entry of treeFX.leaves){entry.anim.cancel();entry.leaf.remove();}
+    treeFX.leaves.clear();
+    // Intentionally do not pause/restart the sound: the current clip finishes.
+  }
+  function burstMap1TreeLeaves() {
+    // Exact legacy glyphs, font, palette, shadow, rotations and easing.
+    // Adapted origin/fall endpoints spread leaves around the moving character
+    // and land them at the ground instead of hiding/replacing the player.
+    const glyphs=['●','◆','●','◆','●','◆','●','◆','●','◆','●','◆','●','◆','●','◆','●','◆','●','◆','●','◆','●','◆','●','◆','●','◆'];
+    const unit=WORLD.width/1536;
+    glyphs.forEach((glyph,i)=>{
+      if(treeFX.leaves.size>=168) return;
+      const leaf=document.createElement('span');leaf.textContent=glyph;
+      const size=(5+(i%4)*2)*unit;
+      const fall=230+(i%6)*35;
+      const originX=state.player.x+(Math.random()-.5)*PLAYER.width*.8;
+      const groundY=state.player.y+(Math.random()-.5)*100;
+      const originY=groundY-fall;
+      Object.assign(leaf.style,{position:'absolute',left:`${originX}px`,top:`${originY}px`,font:`900 ${size}px/1 Georgia,serif`,color:i%3===0?'#78a83a':(i%3===1?'#4f8b2c':'#96bd4d'),textShadow:`0 ${unit}px ${unit}px rgba(30,60,15,.35)`,pointerEvents:'none',opacity:'1',transform:'translate(-50%,-50%) rotate(0deg)',willChange:'transform,opacity'});
+      leafLayer.appendChild(leaf);
+      const angle=-Math.PI*.95+(Math.PI*1.9)*(i/(glyphs.length-1));
+      const burst=24+(i%7)*7;
+      const dx=Math.cos(angle)*burst*unit*.45;
+      const down=(12+(i%5)*3)*unit;
+      const drift=dx+(i%2?18:-18)*unit*.45;
+      const rot=(i%2?1:-1)*(180+37*i);
+      const anim=leaf.animate([
+        {transform:'translate(-50%,-50%) translate(0,0) rotate(0deg) scale(.7)',opacity:0,offset:0},
+        {transform:`translate(-50%,-50%) translate(${dx}px,${down}px) rotate(${rot*.28}deg) scale(1)`,opacity:1,offset:.18},
+        {transform:`translate(-50%,-50%) translate(${drift*.82}px,${fall*.55}px) rotate(${rot*.72}deg) scale(.92)`,opacity:.95,offset:.72},
+        {transform:`translate(-50%,-50%) translate(${drift}px,${fall}px) rotate(${rot}deg) scale(.72)`,opacity:0,offset:1}
+      ],{duration:1500+(i%5)*95,easing:'cubic-bezier(.18,.65,.28,1)',fill:'forwards'});
+      const entry={leaf,anim};treeFX.leaves.add(entry);
+      anim.onfinish=()=>{treeFX.leaves.delete(entry);leaf.remove();};
+    });
+  }
+  function updateTreeEffects(moved,dt) {
+    if(!shouldPlayTreeEffects(state.player,moved)){if(treeFX.active)stopTreeLeaves();return;}
+    if(!treeFX.active){treeFX.active=true;treeFX.elapsed=0;burstMap1TreeLeaves();playTreeSound();}
+    else {
+      treeFX.elapsed+=dt*1000;
+      if(treeFX.elapsed>=350){treeFX.elapsed%=350;burstMap1TreeLeaves();}
+      if(treeSound.paused || treeSound.ended)playTreeSound();
+    }
   }
   let width=innerWidth,height=innerHeight,lastTime=0;
 
@@ -373,7 +442,7 @@
     state.player.facing=directionForInput(dx,dy);
   }
   function updateCamera(dx,dy,dt) {
-    trackCamera(camera,state.player,dx,dy,pointer,width,height,dt);
+    trackCamera(camera,state.player,dx,dy,null,width,height,dt);
   }
   function frame(now) {
     const dt=lastTime?clamp((now-lastTime)/1000,0,.05):0;lastTime=now;
@@ -386,6 +455,7 @@
       }
       const moved=Math.hypot(state.player.x-oldX,state.player.y-oldY)>.00001;
       updateAnimation(moved,dt);
+      updateTreeEffects(moved,dt);
       updateCamera(dx,dy,dt);render();
     }
     requestAnimationFrame(frame);
@@ -408,6 +478,7 @@
       await Promise.all(jobs);
       updateAnimation(false,0);
       menu.hidden=true;game.hidden=false;state.playing=true;keys.clear();
+      camera.x=state.player.x;camera.y=state.player.y-PLAYER.height*.5;
       resize();game.focus({preventScroll:true});
     } catch(error) {
       console.error(error);status.textContent='Eine Bilddatei fehlt oder konnte nicht geladen werden. Bitte das ZIP vollständig entpacken und erneut versuchen.';
@@ -422,13 +493,12 @@
   },{passive:false});
   addEventListener('keyup',event=>{
     keys.delete(event.code);
-    if(state.playing && !['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].some(k=>keys.has(k))) updateAnimation(false,0);
+    if(state.playing && !['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].some(k=>keys.has(k))) {updateAnimation(false,0);stopTreeLeaves();}
   });
-  function resetInput(){keys.clear();pointer.inside=false;lastTime=0;if(state.playing)updateAnimation(false,0);}
+  function resetInput(){keys.clear();lastTime=0;if(state.playing)updateAnimation(false,0);stopTreeLeaves();}
   addEventListener('blur',resetInput);
   document.addEventListener('visibilitychange',resetInput);
-  game.addEventListener('pointermove',event=>{pointer.x=event.clientX;pointer.y=event.clientY;pointer.inside=event.pointerType!=='touch';});
-  game.addEventListener('pointerleave',()=>pointer.inside=false);
+
   game.addEventListener('wheel',event=>event.preventDefault(),{passive:false});
   function resize(){width=innerWidth;height=innerHeight;render();}
   addEventListener('resize',resize);
