@@ -1,4 +1,4 @@
-/* Renchtal — Neubau 07: zwei Karten und Iriswechsel. Keine externen Bibliotheken, Musik oder fremden Hitboxen.
+/* Renchtal — Neubau 08: Brückenaußenkollision, Winterbach-Gelände und Eisphysik. Keine externen Bibliotheken, Musik oder fremden Hitboxen.
  * Weltkoordinaten 10000 x 6667: identisch zur Oberkirch-Referenz.
  * Karte: Anhang 2048 x 1365, nach 12288 x 8190 hochskaliert (keine neuen Details).
  * Die zwei Uferpolygone wurden an diesem Kartenanhang neu nachgezeichnet.
@@ -21,11 +21,11 @@
                 {x1:7750,x2:8600,side:'south',target:'oberkirch',spawn:{x:6225,y:760}}]
   });
   function exitRoute(player,dy){return MAP_ROUTES[activeMapId].find(r=>player.x>=r.x1&&player.x<=r.x2&&
-    (r.side==='north'?dy<0&&player.y<=-18:dy>0&&player.y>=WORLD.height+18));}
+    (r.side==='north'?dy<0&&player.y<=-18:dy>0&&player.y>=WORLD.height+PLAYER.height+18));}
   function footWithinMap(x,y){
     const lane=MAP_ROUTES[activeMapId].find(r=>x>=r.x1&&x<=r.x2);
     const minY=lane?.side==='north'?-30:PLAYER.height;
-    const maxY=lane?.side==='south'?WORLD.height+30:WORLD.height-10;
+    const maxY=lane?.side==='south'?WORLD.height+PLAYER.height+35:WORLD.height-10;
     return x>=PLAYER.width/2&&x<=WORLD.width-PLAYER.width/2&&y>=minY&&y<=maxY;
   }
   const PLAYER = Object.freeze({ width: 420, height: 630, speed: 520 });
@@ -263,10 +263,47 @@
     if(x<STONE_BRIDGE_PATH[0][0] || x>STONE_DECK.rightX)return false;
     return !insideStoneDeck(x,y) && worldPointInPolygon(x,y,STONE_STRUCTURE);
   }
+  // Contours measured against the NEW winter map, in its 1600x960 preview.
+  const winterPoint=([x,y])=>Object.freeze([x/1600*10000,y/960*6006]);
+  const WINTER_RIVER=Object.freeze([[930,0],[932,36],[942,72],[954,108],[964,144],[967,180],[975,216],[978,240],[984,252],[962,264],[965,276],[988,288],[991,300],[1000,312],[975,324],[993,336],[1001,348],[1007,360],[1017,372],[1021,384],[1018,396],[1024,408],[1027,420],[1031,432],[1039,444],[1038,456],[1039,468],[1051,480],[1050,492],[1057,504],[1057,516],[1053,528],[1057,540],[1059,552],[1062,564],[1027,576],[1033,588],[1051,600],[1045,612],[1044,624],[1043,636],[1039,648],[1039,660],[1029,672],[1034,684],[1030,696],[1016,708],[1023,720],[1019,732],[1017,744],[1012,756],[1011,768],[1007,780],[1009,792],[1005,804],[1016,816],[1017,828],[1022,840],[1027,852],[1028,864],[1031,876],[1039,888],[1043,900],[1044,912],[1044,924],[1044,936],[1047,948],[1059,960],[1059,960],[1159,960],[1159,960],[1157,948],[1149,936],[1150,924],[1146,912],[1148,900],[1144,888],[1135,876],[1131,864],[1130,852],[1127,840],[1125,828],[1121,816],[1118,804],[1116,792],[1115,780],[1119,768],[1116,756],[1117,744],[1116,732],[1121,720],[1115,708],[1121,696],[1127,684],[1132,672],[1141,660],[1147,648],[1142,636],[1143,624],[1144,612],[1149,600],[1149,588],[1148,576],[1150,564],[1155,552],[1154,540],[1162,528],[1161,516],[1162,504],[1152,492],[1153,480],[1154,468],[1150,456],[1146,444],[1141,432],[1135,420],[1135,408],[1133,396],[1131,384],[1125,372],[1120,360],[1117,348],[1114,336],[1116,324],[1110,312],[1109,300],[1114,288],[1114,276],[1117,264],[1120,252],[1128,240],[1128,216],[1137,180],[1140,144],[1134,108],[1127,72],[1124,36],[1112,0]].map(winterPoint));
+  const WINTER_ICE=Object.freeze([[930,0],[932,36],[942,72],[954,108],[964,144],[967,180],[975,216],[978,240],[979,248],[995,253],[1016,260],[1033,265],[1054,260],[1077,253],[1099,254],[1125,244],[1128,240],[1128,216],[1137,180],[1140,144],[1134,108],[1127,72],[1124,36],[1112,0]].map(winterPoint));
+  const WINTER_MOUNTAINS=Object.freeze([[0,0],[122,0],[160,35],[175,80],[203,118],[207,160],[225,180],[221,225],[244,251],[257,300],[244,326],[274,360],[263,398],[241,430],[232,471],[215,500],[183,530],[160,559],[131,580],[102,615],[0,645]].map(winterPoint));
+  const ICE_PHYSICS=Object.freeze({acceleration:5200,maxSpeed:PLAYER.speed*2,dragMoving:.985,dragNoInput:.975,minSpeed:14,swayAngle:4.6,swayX:8});
+  const iceMotion={vx:0,vy:0,phase:0};
+  function onWinterIce(x,y){return activeMapId==='winterbach'&&worldPointInPolygon(x,y,WINTER_ICE);}
+  function winterTerrainBlocked(x,y){
+    if(activeMapId!=='winterbach')return false;
+    if(worldPointInPolygon(x,y,WINTER_MOUNTAINS))return true;
+    return worldPointInPolygon(x,y,WINTER_RIVER)&&!onWinterIce(x,y);
+  }
+  function clearIceMotion(){iceMotion.vx=0;iceMotion.vy=0;iceMotion.phase=0;}
+  function movePlayerOnIce(player,inputX,inputY,dt){
+    const len=Math.hypot(inputX,inputY),hasInput=len>0;
+    if(hasInput){iceMotion.vx+=inputX/len*ICE_PHYSICS.acceleration*dt;iceMotion.vy+=inputY/len*ICE_PHYSICS.acceleration*dt;}
+    const speed=Math.hypot(iceMotion.vx,iceMotion.vy);
+    if(speed>ICE_PHYSICS.maxSpeed){const k=ICE_PHYSICS.maxSpeed/speed;iceMotion.vx*=k;iceMotion.vy*=k;}
+    const drag=Math.pow(hasInput?ICE_PHYSICS.dragMoving:ICE_PHYSICS.dragNoInput,dt*60);iceMotion.vx*=drag;iceMotion.vy*=drag;
+    if(!hasInput&&Math.hypot(iceMotion.vx,iceMotion.vy)<ICE_PHYSICS.minSpeed){clearIceMotion();return;}
+    const steps=Math.max(1,Math.ceil(Math.hypot(iceMotion.vx,iceMotion.vy)*dt/6));
+    for(let i=0;i<steps;i++){
+      const x=player.x+iceMotion.vx*dt/steps,y=player.y+iceMotion.vy*dt/steps;
+      if(canMoveFootTo(x,player.y))player.x=x;else iceMotion.vx=0;
+      if(canMoveFootTo(player.x,y))player.y=y;else iceMotion.vy=0;
+      if(!onWinterIce(player.x,player.y)){clearIceMotion();break;}
+    }
+  }
+  // Roof, parapets and supports. Only the covered deck remains passable.
+  const COVERED_STRUCTURE=Object.freeze([[740,175],[1158,175],[1162,290],[1125,307],[780,310],[741,287]].map(([x,y])=>Object.freeze([x/2048*10000,y/1365*6667])));
+  function isCoveredStructureBlocked(x,y){
+    if(activeMapId!=='oberkirch'||!worldPointInPolygon(x,y,COVERED_STRUCTURE))return false;
+    return closestPointOnBridgePath(x,y,COVERED_BRIDGE_PATH).distance>BRIDGE_CONFIG.coveredCorridor;
+  }
   function canMoveFootTo(x,y) {
-    return footWithinMap(x,y) && !isRiverBlockedFootPoint(x,y) && !isStoneStructureBlocked(x,y);
+    return footWithinMap(x,y) && !isRiverBlockedFootPoint(x,y) && !isStoneStructureBlocked(x,y) && !isCoveredStructureBlocked(x,y) && !winterTerrainBlocked(x,y);
   }
   function movePlayer(player,bridge,dx,dy,dt) {
+    if(onWinterIce(player.x,player.y)){movePlayerOnIce(player,dx,dy,dt);return null;}
+    clearIceMotion();
     if(!dx && !dy) return bridge;
     bridge=bridge || tryEngageBridge(player,dx,dy);
     if(bridge) return bridge.id==='stone'
@@ -361,7 +398,7 @@
 
   // Geometry and animation can be verified directly in Node without asset stubs.
   if(typeof module!=='undefined' && module.exports) {
-    module.exports={MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
+    module.exports={WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
     return;
   }
 
@@ -499,7 +536,7 @@
   }
   async function switchMap(route){
     if(state.transitioning)return;
-    state.transitioning=true;keys.clear();updateAnimation(false,0);stopTreeLeaves();
+    state.transitioning=true;keys.clear();clearIceMotion();updateAnimation(false,0);stopTreeLeaves();
     const previous={map:activeMapId,x:state.player.x,y:state.player.y};
     mapCurtain.style.display='block';mapCurtain.style.maskImage='none';mapCurtain.style.webkitMaskImage='none';
     mapCurtain.style.transition='opacity 200ms ease';mapCurtain.style.opacity='0';
@@ -545,15 +582,20 @@
       const dx=Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft'));
       const dy=Number(keys.has('KeyS')||keys.has('ArrowDown'))-Number(keys.has('KeyW')||keys.has('ArrowUp'));
       const oldX=state.player.x,oldY=state.player.y;
-      if(dx || dy) {
-        face(dx,dy);state.bridge=movePlayer(state.player,state.bridge,dx,dy,dt);
-      }
+      if(dx || dy)face(dx,dy);
+      state.bridge=movePlayer(state.player,state.bridge,dx,dy,dt);
       const route=exitRoute(state.player,dy);
       if(route){switchMap(route);requestAnimationFrame(frame);return;}
       const moved=Math.hypot(state.player.x-oldX,state.player.y-oldY)>.00001;
-      updateAnimation(moved,dt);
+      updateAnimation(moved && (!onWinterIce(state.player.x,state.player.y) || Boolean(dx||dy)),dt);
       updateTreeEffects(moved,dt);
       updateCamera(dx,dy,dt);render();
+      const sliding=onWinterIce(state.player.x,state.player.y)&&Math.hypot(iceMotion.vx,iceMotion.vy)>ICE_PHYSICS.minSpeed;
+      if(sliding){
+        iceMotion.phase+=dt;
+        const wave=Math.sin(iceMotion.phase*Math.PI*2/.82);
+        sprite.style.transform=`translateX(calc(-50% + ${wave*ICE_PHYSICS.swayX}px)) scaleX(${activeMirror?-1:1}) rotate(${wave*ICE_PHYSICS.swayAngle}deg)`;
+      }else sprite.style.transform=`translateX(-50%) scaleX(${activeMirror?-1:1})`;
     }
     requestAnimationFrame(frame);
   }
@@ -592,7 +634,7 @@
     keys.delete(event.code);
     if(state.playing && !['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].some(k=>keys.has(k))) {updateAnimation(false,0);stopTreeLeaves();}
   });
-  function resetInput(){keys.clear();lastTime=0;if(state.playing)updateAnimation(false,0);stopTreeLeaves();}
+  function resetInput(){keys.clear();clearIceMotion();lastTime=0;if(state.playing)updateAnimation(false,0);stopTreeLeaves();}
   addEventListener('blur',resetInput);
   document.addEventListener('visibilitychange',resetInput);
 
