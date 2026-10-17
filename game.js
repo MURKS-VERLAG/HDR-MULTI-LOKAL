@@ -446,215 +446,17 @@
   }
 
   // Geometry and animation can be verified directly in Node without asset stubs.
-  // Original vector artwork and articulated gait. No third-party knight sprites.
-  const PLAYER_VARIANTS=Object.freeze({
-    knight:{name:'Plattenritter',helmet:'bascinet',body:'plate',legs:'plate',cloth:'#334d69',trim:'#a38b50',weapon:'sword',shield:'heater',shieldColor:'#304b68'},
-    crusader:{name:'Kreuzritter',helmet:'greathelm',body:'surcoat',legs:'mail',cloth:'#c5b995',trim:'#775333',weapon:'sword',shield:'kite',shieldColor:'#c9be9d'},
-    ranger:{name:'Waldläufer',helmet:'hood',body:'leather',legs:'cloth',cloth:'#46583b',trim:'#9b8056',weapon:'dagger',shield:'bow',shieldColor:'#5b4128'},
-    guard:{name:'Burgwache',helmet:'kettle',body:'quilt',legs:'mail',cloth:'#723e36',trim:'#b29a6e',weapon:'spear',shield:'round',shieldColor:'#6c4431'},
-    veteran:{name:'Söldner',helmet:'barbute',body:'brigandine',legs:'cloth',cloth:'#493e32',trim:'#a18b5b',weapon:'axe',shield:'buckler',shieldColor:'#687078'}
-  });
-  function medievalGait(phase,moving,weight=1){
-    const stride=(offset)=>{
-      if(!moving)return {x:0,lift:0};
-      const t=((phase+offset)%1+1)%1;
-      if(t<.5)return {x:(52-208*t)*weight,lift:0};
-      const u=(t-.5)*2,s=u*u*(3-2*u);
-      return {x:(-52+104*s)*weight,lift:Math.sin(Math.PI*u)*27*weight};
-    };
-    return {right:stride(0),left:stride(.5),bob:moving?Math.cos(phase*Math.PI*4)*1.6:Math.sin(phase*Math.PI*2)*.65};
+  // Approved LPC body and eight-frame gait, with a reduced head and five equipment sets.
+  const PLAYER_VARIANTS=Object.freeze({"knight":{"name":"Plattenritter","image":"assets/player/medieval/knight.png","referenceHeight":196,"animations":{"up-idle":[[2,2,166,196,97,193,110]],"up-walk":[[172,2,166,196,97,193,110],[342,2,166,196,97,196,110],[512,2,162,193,97,193,110],[682,2,162,196,93,196,110],[852,2,162,196,93,193,110],[1022,2,162,196,93,196,110],[1192,2,158,193,89,193,110],[1362,2,162,196,93,196,110]],"left-idle":[[2,202,134,193,53,193,110]],"left-walk":[[172,202,146,190,65,190,110],[342,202,138,193,57,190,110],[512,202,129,193,44,190,110],[682,202,138,193,49,193,110],[852,202,150,190,57,190,110],[1022,202,142,193,49,193,110],[1192,202,133,193,44,193,110],[1362,202,129,193,44,193,110]],"down-idle":[[2,402,158,196,69,196,110]],"down-walk":[[172,402,158,196,69,196,110],[342,402,158,196,69,196,110],[512,402,158,193,65,193,110],[682,402,158,196,69,196,110],[852,402,158,196,69,196,110],[1022,402,158,196,69,196,110],[1192,402,154,193,69,193,110],[1362,402,158,196,69,196,110]],"right-idle":[[2,602,134,193,81,193,110]],"right-walk":[[172,602,146,190,81,190,110],[342,602,138,193,81,190,110],[512,602,129,193,85,190,110],[682,602,138,193,89,193,110],[852,602,150,190,93,190,110],[1022,602,142,193,93,193,110],[1192,602,133,193,89,193,110],[1362,602,129,193,85,193,110]]}},"crusader":{"name":"Goldritter","image":"assets/player/medieval/crusader.png","referenceHeight":209,"animations":{"up-idle":[[2,2,174,209,97,206,110]],"up-walk":[[180,2,174,209,97,206,110],[358,2,174,209,97,209,110],[536,2,170,206,97,206,110],[714,2,170,209,93,209,110],[892,2,170,209,93,206,110],[1070,2,170,209,93,209,110],[1248,2,166,206,89,206,110],[1426,2,170,209,93,209,110]],"left-idle":[[2,215,134,209,53,209,110]],"left-walk":[[180,215,146,206,65,206,110],[358,215,138,209,57,206,110],[536,215,129,209,44,206,110],[714,215,138,209,49,209,110],[892,215,150,206,57,206,110],[1070,215,142,209,49,209,110],[1248,215,133,209,44,209,110],[1426,215,129,209,44,209,110]],"down-idle":[[2,428,166,209,77,209,110]],"down-walk":[[180,428,166,209,77,209,110],[358,428,166,209,77,209,110],[536,428,166,206,73,206,110],[714,428,166,209,77,209,110],[892,428,166,209,77,209,110],[1070,428,166,209,77,209,110],[1248,428,162,206,77,206,110],[1426,428,166,209,77,209,110]],"right-idle":[[2,641,134,209,81,209,110]],"right-walk":[[180,641,146,206,81,206,110],[358,641,138,209,81,206,110],[536,641,129,209,85,206,110],[714,641,138,209,89,209,110],[892,641,150,206,93,206,110],[1070,641,142,209,93,209,110],[1248,641,133,209,89,209,110],[1426,641,129,209,85,209,110]]}},"ranger":{"name":"Waldl\u00e4ufer","image":"assets/player/medieval/ranger.png","referenceHeight":193,"animations":{"up-idle":[[2,2,141,190,69,190,110]],"up-walk":[[187,2,141,190,69,190,110],[372,2,138,193,69,193,110],[557,2,137,190,69,190,110],[742,2,138,193,69,193,110],[927,2,138,190,69,190,110],[1112,2,141,193,69,193,110],[1297,2,137,190,65,190,110],[1482,2,141,193,69,193,110]],"left-idle":[[2,199,176,190,108,190,110]],"left-walk":[[187,199,176,186,108,186,110],[372,199,176,187,104,187,110],[557,199,176,187,104,187,110],[742,199,176,190,108,190,110],[927,199,181,186,108,186,110],[1112,199,176,190,104,190,110],[1297,199,176,190,104,190,110],[1482,199,176,190,104,190,110]],"down-idle":[[2,396,145,193,76,193,110]],"down-walk":[[187,396,145,193,76,193,110],[372,396,145,193,76,193,110],[557,396,145,190,76,190,110],[742,396,145,193,76,193,110],[927,396,145,193,76,193,110],[1112,396,145,193,76,193,110],[1297,396,141,190,76,190,110],[1482,396,145,193,76,193,110]],"right-idle":[[2,593,176,190,76,190,110]],"right-walk":[[187,593,176,186,76,186,110],[372,593,176,187,76,187,110],[557,593,176,187,76,187,110],[742,593,176,190,76,190,110],[927,593,177,186,73,186,110],[1112,593,176,190,76,190,110],[1297,593,176,190,76,190,110],[1482,593,176,190,76,190,110]]}},"guard":{"name":"Kettenwache","image":"assets/player/medieval/guard.png","referenceHeight":196,"animations":{"up-idle":[[2,2,234,190,121,190,110]],"up-walk":[[240,2,222,190,109,190,110],[478,2,178,201,81,201,110],[716,2,134,241,69,241,110],[954,2,178,201,81,201,110],[1192,2,222,190,109,190,110],[1430,2,178,193,81,193,110],[1668,2,134,237,65,237,110],[1906,2,178,193,85,193,110]],"left-idle":[[2,247,222,193,125,193,110]],"left-walk":[[240,247,178,190,117,190,110],[478,247,217,190,128,190,110],[716,247,234,190,109,190,110],[954,247,233,193,105,193,110],[1192,247,222,190,105,190,110],[1430,247,233,193,105,193,110],[1668,247,222,193,121,193,110],[1906,247,178,193,105,193,110]],"down-idle":[[2,492,234,196,121,196,110]],"down-walk":[[240,492,213,196,128,196,110],[478,492,197,196,128,196,110],[716,492,217,193,128,193,110],[954,492,197,196,128,196,110],[1192,492,213,196,128,196,110],[1430,492,197,196,128,196,110],[1668,492,193,193,128,193,110],[1906,492,213,196,128,196,110]],"right-idle":[[2,737,222,193,97,193,110]],"right-walk":[[240,737,178,190,61,190,110],[478,737,217,190,89,190,110],[716,737,234,190,125,190,110],[954,737,233,193,128,193,110],[1192,737,222,190,117,190,110],[1430,737,233,193,128,193,110],[1668,737,222,193,101,193,110],[1906,737,178,193,73,193,110]]}},"veteran":{"name":"S\u00f6ldner","image":"assets/player/medieval/veteran.png","referenceHeight":196,"animations":{"up-idle":[[2,2,138,193,69,193,110]],"up-walk":[[144,2,138,193,69,193,110],[286,2,138,196,69,196,110],[428,2,134,193,69,193,110],[570,2,138,196,69,196,110],[712,2,138,193,69,193,110],[854,2,138,196,69,196,110],[996,2,134,193,65,193,110],[1138,2,138,196,69,196,110]],"left-idle":[[2,202,98,193,45,193,110]],"left-walk":[[144,202,118,190,61,190,110],[286,202,106,192,53,190,110],[428,202,105,190,44,190,110],[570,202,114,193,49,193,110],[712,202,130,190,57,190,110],[854,202,110,193,45,193,110],[996,202,105,193,44,193,110],[1138,202,101,193,44,193,110]],"down-idle":[[2,402,138,196,69,196,110]],"down-walk":[[144,402,138,196,69,196,110],[286,402,138,196,69,196,110],[428,402,134,193,65,193,110],[570,402,138,196,69,196,110],[712,402,138,196,69,196,110],[854,402,138,196,69,196,110],[996,402,134,193,69,193,110],[1138,402,138,196,69,196,110]],"right-idle":[[2,602,98,193,53,193,110]],"right-walk":[[144,602,118,190,57,190,110],[286,602,106,190,53,190,110],[428,602,105,190,61,190,110],[570,602,114,193,65,193,110],[712,602,130,190,73,190,110],[854,602,110,193,65,193,110],[996,602,105,193,61,193,110],[1138,602,101,193,57,193,110]]}}});
+  function variantFrameAt(id,direction,moving,elapsed){
+    const frames=PLAYER_VARIANTS[id].animations[`${direction}-${moving?'walk':'idle'}`];
+    const duration=frames.reduce((n,f)=>n+f[6],0);
+    let t=((elapsed%duration)+duration)%duration;
+    for(let i=0;i<frames.length;i++){if(t<frames[i][6])return {frame:frames[i],index:i};t-=frames[i][6];}
+    return {frame:frames[0],index:0};
   }
-  function medievalKnee(hip,ankle){
-    const dx=ankle.x-hip.x,dy=ankle.y-hip.y,d=Math.max(.001,Math.hypot(dx,dy));
-    const a=(76*76-78*78+d*d)/(2*d),height=Math.sqrt(Math.max(0,76*76-a*a));
-    return {x:hip.x+dx*a/d+dy*height/d,y:hip.y+dy*a/d-dx*height/d};
-  }
-  function drawMedievalCharacter(ctx,id,direction,phase,moving,weight=1){
-    const cfg=PLAYER_VARIANTS[id],side=direction==='left'||direction==='right',back=direction==='up';
-    const gait=medievalGait(phase,moving,weight),bob=gait.bob;
-    ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
-    if(direction==='left')ctx.scale(-1,1);
-    if(!side){const lowest=Math.max(...[gait.right,gait.left].map(f=>334-(52-f.x)*.055-f.lift));ctx.translate(0,334-lowest);}
-    const ink='#39362f',dark='#343b3d',leather='#554232',skin='#bb9676';
-    function path(d,fill,stroke=ink,width=.85){ctx.beginPath();const p=new Path2D(d);if(fill){ctx.fillStyle=fill;ctx.fill(p);}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=width;ctx.stroke(p);}}
-    function line(points,color=ink,width=1){ctx.beginPath();ctx.moveTo(...points[0]);for(let i=1;i<points.length;i++)ctx.lineTo(...points[i]);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();}
-    function oval(x,y,rx,ry,fill,stroke=ink,width=.8){ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=width;ctx.stroke();}}
-    function grad(x,y,w,colors){const g=ctx.createLinearGradient(x,y,x+w,y+w*.15);colors.forEach((c,i)=>g.addColorStop(i/(colors.length-1),c));return g;}
-    const steel=grad(-30,90,66,['#424b50','#88959a','#d1d4ce','#747f84','#3d484c']);
-    const steelSmall=grad(-14,25,35,['#4a5357','#9aa6a8','#ced0c7','#5a676c']);
-    const cloth=grad(-32,90,65,[cfg.cloth,cfg.cloth,'#262e29']);
-    const mail=grad(-30,100,65,['#42484a','#92928a','#555d5c','#343c3d']);
-    const hide=grad(-30,95,62,['#43352b','#80664a','#5f4c37','#372d26']);
-    const clothLeg=cfg.helmet==='hood'?'#514e3c':'#4d4840';
-    function rivet(x,y,r=.95){oval(x,y,r,r,'#c5b98a','#5f573d',.4);}
-    function mailRows(x,y,w,h){ctx.save();ctx.beginPath();ctx.rect(x,y,w,h);ctx.clip();for(let yy=y;yy<y+h;yy+=3.3)for(let xx=x+(Math.round(yy/3.3)%2)*1.7;xx<x+w;xx+=3.4){ctx.beginPath();ctx.arc(xx,yy,1.25,.1,2.9);ctx.strokeStyle='rgba(206,205,186,.36)';ctx.lineWidth=.65;ctx.stroke();}ctx.restore();}
-    function segment(a,b,w1,w2,fill,armored=false){
-      const dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy)||1,nx=-dy/len,ny=dx/len;
-      path(`M ${a.x+nx*w1} ${a.y+ny*w1} Q ${(a.x+b.x)/2+nx*(w1+w2)*.56} ${(a.y+b.y)/2+ny*(w1+w2)*.56} ${b.x+nx*w2} ${b.y+ny*w2} L ${b.x-nx*w2} ${b.y-ny*w2} Q ${(a.x+b.x)/2-nx*(w1+w2)*.55} ${(a.y+b.y)/2-ny*(w1+w2)*.55} ${a.x-nx*w1} ${a.y-ny*w1} Z`,fill);
-      if(armored){line([[a.x+nx*w1*.45,a.y+ny*w1*.45],[b.x+nx*w2*.45,b.y+ny*w2*.45]],'#c1c5be',.8);line([[b.x+nx*w2,b.y+ny*w2],[b.x-nx*w2,b.y-ny*w2]],'#3f484b',1.4);}
-    }
-    function foot(x,y,isSide){
-      if(isSide){path(`M ${x-7} ${y-15} L ${x+5} ${y-16} Q ${x+7} ${y-7} ${x+17} ${y-5} Q ${x+22} ${y-1} ${x+17} ${y} L ${x-9} ${y} Q ${x-12} ${y-3} ${x-7} ${y-15} Z`,cfg.legs==='plate'?steel:'#4c3c2d');line([[x-8,y-2],[x+16,y-2]],'#252923',1.1);if(cfg.legs==='plate')for(let i=0;i<3;i++)line([[x+3+i*4,y-8+i],[x+4+i*4,y-3]],'#737e7c',.7);}
-      else{path(`M ${x-6.5} ${y-17} L ${x+6} ${y-17} L ${x+8} ${y-4} Q ${x+8} ${y+1} ${x} ${y} Q ${x-9} ${y+1} ${x-8} ${y-5} Z`,cfg.legs==='plate'?steel:'#48392d');line([[x-6,y-2],[x+6,y-2]],'#232722',1.1);}
-    }
-    function leg(which,far){
-      const step=gait[which],sign=which==='right'?-1:1;
-      const hip={x:side?(far?-3:4):sign*13,y:170+(moving?10*weight:0)+bob};
-      const x=side?step.x:sign*(14+(moving?Math.sin(phase*Math.PI*2)*.5:0));
-      const ground=side?334:334-(52-step.x)*.055;
-      const ankle={x,y:ground-step.lift-10};
-      const knee=side?medievalKnee(hip,ankle):{x:sign*15.5,y:(hip.y+ankle.y)/2-3-step.lift*.12};
-      ctx.save();if(far)ctx.globalAlpha=.94;
-      const fill=cfg.legs==='plate'?steel:cfg.legs==='mail'?mail:clothLeg;
-      segment(hip,knee,side?10.3:10,side?8.5:8,fill,cfg.legs==='plate');
-      segment(knee,ankle,8,5.4,cfg.legs==='plate'?steel:cfg.legs==='mail'?mail:clothLeg,cfg.legs==='plate');
-      if(cfg.legs==='mail'){
-        const dx=ankle.x-knee.x,dy=ankle.y-knee.y,len=Math.hypot(dx,dy),nx=-dy/len,ny=dx/len;
-        ctx.save();ctx.beginPath();ctx.moveTo(knee.x+nx*7,knee.y+ny*7);ctx.lineTo(ankle.x+nx*5,ankle.y+ny*5);ctx.lineTo(ankle.x-nx*5,ankle.y-ny*5);ctx.lineTo(knee.x-nx*7,knee.y-ny*7);ctx.closePath();ctx.clip();mailRows(Math.min(knee.x,ankle.x)-9,knee.y,Math.abs(dx)+18,Math.abs(dy));ctx.restore();
-        const t=.72,cx=knee.x+dx*t,cy=knee.y+dy*t;line([[cx+nx*6,cy+ny*6],[cx-nx*6,cy-ny*6]],'#806647',2.5);
-      }
-      if(cfg.legs==='plate'){oval(knee.x,knee.y+1,9,8,steel);path(`M ${knee.x-7} ${knee.y+1} L ${knee.x+3} ${knee.y-4} L ${knee.x+8} ${knee.y+2}`,null,'#c9cdc4',.8);}
-      if(cfg.legs==='cloth'){line([[hip.x-2,hip.y+13],[knee.x-3,knee.y-7]],'#302e28',.8);const start={x:knee.x+(ankle.x-knee.x)*.55,y:knee.y+(ankle.y-knee.y)*.55};segment(start,ankle,7,6,hide);const dx=ankle.x-start.x,dy=ankle.y-start.y,len=Math.hypot(dx,dy);line([[start.x-dy/len*6,start.y+dx/len*6],[start.x+dy/len*6,start.y-dx/len*6]],cfg.trim,1);}
-      foot(ankle.x,ground-step.lift,side);if(far){ctx.fillStyle='rgba(25,31,29,.10)';}
-      ctx.restore();
-    }
-    function quiver(){
-      ctx.save();ctx.translate(side?-21:(back?15:-19),110+bob);ctx.rotate(-.18);
-      path('M -7 -39 L 7 -39 L 8 58 Q 0 65 -8 58 Z',hide);line([[-9,-37],[9,-37]],cfg.trim,3);
-      for(let i=0;i<5;i++){const x=-5+i*2.6;line([[x,-36],[x+i*.5,-76+i%2*5]],'#9c875b',1.2);path(`M ${x-2} -70 L ${x+1} -78 L ${x+4} -70`, '#a7a99a',null);}
-      ctx.restore();
-    }
-    if(cfg.helmet==='hood')quiver();
-    const nearHand=side?(direction==='left'?'left':'right'):'left';
-    function weapon(x,y,type,far=false){
-      ctx.save();ctx.translate(x,y);if(far)ctx.globalAlpha=.9;
-      if(type==='spear'){
-        ctx.rotate(side?-.09:(back?.09:-.08));line([[0,130],[0,-139]],'#302f25',4.3);line([[-.7,129],[-.7,-138]],'#a78c57',2.4);
-        path('M -6 -140 Q -6 -151 0 -171 Q 6 -151 6 -140 L 0 -134 Z',steelSmall);line([[0,-166],[0,-137]],'#e1ded0',.7);line([[-4,-133],[4,-133]],'#8d713d',2);
-      }else if(type==='bow'){
-        ctx.rotate(side?.17:-.13);path('M -2 -81 Q 28 -45 25 0 Q 28 45 -2 81',null,'#342d23',5);path('M -2 -81 Q 28 -45 25 0 Q 28 45 -2 81',null,'#ad8a50',2.5);line([[-2,-81],[4,0],[-2,81]],'#c1b896',.7);path('M 20 -11 L 28 -11 L 28 11 L 20 11 Z',leather);}
-      else if(type==='axe'){
-        ctx.rotate(side?-.30:.13);line([[0,-16],[0,82]],'#322b20',6);line([[-1,-14],[-1,80]],'#aa8654',3.3);
-        path('M -3 -12 Q 11 -24 27 -23 Q 18 -5 27 8 Q 9 7 -3 0 Z',steelSmall);line([[25,-21],[21,-7],[25,6]],'#d9d8cc',1.5);path('M -7 -15 L 3 -15 L 3 4 L -7 4 Z',dark);
-      }else{
-        ctx.rotate(side?-.28:(back?-.19:.19));const len=type==='dagger'?50:101;
-        path(`M -3 12 L -4 ${len-8} L 0 ${len+7} L 4 ${len-8} L 3 12 Z`,steelSmall);line([[0,14],[0,len+4]],'#d9ded6',.7);
-        path('M -15 7 Q 0 12 15 7 L 15 11 Q 0 16 -15 11 Z',cfg.trim);path('M -3 -11 L 3 -11 L 3 8 L -3 8 Z',leather);for(let i=0;i<4;i++)line([[-2,-8+i*4],[2,-6+i*4]],'#a18a62',.6);oval(0,-14,4,3,cfg.trim);
-      }
-      ctx.restore();
-    }
-    function shield(x,y,type){
-      if(type==='bow'){weapon(x,y,'bow');return;}
-      ctx.save();ctx.translate(x,y+9);if(side)ctx.scale(.55,1);
-      const paint=grad(-27,0,55,[cfg.shieldColor,cfg.shieldColor,'#272e2b']);
-      if(type==='round'||type==='buckler'){
-        const r=type==='round'?34:22;oval(0,0,r,r,type==='round'?paint:steel);oval(0,0,r-3,r-3,type==='round'?paint:steel, '#aea58a',1.2);
-        if(type==='round')for(let x=-24;x<=24;x+=8)line([[x,-Math.sqrt(r*r-x*x)+4],[x,Math.sqrt(r*r-x*x)-4]],'#49362a',.9);
-        oval(0,0,9,9,steelSmall);for(let a=0;a<Math.PI*2;a+=Math.PI/4)rivet(Math.cos(a)*(r-5),Math.sin(a)*(r-5));
-      }else{
-        const h=type==='kite'?63:48;
-        path(`M -30 -34 Q 0 -42 30 -34 Q 31 15 0 ${h} Q -31 15 -30 -34 Z`,paint,cfg.trim,2.2);
-        path(`M -25 -29 Q 0 -34 25 -29 Q 24 13 0 ${h-7} Q -24 13 -25 -29 Z`,null,'#a89b75',.65);
-        if(cfg.helmet==='greathelm'){path('M -4 -26 L 4 -26 L 4 -7 L 20 -7 L 20 0 L 4 0 L 4 34 L -4 34 L -4 0 L -20 0 L -20 -7 L -4 -7 Z','#8b392c',null);}
-        else{path('M -3 -23 L 3 -23 L 3 4 L 17 4 L 17 10 L 3 10 L 3 31 L -3 31 L -3 10 L -17 10 L -17 4 L -3 4 Z','#c6b17b',null);}
-        for(const [xx,yy]of [[-26,-30],[26,-30],[-20,12],[20,12],[0,h-5]])rivet(xx,yy,.8);
-      }
-      ctx.restore();
-    }
-    function arm(which,far){
-      const sign=which==='right'?(back?1:-1):(back?-1:1),step=gait[which==='right'?'left':'right'];
-      const shoulder={x:side?(far?-4:5):sign*28,y:88+bob};
-      const hand={x:side?(far?-6:7)+step.x*.43:sign*(35+step.lift*.04),y:side?179+bob-step.lift*.13:179+bob+step.x*.12};
-      const elbow={x:side?(shoulder.x+hand.x)/2+7:sign*35,y:134+bob};
-      const mat=cfg.body==='plate'?steel:cfg.body==='leather'||cfg.body==='brigandine'?hide:mail;
-      ctx.save();if(far)ctx.globalAlpha=.92;
-      segment(shoulder,elbow,9,7,mat,cfg.body==='plate');segment(elbow,hand,7.5,5.5,mat,cfg.body==='plate');
-      if(cfg.body==='plate'){oval(shoulder.x,shoulder.y+4,side?12:13,11,steel);line([[shoulder.x-9,shoulder.y+9],[shoulder.x+8,shoulder.y+10]],'#bcc0b8',.8);oval(elbow.x,elbow.y,8,6,steel);}
-      else if(cfg.body==='quilt'||cfg.body==='surcoat'){mailRows(elbow.x-5,elbow.y+4,10,25);oval(shoulder.x,shoulder.y,10,8,mail);}
-      if(cfg.body==='leather'||cfg.body==='brigandine'){segment({x:elbow.x+1,y:elbow.y+11},hand,7,6,hide);line([[hand.x-5,hand.y-9],[hand.x+5,hand.y-9]],cfg.trim,1.1);}
-      oval(hand.x,hand.y,5.7,7.5,cfg.body==='plate'?steel:cfg.helmet==='hood'?skin:leather);
-      if(which==='right')weapon(hand.x,hand.y,cfg.weapon,far);else shield(hand.x,hand.y,cfg.shield);
-      ctx.restore();
-    }
-    // Anatomical right/left hands stay consistent in all four views.
-    const farHand=side?(nearHand==='right'?'left':'right'):(back?'left':'right');
-    if(side||!back)arm(farHand,true);
-    if(side){leg('left',true);leg('right',false);}else{leg('right',false);leg('left',false);}
-    ctx.save();ctx.translate(0,bob);
-    // Fauld / tunic hem covers the hip joints without hiding the alternating legs.
-    if(cfg.body==='plate'){
-      path(side?'M -19 164 L 20 164 L 25 200 L 2 207 L -24 198 Z':'M -24 164 L 24 164 L 31 202 L 8 208 L 0 193 L -8 208 L -31 202 Z',steel);
-      for(let y=174;y<198;y+=7)line([[-22,y],[22,y]],'#414b4d',1);}
-    else{path(side?'M -20 164 L 19 164 L 24 216 L 0 222 L -24 214 Z':'M -24 164 L 24 164 L 31 220 L 7 224 L 0 201 L -7 224 L -31 220 Z',cloth);line([[-25,216],[-8,220]],cfg.trim,1.1);line([[8,220],[25,216]],cfg.trim,1.1);}
-    const torso=side?'M -16 79 Q -25 88 -23 111 L -15 162 L -20 177 L 22 177 L 18 161 Q 29 114 21 91 L 11 78 Z':'M -15 78 Q -29 79 -31 94 L -27 121 L -20 163 L -23 179 L 23 179 L 20 163 L 27 121 L 31 94 Q 29 79 15 78 Z';
-    path(torso,cfg.body==='plate'?steel:cfg.body==='leather'||cfg.body==='brigandine'?hide:cloth);
-    if(cfg.body==='plate'){
-      if(side){path('M 9 89 Q 27 110 17 151 L 10 165 L -11 161',null,'#c9cdc4',1);line([[-17,146],[17,149]],'#596467',1);}
-      else{path(back?'M 0 86 L 0 160 M -22 105 Q 0 118 22 105':'M 0 85 Q -5 119 0 160 M -23 111 Q 0 126 23 111',null,'#b9c0ba',1);path('M -20 147 Q 0 155 20 147 L 19 162 Q 0 168 -19 162 Z',steel);}
-      for(const x of (side?[-17,17]:[-25,25]))for(let y=98;y<145;y+=15)rivet(x,y,.7);
-    }else if(cfg.body==='surcoat'){
-      if(!back&&!side)path('M -4 95 L 4 95 L 4 111 L 17 111 L 17 118 L 4 118 L 4 151 L -4 151 L -4 118 L -17 118 L -17 111 L -4 111 Z','#8a3b30',null);
-      line([[side?10:-12,96],[side?15:-16,158]],'#998c6e',.8);line([[12,130],[15,157]],'#e2d7b6',.8);
-    }else if(cfg.body==='quilt'){
-      for(let x=-21;x<=21;x+=7)line([[x,94],[x*.78,161]],'#382e29',.8);for(let y=105;y<160;y+=12)line([[-23,y],[23,y]],'rgba(184,147,113,.18)',.65);
-      path('M -17 78 L -24 92 L -11 103 L 0 90 L 11 103 L 24 92 L 17 78 Z',mail);mailRows(-18,83,36,13);
-    }else{
-      if(cfg.body==='brigandine')for(let y=96;y<157;y+=12)for(let x=-17;x<=17;x+=11)rivet(x,y,.65);
-      path(side?'M -14 83 L -20 87 L 17 155 L 20 145 Z':'M -22 84 L -29 89 L 14 161 L 22 159 Z',leather);line([[side?-15:-23,85],[side?18:18,154]],'#a48d64',.7);
-      if(cfg.body==='leather')path('M -12 80 Q 0 96 12 80 L 8 95 L 0 103 L -8 95 Z',cfg.cloth);
-    }
-    // Belt and metal buckle.
-    path(side?'M -19 164 L 21 164 L 21 171 L -20 171 Z':'M -22 164 Q 0 170 22 164 L 23 171 Q 0 178 -23 171 Z','#443226');
-    if(!back)path(side?'M 12 164 L 22 164 L 22 173 L 12 173 Z':'M -5 167 L 5 167 L 5 176 L -5 176 Z',null,cfg.trim,1.6);
-    if(!side){path(`M ${back?-22:17} 172 l 10 2 l 1 23 q -6 7 -13 0 Z`,hide);rivet(back?-17:22,180,.8);}
-    // Neck and mail collar connect the helmet organically to the shoulders.
-    path(side?'M -7 63 L 10 63 L 14 82 Q 0 91 -13 82 Z':'M -9 63 L 9 63 L 14 82 Q 0 91 -14 82 Z',cfg.helmet==='hood'?skin:mail);if(cfg.helmet!=='hood')mailRows(-10,68,20,15);
-    ctx.restore();
-    function head(){
-      ctx.save();ctx.translate(side?4:0,bob);
-      if(cfg.helmet==='hood'){
-        path(side?'M -15 59 Q -20 34 -9 23 Q 6 15 18 32 L 22 59 L 13 80 L -15 75 Z':'M -18 59 Q -21 30 -9 23 Q 0 17 10 23 Q 23 31 18 61 L 14 78 L -14 78 Z',cloth);
-        if(!back){path(side?'M 8 32 Q 18 34 19 43 L 24 48 L 20 52 L 18 64 L 9 69 L 3 62 L 1 41 Z':'M -10 34 Q 0 27 10 34 L 11 52 Q 8 67 0 69 Q -8 67 -11 52 Z',skin);
-          if(side){line([[13,44],[18,44]],'#433b30',1);path('M 9 55 Q 14 63 19 56 L 16 66 L 9 66 Z','#62513c',null);}
-          else{line([[-8,44],[-3,44]],'#433b30',.8);line([[3,44],[8,44]],'#433b30',.8);line([[0,45],[-1,52],[2,53]],'#8e725a',.7);path('M -8 55 Q 0 61 8 55 L 6 65 L 0 69 L -6 65 Z','#66503b',null);}
-        }else path('M -10 29 Q 5 39 0 69',null,'#6d7d52',.9);
-        path(side?'M -16 59 Q -11 75 15 75 L 23 86 Q 0 95 -23 83 Z':'M -19 61 Q -11 76 0 73 Q 11 76 19 61 L 24 83 Q 0 96 -24 83 Z',cloth);line([[-13,77],[0,86],[13,77]],'#7b885a',.8);
-      }else if(cfg.helmet==='greathelm'){
-        path(side?'M -16 27 Q 2 20 19 29 L 22 64 L 11 78 L -16 70 Z':'M -17 28 Q 0 19 17 28 L 20 67 L 0 79 L -20 67 Z',steelSmall);
-        if(!back){if(side){path('M 7 42 L 21 43 L 21 47 L 8 46 Z','#202c2e',null);line([[7,28],[10,72]],cfg.trim,2);for(let y=53;y<67;y+=4)oval(16,y,1,1,'#303a3c',null);}
-          else{path('M -16 42 L -3 40 L -3 44 L -16 46 Z M 3 40 L 16 42 L 16 46 L 3 44 Z','#202c2e',null);line([[0,25],[0,75]],cfg.trim,2.6);for(let y=52;y<67;y+=4)for(let x of [-11,-7,7,11])oval(x,y,.8,.8,'#303a3c',null);}}
-        else{line([[-13,29],[-13,65]],'#c6c9be',.8);line([[0,27],[0,75]],'#566267',1);}
-        for(const [x,y]of [[-13,32],[13,32],[-14,65],[14,65]])rivet(x,y,.65);
-      }else{
-        if(cfg.helmet==='kettle'){
-          if(!back){path(side?'M -7 37 L 12 36 L 17 45 L 22 49 L 18 53 L 15 65 L 5 70 L -6 61 Z':'M -11 37 L 11 37 L 12 54 Q 8 68 0 70 Q -8 68 -12 54 Z',skin);if(!side){line([[-8,47],[-3,47]],'#4b4031',.7);line([[3,47],[8,47]],'#4b4031',.7);line([[-3,59],[3,59]],'#77523c',.7);}else line([[12,46],[16,46]],'#4b4031',.7);}
-          path('M -18 39 Q -20 22 -6 19 Q 12 15 18 39 L 29 44 Q 0 54 -29 44 Z',steelSmall);line([[-24,44],[0,49],[24,44]],'#d3d4c7',.9);line([[-3,20],[-3,39]],'#4e5c5e',1);
-          path(side?'M -12 44 L -2 47 L 2 64 L -7 67 Z':'M -17 47 L -11 49 L -9 65 L -15 67 Z M 17 47 L 11 49 L 9 65 L 15 67 Z',mail);mailRows(-16,51,7,13);
-        }else{
-          path(side?'M -17 53 Q -22 27 -5 20 Q 13 17 20 38 L 21 55 L 12 73 L -10 71 Z':'M -18 52 Q -22 28 -8 21 Q 0 17 8 21 Q 22 28 18 52 L 14 72 L 0 77 L -14 72 Z',steelSmall);
-          if(!back){
-            if(cfg.helmet==='barbute'){
-              path(side?'M 10 35 L 20 39 L 22 49 L 17 53 L 13 65 L 5 64 L 3 48 Z':'M -10 38 L -3 38 L -3 48 L 3 48 L 3 38 L 10 38 L 9 54 L 5 54 L 5 67 L -5 67 L -5 54 L -9 54 Z','#302e27');
-              if(!side)path('M -2 51 L 3 51 L 3 64 L -2 64 Z',skin,null);
-            }else{
-              path(side?'M 3 39 L 22 40 L 28 51 L 18 66 L 4 65 L -1 51 Z':'M -17 41 Q 0 35 17 41 L 17 55 L 0 69 L -17 55 Z',steelSmall);
-              path(side?'M 9 41 L 23 43 L 24 46 L 10 45 Z':'M -14 42 L -2 41 L -2 44 L -14 45 Z M 2 41 L 14 42 L 14 45 L 2 44 Z','#263134',null);
-              if(side)for(let i=0;i<4;i++)oval(10+i*2.5,55, .8,1.2,'#414a49',null);else for(let x of [-11,-7,-3,3,7,11])oval(x,54,.7,1.2,'#414a49',null);
-              line(side?[[7,48],[24,51],[15,64]]:[[-15,48],[0,52],[15,48]],'#d6d9cf',.65);
-            }
-          }else{path('M -9 24 Q -14 42 -10 65',null,'#c5cec7',.85);line([[0,23],[0,70]],'#69777b',.7);}
-          line([[-9,27],[-13,37]],'#e0e0d4',.8);rivet(-16,48,.9);rivet(16,48,.9);
-        }
-      }
-      ctx.restore();
-    }
-    head();
-    if(side)arm(nearHand,false);else if(back){arm('left',false);arm('right',false);}else arm('left',false);
-    ctx.restore();
-  }
-
   if(typeof module!=='undefined' && module.exports) {
-    module.exports={PLAYER_VARIANTS,medievalGait,medievalKnee,drawMedievalCharacter,WINTER_CASTLE,CASTLE_ROAD,castleLocal,castleBlockedFoot,castleBehindFoot,castleRoadContains,tryCastleRoad,moveCastleRoad,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
+    module.exports={PLAYER_VARIANTS,variantFrameAt,WINTER_CASTLE,CASTLE_ROAD,castleLocal,castleBlockedFoot,castleBehindFoot,castleRoadContains,tryCastleRoad,moveCastleRoad,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
     return;
   }
 
@@ -677,37 +479,38 @@
   const animation={moving:false,index:0,elapsed:0,direction:'down'};
   let activeSpriteKey='',activeMirror=false;
   let playerVariant='original';
-  const variantAnimation={phase:0,idleTime:0,weight:0};
+  const variantImages={};
+  const variantAnimation={elapsed:0,direction:'down',moving:false};
   function setPlayerVariant(id){
     if(state.transitioning||!state.playing)return;
-    if(id!=='original'&&!PLAYER_VARIANTS[id])return;
+    if(id!=='original'&&!variantImages[id])return;
     playerVariant=id===playerVariant?'original':id;
     activeSpriteKey='';activeMirror=false;
-    variantAnimation.phase=0;variantAnimation.idleTime=0;variantAnimation.weight=0;
+    variantAnimation.elapsed=0;variantAnimation.direction=state.player.facing;variantAnimation.moving=false;
     animation.moving=false;animation.index=0;animation.elapsed=0;
     updateAnimation(false,0);
   }
   function updateVariantAnimation(moving,dt){
-    const elapsed=Math.max(0,dt);
-    variantAnimation.idleTime+=elapsed;
-    if(moving)variantAnimation.phase=(variantAnimation.phase+elapsed/.8)%1;
-    const target=moving?1:0;
-    variantAnimation.weight+=clamp(target-variantAnimation.weight,-elapsed/.12,elapsed/.12);
-    const walking=variantAnimation.weight>.0001;
-    const box=1000,scale=TARGET_VISIBLE_HEIGHT/312;
+    const direction=state.player.facing;
+    if(variantAnimation.direction!==direction||variantAnimation.moving!==moving)variantAnimation.elapsed=0;
+    else variantAnimation.elapsed+=Math.max(0,dt)*1000;
+    variantAnimation.direction=direction;variantAnimation.moving=moving;
+    const cfg=PLAYER_VARIANTS[playerVariant];
+    const {frame:f,index}=variantFrameAt(playerVariant,direction,moving,variantAnimation.elapsed);
+    const key=`variant:${playerVariant}:${direction}:${moving}:${index}`;
+    if(activeSpriteKey===key)return;
+    const box=1000,scale=TARGET_VISIBLE_HEIGHT/cfg.referenceHeight;
     Object.assign(sprite.style,{position:'absolute',left:'50%',width:`${box}px`,height:`${box}px`,bottom:'0px',transform:'translateX(-50%)',transformOrigin:'50% 100%',imageRendering:'auto'});
-    spriteContext.setTransform(1,0,0,1,0,0);
-    spriteContext.clearRect(0,0,sprite.width,sprite.height);
+    spriteContext.setTransform(1,0,0,1,0,0);spriteContext.clearRect(0,0,sprite.width,sprite.height);
     spriteContext.imageSmoothingEnabled=true;
-    // A single canvas transaction: clear first, then draw one articulated figure.
-    spriteContext.save();
-    spriteContext.setTransform(sprite.width/box*scale,0,0,sprite.height/box*scale,sprite.width/2,sprite.height);
-    spriteContext.translate(0,-334);
-    drawMedievalCharacter(spriteContext,playerVariant,state.player.facing,
-      walking?variantAnimation.phase:variantAnimation.idleTime/3.4,walking,variantAnimation.weight);
-    spriteContext.restore();
-    activeSpriteKey=`rig:${playerVariant}:${state.player.facing}:${walking}`;activeMirror=false;
+    spriteContext.drawImage(variantImages[playerVariant],f[0],f[1],f[2],f[3],
+      (box/2-f[4]*scale)*sprite.width/box,(box-f[5]*scale)*sprite.height/box,
+      f[2]*scale*sprite.width/box,f[3]*scale*sprite.height/box);
+    activeSpriteKey=key;activeMirror=false;
   }
+  const artCredits=document.createElement('a');artCredits.href='credits.html';
+  artCredits.textContent='Grafiknachweise';artCredits.target='_blank';artCredits.rel='noopener';
+  Object.assign(artCredits.style,{position:'absolute',right:'14px',bottom:'10px',color:'#302519',font:'12px Georgia,serif'});menu.appendChild(artCredits);
   function showPlayerSprite(key,mirror=false) {
     if(activeSpriteKey===key && activeMirror===mirror) return;
     sprite.style.imageRendering='auto';spriteContext.imageSmoothingEnabled=true;
@@ -930,6 +733,9 @@
     state.starting=true;status.hidden=false;status.textContent='Oberkirch wird geöffnet …';
     try {
       const jobs=[waitForImage(map),waitForImage(castleImage)];
+      for(const [id,cfg]of Object.entries(PLAYER_VARIANTS)){
+        const image=new Image();image.src=cfg.image;variantImages[id]=image;jobs.push(waitForImage(image));
+      }
       for(const direction of ['down','left','right','up']) {
         const image=new Image();image.src=`assets/player/stand-${direction}.png`;
         images[`stand-${direction}`]=image;jobs.push(waitForImage(image));
