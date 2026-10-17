@@ -1,0 +1,18 @@
+:root { color-scheme: light; font-family: Arial, Helvetica, sans-serif; }
+* { box-sizing: border-box; }
+html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; overscroll-behavior: none; }
+[hidden] { display: none !important; }
+body { background: #d6b783; }
+#menu { position: fixed; inset: 0; display: grid; place-content: center; gap: 24px; background-color: #d6b783;
+  background-image: radial-gradient(ellipse at 45% 37%, #f5e2bc99, transparent 68%), radial-gradient(ellipse at center, transparent 35%, #79502638), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%23704420' opacity='.13' filter='url(%23n)' d='M0 0h180v180H0z'/%3E%3C/svg%3E"); }
+.choices { display: flex; flex-direction: column; gap: 22px; width: min(420px, 84vw); }
+.choices button { min-height: 80px; padding: 20px 22px; border: 1px solid #644724; background: #efdcaf35; color: #100d08; font: 600 clamp(17px, 2.5vw, 23px)/1.35 Arial, Helvetica, sans-serif; letter-spacing: .055em; cursor: pointer; transition: background 150ms, box-shadow 150ms, border-color 150ms; }
+.choices button:hover, .choices button:focus-visible { background: #fff1c58c; border-color: #3e2d15; box-shadow: 0 0 24px #fff0aecc, inset 0 0 18px #fff8d980; outline: 2px solid transparent; }
+#status { max-width: min(420px,84vw); margin: 0; color: #26180e; text-align: center; line-height: 1.5; }
+#game { position: fixed; inset: 0; overflow: hidden; background: #111; outline: none; touch-action: none; }
+#world { position: absolute; left: 0; top: 0; width: 10000px; height: 6667px; transform-origin: 0 0; will-change: transform; }
+#map { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; user-select: none; }
+#player { position: absolute; width: 420px; height: 630px; transform: translate(-50%, -100%); z-index: 10; pointer-events: none; user-select: none; transition: opacity 145ms ease; }
+#playerSprite { display: block; width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; }
+.geometry-debug { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 20; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .choices button, #player { transition: none; } }

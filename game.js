@@ -1,0 +1,296 @@
+/* Renchtal — Neubau 01. Keine externen Bibliotheken, Musik oder fremden Hitboxen.
+ * Weltkoordinaten 10000 x 6667: identisch zur Oberkirch-Referenz.
+ * Karte: Anhang 2048 x 1365, nach 12288 x 8190 hochskaliert (keine neuen Details).
+ * Die zwei Uferpolygone wurden an diesem Kartenanhang neu nachgezeichnet.
+ * Brückengeometrie und Verdeckung stammen unverändert aus der alten game.js.
+ */
+(() => {
+  "use strict";
+  const WORLD = Object.freeze({ width: 10000, height: 6667 });
+  const PLAYER = Object.freeze({ width: 420, height: 630, speed: 520 });
+  const STONE_BRIDGE_PATH = Object.freeze([
+    Object.freeze([3490, 5871]),
+    Object.freeze([3855, 5791]),
+    Object.freeze([4220, 5725]),
+    Object.freeze([4585, 5693]),
+    Object.freeze([4950, 5691]),
+    Object.freeze([5315, 5722]),
+    Object.freeze([5680, 5785]),
+    Object.freeze([6045, 5871]),
+    Object.freeze([6410, 5981]),
+    Object.freeze([6775, 5977]),
+    Object.freeze([7016, 5966])
+  ]);
+
+  const COVERED_BRIDGE_PATH = Object.freeze([
+    // FINAL: only the short straight bridge corridor is forced.
+    // The road junctions inside the blue circles stay completely free.
+    Object.freeze([3500, 1305]),
+    Object.freeze([6020, 1305])
+  ]);
+
+  const BRIDGE_CONFIG = Object.freeze({
+    stoneCorridor: 150,
+    coveredCorridor: 72,
+    engageDistance: 285,
+    coveredFadeMs: 145,
+
+    // FINAL R9: left invisibility starts exactly at the red vertical line.
+    // The confirmed-perfect right boundary stays unchanged.
+    coveredInterior: Object.freeze({
+      x1: 3650,
+      y1: 800,
+      x2: 5790,
+      y2: 1470
+    }),
+
+    // FINAL R9: capture zones exist only immediately before the bridge.
+    // They no longer reach into either blue-circled road junction.
+    coveredCaptureLeft: Object.freeze({
+      x1: 3435, y1: 1080, x2: 3735, y2: 1535
+    }),
+    coveredCaptureRight: Object.freeze({
+      x1: 5700, y1: 1080, x2: 6050, y2: 1535
+    })
+  });
+
+  const RIVER_BLOCK_ZONES = [[[793,0],[785,8],[795,16],[806,24],[796,32],[796,40],[809,48],[807,56],[811,64],[814,72],[817,80],[819,88],[826,96],[839,104],[818,112],[820,120],[835,128],[826,136],[828,144],[836,152],[848,160],[838,168],[838,176],[873,292],[873,300],[885,308],[869,316],[857,324],[851,332],[851,340],[857,348],[846,356],[852,364],[864,372],[870,380],[867,388],[859,396],[858,404],[854,412],[858,420],[875,428],[857,436],[846,444],[849,452],[852,460],[854,468],[860,476],[861,484],[853,492],[854,500],[854,508],[859,516],[851,524],[842,532],[842,540],[870,548],[870,550],[1032,550],[1032,548],[1033,540],[1020,532],[1031,524],[1032,516],[1024,508],[1037,500],[1045,492],[1048,484],[1054,476],[1057,468],[1055,460],[1041,452],[1058,444],[1059,436],[1048,428],[1047,420],[1054,412],[1056,404],[1048,396],[1038,388],[1045,380],[1039,372],[1040,364],[1045,356],[1047,348],[1061,340],[1060,332],[1043,324],[1043,316],[1019,308],[1018,300],[1018,292],[1066,176],[1066,168],[1059,160],[1047,152],[1060,144],[1062,136],[1043,128],[1043,120],[1049,112],[1048,104],[1033,96],[1028,88],[1015,80],[1005,72],[1016,64],[1017,56],[1009,48],[1001,40],[997,32],[1009,24],[1011,16],[1010,8],[1008,0]],[[930,950],[932,960],[910,968],[912,976],[908,984],[892,992],[898,1000],[918,1008],[919,1016],[898,1024],[900,1032],[901,1040],[901,1048],[903,1056],[902,1064],[872,1072],[874,1080],[875,1088],[868,1096],[874,1104],[879,1112],[883,1120],[883,1128],[883,1134],[865,1250],[865,1260],[863,1268],[870,1276],[871,1284],[869,1292],[869,1300],[859,1308],[854,1316],[854,1324],[853,1332],[852,1340],[857,1348],[857,1356],[855,1364],[855,1365],[1123,1365],[1123,1364],[1125,1356],[1124,1348],[1116,1340],[1112,1332],[1107,1324],[1089,1316],[1093,1308],[1095,1300],[1096,1292],[1080,1284],[1081,1276],[1085,1268],[1084,1260],[1084,1250],[1117,1134],[1117,1128],[1116,1120],[1113,1112],[1099,1104],[1099,1096],[1102,1088],[1105,1080],[1103,1072],[1110,1064],[1099,1056],[1089,1048],[1082,1040],[1081,1032],[1071,1024],[1066,1016],[1076,1008],[1065,1000],[1076,992],[1077,984],[1069,976],[1063,968],[1045,960],[1040,950]]].map(polygon => polygon.map(([x,y]) => [x / 2048 * WORLD.width, y / 1365 * WORLD.height]));
+
+  const bridgePathCache = new Map();
+  function getPathMetrics(path) {
+    if (bridgePathCache.has(path)) return bridgePathCache.get(path);
+    const cumulative = [0];
+    let total = 0;
+    for (let i = 1; i < path.length; i++) {
+      total += Math.hypot(path[i][0] - path[i-1][0], path[i][1] - path[i-1][1]);
+      cumulative.push(total);
+    }
+    const result = { cumulative, total };
+    bridgePathCache.set(path, result);
+    return result;
+  }
+  const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+  function closestPointOnBridgePath(x, y, path) {
+    const metrics = getPathMetrics(path);
+    let best = null;
+    for (let i = 0; i < path.length - 1; i++) {
+      const [ax, ay] = path[i], [bx, by] = path[i+1];
+      const vx = bx-ax, vy = by-ay;
+      const t = clamp(((x-ax)*vx+(y-ay)*vy)/(vx*vx+vy*vy || 1), 0, 1);
+      const px = ax+vx*t, py = ay+vy*t;
+      const distance = Math.hypot(x-px,y-py);
+      const pathDistance = metrics.cumulative[i]+Math.hypot(vx,vy)*t;
+      if (!best || distance < best.distance) best = {x:px,y:py,distance,pathDistance,progress:pathDistance/metrics.total};
+    }
+    return best;
+  }
+  function pointAtBridgeDistance(path, distance) {
+    const m = getPathMetrics(path), d = clamp(distance,0,m.total);
+    for (let i=0;i<path.length-1;i++) {
+      if (d<=m.cumulative[i+1] || i===path.length-2) {
+        const t=(d-m.cumulative[i])/(m.cumulative[i+1]-m.cumulative[i] || 1);
+        return {x:path[i][0]+(path[i+1][0]-path[i][0])*t,y:path[i][1]+(path[i+1][1]-path[i][1])*t};
+      }
+    }
+  }
+  function pointInRect(x,y,r) { return x>=r.x1 && x<=r.x2 && y>=r.y1 && y<=r.y2; }
+  function worldPointInPolygon(x,y,polygon) {
+    let inside=false;
+    for(let i=0,j=polygon.length-1;i<polygon.length;j=i++) {
+      const [ax,ay]=polygon[i], [bx,by]=polygon[j];
+      if(((ay>y)!==(by>y)) && x<(bx-ax)*(y-ay)/(by-ay)+ax) inside=!inside;
+    }
+    return inside;
+  }
+  function bridgeDefinition(id) {
+    return id==='covered'
+      ? {id,path:COVERED_BRIDGE_PATH,corridor:BRIDGE_CONFIG.coveredCorridor}
+      : {id:'stone',path:STONE_BRIDGE_PATH,corridor:BRIDGE_CONFIG.stoneCorridor};
+  }
+  function isRiverBlockedFootPoint(x,y) {
+    // The exception remains narrow: only the original bridge deck corridors.
+    for (const id of ['stone','covered']) {
+      const bridge=bridgeDefinition(id);
+      if(closestPointOnBridgePath(x,y,bridge.path).distance<=bridge.corridor) return false;
+    }
+    return RIVER_BLOCK_ZONES.some(polygon=>worldPointInPolygon(x,y,polygon));
+  }
+  function tryEngageBridge(player,dx,dy) {
+    const horizontal=Math.sign(dx);
+    if(dx || dy) {
+      const bridge=bridgeDefinition('covered');
+      const closest=closestPointOnBridgePath(player.x,player.y,bridge.path);
+      const feeder=pointInRect(player.x,player.y,BRIDGE_CONFIG.coveredCaptureLeft) || pointInRect(player.x,player.y,BRIDGE_CONFIG.coveredCaptureRight);
+      const leaving=(closest.progress<=.04 && horizontal<0)||(closest.progress>=.96 && horizontal>0);
+      if(feeder && !leaving) return {id:'covered',path:bridge.path,distance:closest.pathDistance,snapping:true};
+    }
+    if(!horizontal) return null;
+    const closest=closestPointOnBridgePath(player.x,player.y,STONE_BRIDGE_PATH);
+    if(closest.distance>BRIDGE_CONFIG.engageDistance) return null;
+    if((closest.progress<=.035 && horizontal<0)||(closest.progress>=.965 && horizontal>0)) return null;
+    return {id:'stone',path:STONE_BRIDGE_PATH,distance:closest.pathDistance,snapping:true};
+  }
+  function moveAlongActiveBridge(player,bridge,horizontal,dt) {
+    const anchor=pointAtBridgeDistance(bridge.path,bridge.distance);
+    if(bridge.snapping) {
+      const dx=anchor.x-player.x,dy=anchor.y-player.y;
+      if(Math.hypot(dx,dy)>5) {
+        const pull=Math.min(1,10*dt);
+        player.x+=dx*pull; player.y+=dy*pull;
+        return bridge;
+      }
+      player.x=anchor.x;player.y=anchor.y;bridge.snapping=false;
+    }
+    if(!horizontal) return bridge;
+    const total=getPathMetrics(bridge.path).total;
+    bridge.distance=clamp(bridge.distance+horizontal*PLAYER.speed*dt,0,total);
+    Object.assign(player,pointAtBridgeDistance(bridge.path,bridge.distance));
+    if((bridge.distance<=.001 && horizontal<0)||(bridge.distance>=total-.001 && horizontal>0)) {
+      if(bridge.id==='covered') player.x+=horizontal*18;
+      return null;
+    }
+    return bridge;
+  }
+  function playerInsideCoveredBridgeInterior(player,bridge) {
+    return Boolean(bridge && bridge.id==='covered' && pointInRect(player.x,player.y,BRIDGE_CONFIG.coveredInterior));
+  }
+  function canMoveFootTo(x,y) {
+    return x>=PLAYER.width/2 && x<=WORLD.width-PLAYER.width/2 && y>=PLAYER.height && y<=WORLD.height-10 && !isRiverBlockedFootPoint(x,y);
+  }
+  function movePlayer(player,bridge,dx,dy,dt) {
+    if(!dx && !dy) return bridge;
+    bridge=bridge || tryEngageBridge(player,dx,dy);
+    if(bridge) return moveAlongActiveBridge(player,bridge,Math.sign(dx),dt);
+    // Small steps prevent stepping across a thin shoreline at a slow frame rate.
+    const length=Math.hypot(dx,dy),distance=PLAYER.speed*dt;
+    const steps=Math.max(1,Math.ceil(distance/6));
+    const sx=dx/length*distance/steps,sy=dy/length*distance/steps;
+    for(let i=0;i<steps;i++) {
+      if(canMoveFootTo(player.x+sx,player.y)) player.x+=sx;
+      if(canMoveFootTo(player.x,player.y+sy)) player.y+=sy;
+    }
+    return null;
+  }
+  function coverCamera(width,height,x,y) {
+    const scale=Math.max(width/WORLD.width,height/WORLD.height);
+    return {scale,x:clamp(x,width/scale/2,WORLD.width-width/scale/2),y:clamp(y,height/scale/2,WORLD.height-height/scale/2)};
+  }
+  // Geometry can be verified directly in Node without a browser or asset stubs.
+  if(typeof module!=='undefined' && module.exports) {
+    module.exports={WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
+    return;
+  }
+
+  const menu=document.getElementById('menu'),game=document.getElementById('game');
+  const world=document.getElementById('world'),map=document.getElementById('map');
+  const playerEl=document.getElementById('player'),sprite=document.getElementById('playerSprite');
+  const startButton=document.getElementById('singleplayer'),status=document.getElementById('status');
+  const state={playing:false,starting:false,player:{x:4950,y:3750,facing:'down'},bridge:null};
+  const camera={x:5000,y:3333.5,scale:1};
+  const pointer={x:0,y:0,inside:false};
+  const keys=new Set(),images={};
+  let width=innerWidth,height=innerHeight,lastTime=0;
+
+  function waitForImage(image) {
+    return new Promise((resolve,reject)=>{
+      const ready=()=>{
+        image.onload=null;image.onerror=null;
+        if(typeof image.decode==='function') image.decode().then(resolve,reject);
+        else resolve();
+      };
+      if(image.complete) {
+        if(image.naturalWidth) ready(); else reject(new Error('Bild konnte nicht geladen werden.'));
+      } else {image.onload=ready;image.onerror=()=>reject(new Error('Bild konnte nicht geladen werden.'));}
+    });
+  }
+  function render() {
+    const c=coverCamera(width,height,camera.x,camera.y);
+    Object.assign(camera,c);
+    world.style.transform=`translate3d(${width/2-camera.x*c.scale}px,${height/2-camera.y*c.scale}px,0) scale(${c.scale})`;
+    playerEl.style.left=`${state.player.x}px`;playerEl.style.top=`${state.player.y}px`;
+    playerEl.style.opacity=playerInsideCoveredBridgeInterior(state.player,state.bridge)?'0':'1';
+  }
+  function face(dx,dy) {
+    // Same vertical priority as the reference; no walk frames until next step.
+    const direction=dy<0?'up':dy>0?'down':dx<0?'left':'right';
+    if(state.player.facing!==direction) {
+      state.player.facing=direction;sprite.src=images[direction].src;
+    }
+  }
+  function updateCamera(dx,dy,dt) {
+    const c=coverCamera(width,height,camera.x,camera.y),s=c.scale;
+    if(dx || dy) {
+      const marginX=width*.18/s,marginY=height*.18/s;
+      const halfW=width/s/2,halfH=height/s/2;
+      // Keep head and feet inside the camera when walking, without changing zoom.
+      if(state.player.x<camera.x-halfW+marginX) camera.x=state.player.x+halfW-marginX;
+      if(state.player.x>camera.x+halfW-marginX) camera.x=state.player.x-halfW+marginX;
+      if(state.player.y-PLAYER.height<camera.y-halfH+marginY) camera.y=state.player.y-PLAYER.height+halfH-marginY;
+      if(state.player.y>camera.y+halfH-marginY) camera.y=state.player.y-halfH+marginY;
+    } else if(pointer.inside) {
+      const edge=Math.min(90,Math.min(width,height)*.13);
+      const intent=(v,size)=>v<edge?-(1-v/edge):v>size-edge?1-(size-v)/edge:0;
+      camera.x+=intent(pointer.x,width)*820/s*dt;
+      camera.y+=intent(pointer.y,height)*820/s*dt;
+    }
+  }
+  function frame(now) {
+    const dt=lastTime?clamp((now-lastTime)/1000,0,.05):0;lastTime=now;
+    if(state.playing && !document.hidden) {
+      const dx=Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft'));
+      const dy=Number(keys.has('KeyS')||keys.has('ArrowDown'))-Number(keys.has('KeyW')||keys.has('ArrowUp'));
+      if(dx || dy) {
+        face(dx,dy);state.bridge=movePlayer(state.player,state.bridge,dx,dy,dt);
+      }
+      updateCamera(dx,dy,dt);render();
+    }
+    requestAnimationFrame(frame);
+  }
+  startButton.addEventListener('click',async()=>{
+    if(state.starting || state.playing) return;
+    state.starting=true;status.hidden=false;status.textContent='Oberkirch wird geöffnet …';
+    try {
+      const jobs=[waitForImage(map)];
+      for(const direction of ['down','left','right','up']) {
+        const image=new Image();image.src=`assets/player/stand-${direction}.png`;
+        images[direction]=image;jobs.push(waitForImage(image));
+      }
+      await Promise.all(jobs);
+      sprite.src=images.down.src;
+      menu.hidden=true;game.hidden=false;state.playing=true;keys.clear();
+      resize();game.focus({preventScroll:true});
+    } catch(error) {
+      console.error(error);status.textContent='Eine Bilddatei fehlt oder konnte nicht geladen werden. Bitte das ZIP vollständig entpacken und erneut versuchen.';
+    } finally {state.starting=false;}
+  });
+  // MEHRSPIELER (LOKAL) deliberately has no click handler, navigation or action.
+  addEventListener('keydown',event=>{
+    if(!state.playing) return;
+    if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(event.code)) {
+      event.preventDefault();keys.add(event.code);
+    }
+  },{passive:false});
+  addEventListener('keyup',event=>keys.delete(event.code));
+  function resetInput(){keys.clear();pointer.inside=false;lastTime=0;}
+  addEventListener('blur',resetInput);
+  document.addEventListener('visibilitychange',resetInput);
+  game.addEventListener('pointermove',event=>{pointer.x=event.clientX;pointer.y=event.clientY;pointer.inside=event.pointerType!=='touch';});
+  game.addEventListener('pointerleave',()=>pointer.inside=false);
+  game.addEventListener('wheel',event=>event.preventDefault(),{passive:false});
+  function resize(){width=innerWidth;height=innerHeight;render();}
+  addEventListener('resize',resize);
+  if(new URLSearchParams(location.search).get('debug')==='1') {
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('viewBox',`0 0 ${WORLD.width} ${WORLD.height}`);svg.classList.add('geometry-debug');
+    for(const polygon of RIVER_BLOCK_ZONES) {
+      const shape=document.createElementNS(svg.namespaceURI,'polygon');
+      shape.setAttribute('points',polygon.map(p=>p.join(',')).join(' '));shape.setAttribute('fill','#f003');shape.setAttribute('stroke','#f55');shape.setAttribute('stroke-width','7');svg.append(shape);
+    }
+    for(const path of [STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH]) {
+      const line=document.createElementNS(svg.namespaceURI,'polyline');
+      line.setAttribute('points',path.map(p=>p.join(',')).join(' '));line.setAttribute('fill','none');line.setAttribute('stroke','#ffe600');line.setAttribute('stroke-width','10');svg.append(line);
+    }
+    world.append(svg);
+  }
+  render();requestAnimationFrame(frame);
+})();
