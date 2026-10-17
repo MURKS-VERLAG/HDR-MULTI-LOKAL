@@ -1,8 +1,9 @@
-/* Renchtal — Neubau 03: W-Lauf und vertikale Animationskadenz. Keine externen Bibliotheken, Musik oder fremden Hitboxen.
+/* Renchtal — Neubau 04: begehbare Steinbrückenbreite und figurenzentrierte Kamera. Keine externen Bibliotheken, Musik oder fremden Hitboxen.
  * Weltkoordinaten 10000 x 6667: identisch zur Oberkirch-Referenz.
  * Karte: Anhang 2048 x 1365, nach 12288 x 8190 hochskaliert (keine neuen Details).
  * Die zwei Uferpolygone wurden an diesem Kartenanhang neu nachgezeichnet.
- * Brücken aus der Referenz, jetzt beidseitig gekürzt; zweiter Steinbogen +2 Weltpixel.
+ * Steinbrücke: durchgehender begehbarer Bogen bis zum sichtbaren rechten Ende.
+ * Holzbrücke und ihre Ausblendung unverändert aus Neubau 03.
  */
 (() => {
   "use strict";
@@ -42,7 +43,21 @@
     result.push(at(total-amount));
     return Object.freeze(result.map(p=>Object.freeze([...p])));
   }
-  const STONE_BRIDGE_PATH=trimPathEnds(STONE_BRIDGE_REFERENCE,3);
+  // The visible right-hand masonry ends at about source X=1280/2048.
+  // The old road extension (through X=7016) must never capture the player.
+  const STONE_DECK=Object.freeze({rightX:6250,upperOffset:-110,lowerOffset:130,entryPadding:12});
+  function clipStonePath(path) {
+    const result=[];
+    for(let i=0;i<path.length;i++) {
+      if(path[i][0]<=STONE_DECK.rightX) result.push(path[i]);
+      else {
+        const a=path[i-1],b=path[i],t=(STONE_DECK.rightX-a[0])/(b[0]-a[0]);
+        result.push(Object.freeze([STONE_DECK.rightX,a[1]+(b[1]-a[1])*t]));break;
+      }
+    }
+    return Object.freeze(result);
+  }
+  const STONE_BRIDGE_PATH=clipStonePath(trimPathEnds(STONE_BRIDGE_REFERENCE,3));
   const STONE_BRIDGE_LOWER_PATH=Object.freeze(STONE_BRIDGE_PATH.map(([x,y])=>Object.freeze([x,y+2])));
 
   const COVERED_BRIDGE_PATH = Object.freeze([
@@ -130,14 +145,51 @@
       ? {id,path:COVERED_BRIDGE_PATH,corridor:BRIDGE_CONFIG.coveredCorridor}
       : {id:'stone',path:STONE_BRIDGE_PATH,corridor:BRIDGE_CONFIG.stoneCorridor};
   }
-  function isRiverBlockedFootPoint(x,y) {
-    // The exception remains narrow: only the original bridge deck corridors.
-    for (const id of ['stone','covered']) {
-      const bridge=bridgeDefinition(id);
-      if(closestPointOnBridgePath(x,y,bridge.path).distance<=bridge.corridor) return false;
+  function stonePointAtX(x) {
+    const path=STONE_BRIDGE_PATH,m=getPathMetrics(path);
+    x=clamp(x,path[0][0],path[path.length-1][0]);
+    for(let i=0;i<path.length-1;i++) {
+      if(x<=path[i+1][0] || i===path.length-2) {
+        const t=(x-path[i][0])/(path[i+1][0]-path[i][0]);
+        return {x,y:path[i][1]+(path[i+1][1]-path[i][1])*t,distance:m.cumulative[i]+(m.cumulative[i+1]-m.cumulative[i])*t};
+      }
     }
-    if(closestPointOnBridgePath(x,y,STONE_BRIDGE_LOWER_PATH).distance<=BRIDGE_CONFIG.stoneCorridor) return false;
+  }
+  function insideStoneDeck(x,y,padding=0) {
+    if(x<STONE_BRIDGE_PATH[0][0]-padding || x>STONE_DECK.rightX+padding) return false;
+    const offset=y-stonePointAtX(x).y;
+    return offset>=STONE_DECK.upperOffset && offset<=STONE_DECK.lowerOffset;
+  }
+  function isRiverBlockedFootPoint(x,y) {
+    const covered=bridgeDefinition('covered');
+    if(closestPointOnBridgePath(x,y,covered.path).distance<=covered.corridor) return false;
+    // Only the actual paved ribbon opens the river, without rounded end caps.
+    if(insideStoneDeck(x,y)) return false;
     return RIVER_BLOCK_ZONES.some(polygon=>worldPointInPolygon(x,y,polygon));
+  }
+  function engageStoneBridge(player,dx,dy) {
+    if(!(dx||dy) || !insideStoneDeck(player.x,player.y,STONE_DECK.entryPadding)) return null;
+    const left=STONE_BRIDGE_PATH[0][0],right=STONE_DECK.rightX;
+    if((player.x<=left+.01 && dx<0)||(player.x>=right-.01 && dx>0)) return null;
+    const point=stonePointAtX(player.x);
+    // Preserve the exact approach height. No pulling to either discrete lane.
+    return {id:'stone',path:STONE_BRIDGE_PATH,distance:point.distance,offset:player.y-point.y,snapping:false};
+  }
+  function moveAlongStoneBridge(player,bridge,dx,dy,dt) {
+    const length=Math.hypot(dx,dy);
+    if(!length) return bridge;
+    const amount=PLAYER.speed*dt/length,total=getPathMetrics(STONE_BRIDGE_PATH).total;
+    const distance=clamp(bridge.distance+dx*amount,0,total);
+    bridge.offset=clamp(bridge.offset+dy*amount,STONE_DECK.upperOffset,STONE_DECK.lowerOffset);
+    const point=pointAtBridgeDistance(STONE_BRIDGE_PATH,distance);
+    player.x=point.x;player.y=point.y+bridge.offset;bridge.distance=distance;
+    if((distance<=.001 && dx<0)||(distance>=total-.001 && dx>0)) {
+      // Tiny outward step releases once. No catch/release loop at the entrance.
+      const nextX=player.x+Math.sign(dx)*2;
+      if(canMoveFootTo(nextX,player.y))player.x=nextX;
+      return null;
+    }
+    return bridge;
   }
   function tryEngageBridge(player,dx,dy) {
     const horizontal=Math.sign(dx);
@@ -148,17 +200,10 @@
       const leaving=(closest.progress<=.04 && horizontal<0)||(closest.progress>=.96 && horizontal>0);
       if(feeder && !leaving) return {id:'covered',path:bridge.path,distance:closest.pathDistance,snapping:true};
     }
-    if(!horizontal) return null;
-    const upper=closestPointOnBridgePath(player.x,player.y,STONE_BRIDGE_PATH);
-    // Select once on entry. No lane-switching/bobbing during the crossing.
-    const lower=player.y>upper.y;
-    const path=lower?STONE_BRIDGE_LOWER_PATH:STONE_BRIDGE_PATH;
-    const closest=closestPointOnBridgePath(player.x,player.y,path);
-    if(closest.distance>BRIDGE_CONFIG.engageDistance) return null;
-    if((closest.progress<=.035 && horizontal<0)||(closest.progress>=.965 && horizontal>0)) return null;
-    return {id:'stone',path,distance:closest.pathDistance,snapping:true,snapRate:lower?4:10};
+    return engageStoneBridge(player,dx,dy);
   }
   function moveAlongActiveBridge(player,bridge,horizontal,dt) {
+    if(bridge.id==='stone') return moveAlongStoneBridge(player,bridge,horizontal,0,dt);
     const anchor=pointAtBridgeDistance(bridge.path,bridge.distance);
     if(bridge.snapping) {
       const dx=anchor.x-player.x,dy=anchor.y-player.y;
@@ -188,12 +233,16 @@
   function movePlayer(player,bridge,dx,dy,dt) {
     if(!dx && !dy) return bridge;
     bridge=bridge || tryEngageBridge(player,dx,dy);
-    if(bridge) return moveAlongActiveBridge(player,bridge,Math.sign(dx),dt);
+    if(bridge) return bridge.id==='stone'
+      ? moveAlongStoneBridge(player,bridge,dx,dy,dt)
+      : moveAlongActiveBridge(player,bridge,Math.sign(dx),dt);
     // Small steps prevent stepping across a thin shoreline at a slow frame rate.
     const length=Math.hypot(dx,dy),distance=PLAYER.speed*dt;
     const steps=Math.max(1,Math.ceil(distance/6));
     const sx=dx/length*distance/steps,sy=dy/length*distance/steps;
     for(let i=0;i<steps;i++) {
+      const stone=engageStoneBridge(player,dx,dy);
+      if(stone) return moveAlongStoneBridge(player,stone,dx,dy,dt*(steps-i)/steps);
       if(canMoveFootTo(player.x+sx,player.y)) player.x+=sx;
       if(canMoveFootTo(player.x,player.y+sy)) player.y+=sy;
     }
@@ -202,6 +251,31 @@
   function coverCamera(width,height,x,y) {
     const scale=Math.max(width/WORLD.width,height/WORLD.height);
     return {scale,x:clamp(x,width/scale/2,WORLD.width-width/scale/2),y:clamp(y,height/scale/2,WORLD.height-height/scale/2)};
+  }
+
+  function trackCamera(camera,player,dx,dy,pointer,width,height,dt) {
+    const scale=coverCamera(width,height,camera.x,camera.y).scale;
+    const focus={x:player.x,y:player.y-PLAYER.height*.5};
+    // Small dead zone around the character centre, not the viewport border.
+    const rx=Math.min(110,width*.09)/scale,ry=Math.min(78,height*.09)/scale;
+    if(dx||dy) {
+      camera.x=clamp(camera.x,focus.x-rx,focus.x+rx);
+      camera.y=clamp(camera.y,focus.y-ry,focus.y+ry);
+    } else if(pointer.inside) {
+      const px=width/2+(focus.x-camera.x)*scale,py=height/2+(focus.y-camera.y)*scale;
+      const vx=pointer.x-px,vy=pointer.y-py,length=Math.hypot(vx,vy);
+      const dead=Math.min(110,Math.min(width,height)*.12);
+      if(length>dead) {
+        const amount=Math.min(1,(length-dead)/dead)*620/scale*dt;
+        camera.x+=vx/length*amount;camera.y+=vy/length*amount;
+        // A short look around the character; map edges are clamped below.
+        const peek=Math.min(165,Math.min(width,height)*.18)/scale;
+        camera.x=clamp(camera.x,focus.x-peek,focus.x+peek);
+        camera.y=clamp(camera.y,focus.y-peek,focus.y+peek);
+      }
+    }
+    Object.assign(camera,coverCamera(width,height,camera.x,camera.y));
+    return camera;
   }
 
   // Opaque bounds measured from the supplied PNG alpha channel. The original
@@ -235,7 +309,7 @@
 
   // Geometry and animation can be verified directly in Node without asset stubs.
   if(typeof module!=='undefined' && module.exports) {
-    module.exports={VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
+    module.exports={STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
     return;
   }
 
@@ -299,21 +373,7 @@
     state.player.facing=directionForInput(dx,dy);
   }
   function updateCamera(dx,dy,dt) {
-    const c=coverCamera(width,height,camera.x,camera.y),s=c.scale;
-    if(dx || dy) {
-      const marginX=width*.18/s,marginY=height*.18/s;
-      const halfW=width/s/2,halfH=height/s/2;
-      // Keep head and feet inside the camera when walking, without changing zoom.
-      if(state.player.x<camera.x-halfW+marginX) camera.x=state.player.x+halfW-marginX;
-      if(state.player.x>camera.x+halfW-marginX) camera.x=state.player.x-halfW+marginX;
-      if(state.player.y-PLAYER.height<camera.y-halfH+marginY) camera.y=state.player.y-PLAYER.height+halfH-marginY;
-      if(state.player.y>camera.y+halfH-marginY) camera.y=state.player.y-halfH+marginY;
-    } else if(pointer.inside) {
-      const edge=Math.min(90,Math.min(width,height)*.13);
-      const intent=(v,size)=>v<edge?-(1-v/edge):v>size-edge?1-(size-v)/edge:0;
-      camera.x+=intent(pointer.x,width)*820/s*dt;
-      camera.y+=intent(pointer.y,height)*820/s*dt;
-    }
+    trackCamera(camera,state.player,dx,dy,pointer,width,height,dt);
   }
   function frame(now) {
     const dt=lastTime?clamp((now-lastTime)/1000,0,.05):0;lastTime=now;
@@ -379,7 +439,7 @@
       const shape=document.createElementNS(svg.namespaceURI,'polygon');
       shape.setAttribute('points',polygon.map(p=>p.join(',')).join(' '));shape.setAttribute('fill','#f003');shape.setAttribute('stroke','#f55');shape.setAttribute('stroke-width','7');svg.append(shape);
     }
-    for(const path of [STONE_BRIDGE_PATH,STONE_BRIDGE_LOWER_PATH,COVERED_BRIDGE_PATH]) {
+    for(const path of [STONE_BRIDGE_PATH.map(([x,y])=>[x,y+STONE_DECK.upperOffset]),STONE_BRIDGE_PATH.map(([x,y])=>[x,y+STONE_DECK.lowerOffset]),COVERED_BRIDGE_PATH]) {
       const line=document.createElementNS(svg.namespaceURI,'polyline');
       line.setAttribute('points',path.map(p=>p.join(',')).join(' '));line.setAttribute('fill','none');line.setAttribute('stroke','#ffe600');line.setAttribute('stroke-width','10');svg.append(line);
     }
