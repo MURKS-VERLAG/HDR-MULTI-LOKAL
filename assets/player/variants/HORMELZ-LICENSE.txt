@@ -1,0 +1,6 @@
+8 Directional Knight Character by Hormelz
+Source: https://hormelz.itch.io/8-directional-knight
+Free Knight-Only Basic bundle, downloaded 2026-10-18.
+Author declares Creative Commons Zero v1.0 Universal (CC0).
+https://creativecommons.org/publicdomain/zero/1.0/
+Changes: extracted cardinal idle/walk frames, tightly packed into a lossless atlas; no artwork repainted.

@@ -446,8 +446,17 @@
   }
 
   // Geometry and animation can be verified directly in Node without asset stubs.
+  // Source frame rectangles, foot anchors and authored timings; only rendering changes.
+  const PLAYER_VARIANTS=Object.freeze({"sova":{"image":"assets/player/variants/sova.png","referenceHeight":155,"pixelArt":false,"animations":{"down-idle":[[2,2,114,155,51.1614,155,62.5],[136,2,114,155,51.1614,155,62.5],[270,2,114,155,51.1614,155,62.5],[404,2,114,155,51.1614,155,62.5],[538,2,113,155,51.1614,155,62.5],[672,2,113,155,51.1614,155,62.5],[806,2,112,155,51.1614,155,62.5],[940,2,112,155,51.1614,155,62.5],[1074,2,112,155,51.1614,155,62.5],[1208,2,112,155,50.1614,155,62.5],[1342,2,112,155,50.1614,155,62.5],[1476,2,113,155,50.1614,155,62.5]],"down-walk":[[2,177,101,160,42.9939,160,50.0],[136,177,101,161,43.9939,161,50.0],[270,177,101,160,43.9939,160,50.0],[404,177,99,161,42.9939,161,50.0],[538,177,96,161,41.9939,161,50.0],[672,177,99,160,43.9939,160,50.0],[806,177,102,159,44.9939,159,50.0],[940,177,98,159,42.9939,159,50.0],[1074,177,95,160,41.9939,160,50.0],[1208,177,94,161,40.9939,161,50.0],[1342,177,95,162,41.9939,162,50.0],[1476,177,97,161,41.9939,161,50.0]],"up-idle":[[2,352,100,155,48.7426,155,62.5],[136,352,100,155,48.7426,155,62.5],[270,352,100,155,48.7426,155,62.5],[404,352,101,155,49.7426,155,62.5],[538,352,100,155,49.7426,155,62.5],[672,352,101,155,49.7426,155,62.5],[806,352,102,154,49.7426,154,62.5],[940,352,103,155,51.7426,155,62.5],[1074,352,102,155,52.7426,155,62.5],[1208,352,102,155,51.7426,155,62.5],[1342,352,103,155,51.7426,155,62.5],[1476,352,101,155,49.7426,155,62.5]],"up-walk":[[2,527,109,169,56.3634,169,50.0],[136,527,112,170,57.3634,170,50.0],[270,527,113,170,57.3634,170,50.0],[404,527,109,169,55.3634,169,50.0],[538,527,105,169,53.3634,169,50.0],[672,527,107,170,55.3634,170,50.0],[806,527,108,171,56.3634,171,50.0],[940,527,112,170,57.3634,170,50.0],[1074,527,115,168,57.3634,168,50.0],[1208,527,113,170,57.3634,170,50.0],[1342,527,112,171,58.3634,171,50.0],[1476,527,110,170,57.3634,170,50.0]],"left-idle":[[2,702,83,155,49.4596,155,62.5],[136,702,83,154,49.4596,154,62.5],[270,702,83,154,49.4596,154,62.5],[404,702,83,154,49.4596,154,62.5],[538,702,83,154,49.4596,154,62.5],[672,702,83,154,49.4596,154,62.5],[806,702,83,154,49.4596,154,62.5],[940,702,82,154,48.4596,154,62.5],[1074,702,82,154,48.4596,154,62.5],[1208,702,81,154,48.4596,154,62.5],[1342,702,81,154,48.4596,154,62.5],[1476,702,83,154,49.4596,154,62.5]],"left-walk":[[2,877,123,151,41.9609,151,50.0],[136,877,128,148,44.9609,148,50.0],[270,877,130,147,45.9609,147,50.0],[404,877,111,149,35.9609,149,50.0],[538,877,91,151,24.9609,151,50.0],[672,877,104,151,31.9609,151,50.0],[806,877,120,150,40.9609,150,50.0],[940,877,119,150,39.9609,150,50.0],[1074,877,118,150,39.9609,150,50.0],[1208,877,117,151,38.9609,151,50.0],[1342,877,117,151,38.9609,151,50.0],[1476,877,116,151,39.9609,151,50.0]],"right-idle":[[2,1052,86,161,17.4721,161,62.5],[136,1052,87,161,18.4721,161,62.5],[270,1052,87,161,18.4721,161,62.5],[404,1052,86,161,18.4721,161,62.5],[538,1052,83,160,17.4721,160,62.5],[672,1052,84,161,17.4721,161,62.5],[806,1052,84,161,17.4721,161,62.5],[940,1052,84,161,17.4721,161,62.5],[1074,1052,84,160,17.4721,160,62.5],[1208,1052,84,161,17.4721,161,62.5],[1342,1052,83,161,16.4721,161,62.5],[1476,1052,85,161,17.4721,161,62.5]],"right-walk":[[2,1227,88,167,61.0507,167,50.0],[136,1227,92,165,63.0507,165,50.0],[270,1227,97,165,66.0507,165,50.0],[404,1227,88,164,61.0507,164,50.0],[538,1227,80,163,57.0507,163,50.0],[672,1227,93,163,63.0507,163,50.0],[806,1227,110,163,73.0507,163,50.0],[940,1227,102,163,69.0507,163,50.0],[1074,1227,93,163,64.0507,163,50.0],[1208,1227,83,163,58.0507,163,50.0],[1342,1227,83,164,58.0507,164,50.0],[1476,1227,80,165,58.0507,165,50.0]]}},"hormelz":{"image":"assets/player/variants/hormelz.png","referenceHeight":79,"pixelArt":true,"animations":{"down-idle":[[2,2,41,79,32.1194,79,142],[64,2,41,79,32.1194,79,142],[126,2,41,79,32.1194,79,142],[188,2,41,79,32.1194,79,142],[250,2,41,79,32.1194,79,142],[312,2,41,79,32.1194,79,142],[374,2,40,79,31.1194,79,142],[436,2,40,79,31.1194,79,142],[498,2,40,79,31.1194,79,142],[560,2,41,79,32.1194,79,142],[622,2,41,79,32.1194,79,142],[684,2,41,79,32.1194,79,142],[2,89,41,79,32.1194,79,142],[64,89,41,79,32.1194,79,142],[126,89,41,79,32.1194,79,142],[188,89,41,79,32.1194,79,142],[250,89,41,79,32.1194,79,142]],"down-walk":[[312,89,49,72,27.3028,72,100],[374,89,49,74,27.3028,74,100],[436,89,49,73,27.3028,73,100],[498,89,49,75,27.3028,75,100],[560,89,49,75,26.3028,75,100],[622,89,48,72,26.3028,72,100],[684,89,47,71,25.3028,71,100],[2,176,47,75,26.3028,75,100],[64,176,47,75,26.3028,75,100],[126,176,48,76,27.3028,76,100],[188,176,49,74,27.3028,74,100]],"up-idle":[[250,176,41,82,22.7667,82,142],[312,176,41,82,22.7667,82,142],[374,176,41,82,22.7667,82,142],[436,176,41,82,22.7667,82,142],[498,176,41,82,22.7667,82,142],[560,176,41,82,22.7667,82,142],[622,176,40,82,22.7667,82,142],[684,176,40,82,22.7667,82,142],[2,263,40,82,22.7667,82,142],[64,263,41,82,22.7667,82,142],[126,263,41,82,22.7667,82,142],[188,263,41,82,22.7667,82,142],[250,263,41,82,22.7667,82,142],[312,263,41,83,22.7667,83,142],[374,263,41,82,22.7667,82,142],[436,263,41,82,22.7667,82,142],[498,263,41,82,22.7667,82,142]],"up-walk":[[560,263,48,76,18.5047,76,100],[622,263,48,78,18.5047,78,100],[684,263,49,78,19.5047,78,100],[2,350,49,79,19.5047,79,100],[64,350,50,80,20.5047,80,100],[126,350,48,76,19.5047,76,100],[188,350,47,80,19.5047,80,100],[250,350,47,81,18.5047,81,100],[312,350,47,81,18.5047,81,100],[374,350,48,82,18.5047,82,100],[436,350,48,79,18.5047,79,100]],"left-idle":[[498,350,57,76,8.4054,76,142],[560,350,57,77,8.4054,77,142],[622,350,57,77,8.4054,77,142],[684,350,57,77,8.4054,77,142],[2,437,57,77,8.4054,77,142],[64,437,57,77,8.4054,77,142],[126,437,57,76,8.4054,76,142],[188,437,57,76,8.4054,76,142],[250,437,57,76,8.4054,76,142],[312,437,57,76,8.4054,76,142],[374,437,57,77,8.4054,77,142],[436,437,57,77,8.4054,77,142],[498,437,57,77,8.4054,77,142],[560,437,57,77,8.4054,77,142],[622,437,57,76,8.4054,76,142],[684,437,57,76,8.4054,76,142],[2,524,57,76,8.4054,76,142]],"left-walk":[[64,524,38,77,26.0377,77,100],[126,524,38,77,26.0377,77,100],[188,524,43,76,27.0377,76,100],[250,524,46,76,27.0377,76,100],[312,524,47,76,28.0377,76,100],[374,524,41,77,29.0377,77,100],[436,524,40,77,29.0377,77,100],[498,524,44,77,29.0377,77,100],[560,524,50,76,29.0377,76,100],[622,524,51,76,28.0377,76,100],[684,524,46,76,27.0377,76,100]],"right-idle":[[2,611,57,71,4.4211,71,142],[64,611,57,71,4.4211,71,142],[126,611,57,71,4.4211,71,142],[188,611,57,71,4.4211,71,142],[250,611,57,71,4.4211,71,142],[312,611,57,71,4.4211,71,142],[374,611,57,71,4.4211,71,142],[436,611,57,71,4.4211,71,142],[498,611,57,71,4.4211,71,142],[560,611,57,71,4.4211,71,142],[622,611,57,71,4.4211,71,142],[684,611,57,71,4.4211,71,142],[2,698,57,71,4.4211,71,142],[64,698,57,71,4.4211,71,142],[126,698,58,71,5.4211,71,142],[188,698,57,71,4.4211,71,142],[250,698,57,71,4.4211,71,142]],"right-walk":[[312,698,38,76,15.7143,76,100],[374,698,38,76,15.7143,76,100],[436,698,43,74,19.7143,74,100],[498,698,47,73,22.7143,73,100],[560,698,47,75,22.7143,75,100],[622,698,41,74,15.7143,74,100],[684,698,40,75,14.7143,75,100],[2,785,44,75,18.7143,75,100],[64,785,50,74,24.7143,74,100],[126,785,51,73,26.7143,73,100],[188,785,46,74,22.7143,74,100]]}},"lpc":{"image":"assets/player/variants/lpc.png","referenceHeight":51,"pixelArt":true,"animations":{"down-idle":[[2,2,30,51,14.3974,51,110]],"down-walk":[[36,2,30,51,14.5,51,110],[70,2,30,50,14.5,50,110],[104,2,29,49,13.5,49,110],[138,2,30,51,14.5,51,110],[172,2,30,51,14.5,51,110],[206,2,30,50,14.5,50,110],[240,2,29,49,14.5,49,110],[274,2,30,51,14.5,51,110]],"up-idle":[[308,2,30,48,14.5,48,110]],"up-walk":[[342,2,30,48,14.5,48,110],[376,2,30,49,14.5,49,110],[2,57,29,49,14.5,49,110],[36,57,30,49,14.5,49,110],[70,57,30,48,14.5,48,110],[104,57,30,49,14.5,49,110],[138,57,29,49,13.5,49,110],[172,57,30,49,14.5,49,110]],"left-idle":[[206,57,22,49,10.1139,49,110]],"left-walk":[[240,57,26,47,13.2731,47,110],[274,57,23,47,11.2731,47,110],[308,57,24,47,10.2731,47,110],[342,57,25,48,10.2731,48,110],[376,57,28,47,11.2731,47,110],[2,112,25,48,10.2731,48,110],[36,112,24,48,10.2731,48,110],[70,112,23,48,10.2731,48,110]],"right-idle":[[104,112,22,49,10.8861,49,110]],"right-walk":[[138,112,26,47,11.7269,47,110],[172,112,23,47,10.7269,47,110],[206,112,24,47,12.7269,47,110],[240,112,25,48,13.7269,48,110],[274,112,28,47,15.7269,47,110],[308,112,25,48,13.7269,48,110],[342,112,24,48,12.7269,48,110],[376,112,23,48,11.7269,48,110]]}}});
+  function variantFrameAt(variant,direction,moving,elapsedMs){
+    const frames=PLAYER_VARIANTS[variant].animations[`${direction}-${moving?'walk':'idle'}`];
+    const total=frames.reduce((sum,f)=>sum+f[6],0);
+    let time=((elapsedMs%total)+total)%total;
+    for(let i=0;i<frames.length;i++){if(time<frames[i][6])return {frame:frames[i],index:i};time-=frames[i][6];}
+    return {frame:frames[0],index:0};
+  }
   if(typeof module!=='undefined' && module.exports) {
-    module.exports={WINTER_CASTLE,CASTLE_ROAD,castleLocal,castleBlockedFoot,castleBehindFoot,castleRoadContains,tryCastleRoad,moveCastleRoad,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
+    module.exports={PLAYER_VARIANTS,variantFrameAt,WINTER_CASTLE,CASTLE_ROAD,castleLocal,castleBlockedFoot,castleBehindFoot,castleRoadContains,tryCastleRoad,moveCastleRoad,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
     return;
   }
 
@@ -469,8 +478,44 @@
   const keys=new Set(),images={};
   const animation={moving:false,index:0,elapsed:0,direction:'down'};
   let activeSpriteKey='',activeMirror=false;
+  let playerVariant='original';
+  const variantImages={};
+  const variantAnimation={elapsed:0,direction:'down',moving:false};
+  function setPlayerVariant(id){
+    if(state.transitioning||!state.playing||id===playerVariant)return;
+    if(id!=='original'&&!variantImages[id])return;
+    playerVariant=id;activeSpriteKey='';activeMirror=false;
+    variantAnimation.elapsed=0;variantAnimation.direction=state.player.facing;
+    animation.moving=false;animation.index=0;animation.elapsed=0;
+    updateAnimation(false,0);
+  }
+  function updateVariantAnimation(moving,dt){
+    const direction=state.player.facing;
+    if(variantAnimation.direction!==direction||variantAnimation.moving!==moving)variantAnimation.elapsed=0;
+    else variantAnimation.elapsed+=Math.max(0,dt)*1000;
+    variantAnimation.direction=direction;variantAnimation.moving=moving;
+    const cfg=PLAYER_VARIANTS[playerVariant];
+    const {frame:f,index}=variantFrameAt(playerVariant,direction,moving,variantAnimation.elapsed);
+    const key=`variant:${playerVariant}:${direction}:${moving}:${index}`;
+    if(activeSpriteKey===key)return;
+    activeSpriteKey=key;activeMirror=false;
+    // The same world foot point anchors every frame; the original collision body stays intact.
+    const box=1000,scale=TARGET_VISIBLE_HEIGHT/cfg.referenceHeight;
+    Object.assign(sprite.style,{position:'absolute',left:'50%',width:`${box}px`,height:`${box}px`,bottom:'0px',transform:'translateX(-50%)',transformOrigin:'50% 100%',imageRendering:cfg.pixelArt?'pixelated':'auto'});
+    spriteContext.setTransform(1,0,0,1,0,0);
+    spriteContext.clearRect(0,0,sprite.width,sprite.height);
+    spriteContext.imageSmoothingEnabled=!cfg.pixelArt;
+    spriteContext.drawImage(variantImages[playerVariant],f[0],f[1],f[2],f[3],
+      (box/2-f[4]*scale)*sprite.width/box,(box-f[5]*scale)*sprite.height/box,
+      f[2]*scale*sprite.width/box,f[3]*scale*sprite.height/box);
+  }
+  // Attribution is accessible from the existing menu and does not change gameplay.
+  const artCredits=document.createElement('a');artCredits.href='credits.html';
+  artCredits.textContent='Grafiknachweise';artCredits.target='_blank';artCredits.rel='noopener';
+  Object.assign(artCredits.style,{position:'absolute',right:'14px',bottom:'10px',color:'#302519',font:'12px Georgia,serif'});menu.appendChild(artCredits);
   function showPlayerSprite(key,mirror=false) {
     if(activeSpriteKey===key && activeMirror===mirror) return;
+    sprite.style.imageRendering='auto';spriteContext.imageSmoothingEnabled=true;
     const layout=spriteLayout(key);
     sprite.style.position='absolute';sprite.style.left=`calc(50% + ${layout.offsetX}px)`;
     sprite.style.width=`${layout.width}px`;sprite.style.height=`${layout.height}px`;
@@ -483,6 +528,7 @@
     activeSpriteKey=key;activeMirror=mirror;
   }
   function updateAnimation(moving,dt) {
+    if(playerVariant!=='original'){updateVariantAnimation(moving,dt);return;}
     const key=advanceWalkAnimation(animation,state.player.facing,moving,dt);
     showPlayerSprite(key,moving && state.player.facing==='left');
   }
@@ -689,6 +735,9 @@
     state.starting=true;status.hidden=false;status.textContent='Oberkirch wird geöffnet …';
     try {
       const jobs=[waitForImage(map),waitForImage(castleImage)];
+      for(const [id,cfg]of Object.entries(PLAYER_VARIANTS)){
+        const image=new Image();image.src=cfg.image;variantImages[id]=image;jobs.push(waitForImage(image));
+      }
       for(const direction of ['down','left','right','up']) {
         const image=new Image();image.src=`assets/player/stand-${direction}.png`;
         images[`stand-${direction}`]=image;jobs.push(waitForImage(image));
@@ -711,6 +760,10 @@
   // MEHRSPIELER (LOKAL) deliberately has no click handler, navigation or action.
   addEventListener('keydown',event=>{
     if(!state.playing) return;
+    const variantKeys={Digit0:'original',Numpad0:'original',Digit1:'sova',Numpad1:'sova',Digit2:'hormelz',Numpad2:'hormelz',Digit3:'lpc',Numpad3:'lpc'};
+    if(Object.prototype.hasOwnProperty.call(variantKeys,event.code)){
+      event.preventDefault();if(!event.repeat)setPlayerVariant(variantKeys[event.code]);return;
+    }
     if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(event.code)) {
       event.preventDefault();keys.add(event.code);
     }
