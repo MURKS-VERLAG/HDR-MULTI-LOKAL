@@ -1,4 +1,4 @@
-/* Renchtal — Neubau 06: Steinbrücken-Außenkontur und untere Baumflächen. Keine externen Bibliotheken, Musik oder fremden Hitboxen.
+/* Renchtal — Neubau 07: zwei Karten und Iriswechsel. Keine externen Bibliotheken, Musik oder fremden Hitboxen.
  * Weltkoordinaten 10000 x 6667: identisch zur Oberkirch-Referenz.
  * Karte: Anhang 2048 x 1365, nach 12288 x 8190 hochskaliert (keine neuen Details).
  * Die zwei Uferpolygone wurden an diesem Kartenanhang neu nachgezeichnet.
@@ -7,7 +7,27 @@
  */
 (() => {
   "use strict";
-  const WORLD = Object.freeze({ width: 10000, height: 6667 });
+  const MAPS=Object.freeze({
+    oberkirch:Object.freeze({id:'oberkirch',width:10000,height:6667,image:'assets/maps/oberkirch-12k.webp',name:'Oberkirch'}),
+    winterbach:Object.freeze({id:'winterbach',width:10000,height:6006,image:'assets/maps/winterbach-12k.webp',name:'Winterbach'})
+  });
+  let activeMapId='oberkirch';
+  function setActiveMap(id){if(!MAPS[id])throw new Error('Unknown map');activeMapId=id;}
+  const WORLD=Object.freeze({get width(){return MAPS[activeMapId].width;},get height(){return MAPS[activeMapId].height;}});
+  const MAP_ROUTES=Object.freeze({
+    oberkirch:[{x1:2150,x2:3250,side:'north',target:'winterbach',spawn:{x:5485,y:5925}},
+               {x1:5750,x2:6750,side:'north',target:'winterbach',spawn:{x:8175,y:5925}}],
+    winterbach:[{x1:4900,x2:6150,side:'south',target:'oberkirch',spawn:{x:2590,y:673}},
+                {x1:7750,x2:8600,side:'south',target:'oberkirch',spawn:{x:6225,y:760}}]
+  });
+  function exitRoute(player,dy){return MAP_ROUTES[activeMapId].find(r=>player.x>=r.x1&&player.x<=r.x2&&
+    (r.side==='north'?dy<0&&player.y<=-18:dy>0&&player.y>=WORLD.height+18));}
+  function footWithinMap(x,y){
+    const lane=MAP_ROUTES[activeMapId].find(r=>x>=r.x1&&x<=r.x2);
+    const minY=lane?.side==='north'?-30:PLAYER.height;
+    const maxY=lane?.side==='south'?WORLD.height+30:WORLD.height-10;
+    return x>=PLAYER.width/2&&x<=WORLD.width-PLAYER.width/2&&y>=minY&&y<=maxY;
+  }
   const PLAYER = Object.freeze({ width: 420, height: 630, speed: 520 });
   const STONE_BRIDGE_REFERENCE = Object.freeze([
     Object.freeze([3490, 5871]),
@@ -64,7 +84,7 @@
     // FINAL: only the short straight bridge corridor is forced.
     // The road junctions inside the blue circles stay completely free.
     Object.freeze([3505, 1305]),
-    Object.freeze([6010, 1305])
+    Object.freeze([5750, 1305])
   ]);
 
   const BRIDGE_CONFIG = Object.freeze({
@@ -88,7 +108,7 @@
       x1: 3440, y1: 1080, x2: 3735, y2: 1535
     }),
     coveredCaptureRight: Object.freeze({
-      x1: 5700, y1: 1080, x2: 6040, y2: 1535
+      x1: 5700, y1: 1080, x2: 5805, y2: 1535
     })
   });
 
@@ -161,6 +181,7 @@
     return offset>=STONE_DECK.upperOffset && offset<=STONE_DECK.lowerOffset;
   }
   function isRiverBlockedFootPoint(x,y) {
+    if(activeMapId!=='oberkirch')return false;
     const covered=bridgeDefinition('covered');
     if(closestPointOnBridgePath(x,y,covered.path).distance<=covered.corridor) return false;
     // Only the actual paved ribbon opens the river, without rounded end caps.
@@ -168,6 +189,7 @@
     return RIVER_BLOCK_ZONES.some(polygon=>worldPointInPolygon(x,y,polygon));
   }
   function engageStoneBridge(player,dx,dy) {
+    if(activeMapId!=='oberkirch')return null;
     if(!(dx||dy) || !insideStoneDeck(player.x,player.y,STONE_DECK.entryPadding)) return null;
     const left=STONE_BRIDGE_PATH[0][0],right=STONE_DECK.rightX;
     if((player.x<=left+.01 && dx<0)||(player.x>=right-.01 && dx>0)) return null;
@@ -192,6 +214,7 @@
     return bridge;
   }
   function tryEngageBridge(player,dx,dy) {
+    if(activeMapId!=='oberkirch')return null;
     const horizontal=Math.sign(dx);
     if(dx || dy) {
       const bridge=bridgeDefinition('covered');
@@ -225,7 +248,7 @@
     return bridge;
   }
   function playerInsideCoveredBridgeInterior(player,bridge) {
-    return Boolean(bridge && bridge.id==='covered' && pointInRect(player.x,player.y,BRIDGE_CONFIG.coveredInterior));
+    return Boolean(activeMapId==='oberkirch' && bridge && bridge.id==='covered' && pointInRect(player.x,player.y,BRIDGE_CONFIG.coveredInterior));
   }
   // Visible upper parapet and lower masonry, traced in original 2048x1365
   // map pixels. The walkable ribbon is the sole opening in this structure.
@@ -235,10 +258,13 @@
     [1010,1310],[900,1314],[790,1291],[715,1285]
   ].map(([x,y])=>Object.freeze([x/2048*WORLD.width,y/1365*WORLD.height])));
   function isStoneStructureBlocked(x,y) {
+    if(activeMapId!=='oberkirch')return false;
+    // Side portals must open through the whole masonry, not only its deck.
+    if(x<STONE_BRIDGE_PATH[0][0] || x>STONE_DECK.rightX)return false;
     return !insideStoneDeck(x,y) && worldPointInPolygon(x,y,STONE_STRUCTURE);
   }
   function canMoveFootTo(x,y) {
-    return x>=PLAYER.width/2 && x<=WORLD.width-PLAYER.width/2 && y>=PLAYER.height && y<=WORLD.height-10 && !isRiverBlockedFootPoint(x,y) && !isStoneStructureBlocked(x,y);
+    return footWithinMap(x,y) && !isRiverBlockedFootPoint(x,y) && !isStoneStructureBlocked(x,y);
   }
   function movePlayer(player,bridge,dx,dy,dt) {
     if(!dx && !dy) return bridge;
@@ -289,8 +315,18 @@
     [627,1261,67,102],[690,1332,50,47],
     [1324,1290,78,62],[1411,1316,53,49]
   ].map(([x,y,rx,ry])=>Object.freeze({x:x/2048*WORLD.width,y:y/1365*WORLD.height,rx:rx/2048*WORLD.width,ry:ry/1365*WORLD.height})));
+  function taperedTreeContains(t,x,y){
+    const ny=(y-t.y)/t.ry,nx=(x-t.x)/t.rx;
+    if(nx*nx+ny*ny>1)return false;
+    // Keep the broad lower crown, but narrow continuously toward its actual tip.
+    return ny>=-.25 || Math.abs(nx)<=(ny+1)/.75;
+  }
   function treeAreaAt(x,y) {
-    return [...TREE_AREAS,...LOWER_BRIDGE_TREES].findIndex(t=>((x-t.x)/t.rx)**2+((y-t.y)/t.ry)**2<=1);
+    if(activeMapId!=='oberkirch')return -1;
+    const first=TREE_AREAS.findIndex(t=>((x-t.x)/t.rx)**2+((y-t.y)/t.ry)**2<=1);
+    if(first>=0)return first;
+    const lower=LOWER_BRIDGE_TREES.findIndex(t=>taperedTreeContains(t,x,y));
+    return lower<0?-1:TREE_AREAS.length+lower;
   }
   function shouldPlayTreeEffects(player,moved) {return Boolean(moved && treeAreaAt(player.x,player.y)>=0);}
 
@@ -325,7 +361,7 @@
 
   // Geometry and animation can be verified directly in Node without asset stubs.
   if(typeof module!=='undefined' && module.exports) {
-    module.exports={STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
+    module.exports={MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
     return;
   }
 
@@ -341,7 +377,7 @@
   originalSprite.replaceWith(sprite);
   const spriteContext=sprite.getContext('2d');
   const startButton=document.getElementById('singleplayer'),status=document.getElementById('status');
-  const state={playing:false,starting:false,player:{x:4950,y:3750,facing:'down'},bridge:null};
+  const state={playing:false,starting:false,transitioning:false,player:{x:4950,y:3750,facing:'down'},bridge:null};
   const camera={x:5000,y:3333.5,scale:1};
 
   const keys=new Set(),images={};
@@ -445,6 +481,51 @@
       } else {image.onload=ready;image.onerror=()=>reject(new Error('Bild konnte nicht geladen werden.'));}
     });
   }
+  const mapCurtain=document.createElement('div');
+  Object.assign(mapCurtain.style,{position:'fixed',inset:'0',background:'#000',zIndex:'5000',display:'none',opacity:'0',pointerEvents:'none'});
+  game.appendChild(mapCurtain);
+  function openMapIris(){
+    return new Promise(resolve=>{
+      const began=performance.now();
+      function reveal(now){
+        const p=clamp((now-began)/2700,0,1),eased=1-Math.pow(1-p,3);
+        const radius=Math.hypot(width,height)*.6*eased;
+        const mask=`radial-gradient(circle at 50% 50%, transparent 0 ${radius}px, #000 ${radius+2}px)`;
+        mapCurtain.style.maskImage=mask;mapCurtain.style.webkitMaskImage=mask;
+        if(p<1)requestAnimationFrame(reveal);else resolve();
+      }
+      requestAnimationFrame(reveal);
+    });
+  }
+  async function switchMap(route){
+    if(state.transitioning)return;
+    state.transitioning=true;keys.clear();updateAnimation(false,0);stopTreeLeaves();
+    const previous={map:activeMapId,x:state.player.x,y:state.player.y};
+    mapCurtain.style.display='block';mapCurtain.style.maskImage='none';mapCurtain.style.webkitMaskImage='none';
+    mapCurtain.style.transition='opacity 200ms ease';mapCurtain.style.opacity='0';
+    void mapCurtain.offsetWidth;mapCurtain.style.opacity='1';
+    try{
+      await new Promise(resolve=>setTimeout(resolve,210));
+      const next=MAPS[route.target],image=new Image();image.src=next.image;
+      await waitForImage(image);
+      map.src=image.src;await waitForImage(map);
+      setActiveMap(route.target);state.bridge=null;
+      state.player.x=route.spawn.x;state.player.y=route.spawn.y;
+      state.player.facing=route.side==='north'?'up':'down';updateAnimation(false,0);
+      game.setAttribute('aria-label',next.name);map.alt=next.name;
+      world.style.width=`${WORLD.width}px`;world.style.height=`${WORLD.height}px`;
+      camera.x=state.player.x;camera.y=state.player.y-PLAYER.height*.5;
+      render();mapCurtain.style.transition='none';
+      await openMapIris();
+    }catch(error){
+      console.error('Map transition failed',error);
+      setActiveMap(previous.map);state.player.x=previous.x;state.player.y=previous.y;
+      map.src=MAPS[previous.map].image;world.style.height=`${WORLD.height}px`;render();
+    }finally{
+      mapCurtain.style.display='none';mapCurtain.style.opacity='0';mapCurtain.style.maskImage='none';mapCurtain.style.webkitMaskImage='none';
+      keys.clear();lastTime=0;state.transitioning=false;
+    }
+  }
   function render() {
     const c=coverCamera(width,height,camera.x,camera.y);
     Object.assign(camera,c);
@@ -460,13 +541,15 @@
   }
   function frame(now) {
     const dt=lastTime?clamp((now-lastTime)/1000,0,.05):0;lastTime=now;
-    if(state.playing && !document.hidden) {
+    if(state.playing && !state.transitioning && !document.hidden) {
       const dx=Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft'));
       const dy=Number(keys.has('KeyS')||keys.has('ArrowDown'))-Number(keys.has('KeyW')||keys.has('ArrowUp'));
       const oldX=state.player.x,oldY=state.player.y;
       if(dx || dy) {
         face(dx,dy);state.bridge=movePlayer(state.player,state.bridge,dx,dy,dt);
       }
+      const route=exitRoute(state.player,dy);
+      if(route){switchMap(route);requestAnimationFrame(frame);return;}
       const moved=Math.hypot(state.player.x-oldX,state.player.y-oldY)>.00001;
       updateAnimation(moved,dt);
       updateTreeEffects(moved,dt);
