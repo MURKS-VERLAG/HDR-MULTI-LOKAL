@@ -1,4 +1,4 @@
-/* Renchtal — Neubau 05: weiche Kamera, Schwertcursor, bewegungsabhängiges Baumlaub. Keine externen Bibliotheken, Musik oder fremden Hitboxen.
+/* Renchtal — Neubau 06: Steinbrücken-Außenkontur und untere Baumflächen. Keine externen Bibliotheken, Musik oder fremden Hitboxen.
  * Weltkoordinaten 10000 x 6667: identisch zur Oberkirch-Referenz.
  * Karte: Anhang 2048 x 1365, nach 12288 x 8190 hochskaliert (keine neuen Details).
  * Die zwei Uferpolygone wurden an diesem Kartenanhang neu nachgezeichnet.
@@ -64,7 +64,7 @@
     // FINAL: only the short straight bridge corridor is forced.
     // The road junctions inside the blue circles stay completely free.
     Object.freeze([3505, 1305]),
-    Object.freeze([6015, 1305])
+    Object.freeze([6010, 1305])
   ]);
 
   const BRIDGE_CONFIG = Object.freeze({
@@ -88,7 +88,7 @@
       x1: 3440, y1: 1080, x2: 3735, y2: 1535
     }),
     coveredCaptureRight: Object.freeze({
-      x1: 5700, y1: 1080, x2: 6045, y2: 1535
+      x1: 5700, y1: 1080, x2: 6040, y2: 1535
     })
   });
 
@@ -227,8 +227,18 @@
   function playerInsideCoveredBridgeInterior(player,bridge) {
     return Boolean(bridge && bridge.id==='covered' && pointInRect(player.x,player.y,BRIDGE_CONFIG.coveredInterior));
   }
+  // Visible upper parapet and lower masonry, traced in original 2048x1365
+  // map pixels. The walkable ribbon is the sole opening in this structure.
+  const STONE_STRUCTURE=Object.freeze([
+    [710,1157],[795,1132],[905,1113],[1015,1115],[1130,1130],
+    [1240,1153],[1280,1170],[1280,1265],[1220,1278],[1120,1295],
+    [1010,1310],[900,1314],[790,1291],[715,1285]
+  ].map(([x,y])=>Object.freeze([x/2048*WORLD.width,y/1365*WORLD.height])));
+  function isStoneStructureBlocked(x,y) {
+    return !insideStoneDeck(x,y) && worldPointInPolygon(x,y,STONE_STRUCTURE);
+  }
   function canMoveFootTo(x,y) {
-    return x>=PLAYER.width/2 && x<=WORLD.width-PLAYER.width/2 && y>=PLAYER.height && y<=WORLD.height-10 && !isRiverBlockedFootPoint(x,y);
+    return x>=PLAYER.width/2 && x<=WORLD.width-PLAYER.width/2 && y>=PLAYER.height && y<=WORLD.height-10 && !isRiverBlockedFootPoint(x,y) && !isStoneStructureBlocked(x,y);
   }
   function movePlayer(player,bridge,dx,dy,dt) {
     if(!dx && !dy) return bridge;
@@ -275,8 +285,12 @@
     x:x/1609*WORLD.width,y:(y+87)/1609*WORLD.width,
     rx:(rx-3)/1609*WORLD.width,ry:(ry-3)/1609*WORLD.width
   })));
+  const LOWER_BRIDGE_TREES=Object.freeze([
+    [627,1261,67,102],[690,1332,50,47],
+    [1324,1290,78,62],[1411,1316,53,49]
+  ].map(([x,y,rx,ry])=>Object.freeze({x:x/2048*WORLD.width,y:y/1365*WORLD.height,rx:rx/2048*WORLD.width,ry:ry/1365*WORLD.height})));
   function treeAreaAt(x,y) {
-    return TREE_AREAS.findIndex(t=>((x-t.x)/t.rx)**2+((y-t.y)/t.ry)**2<=1);
+    return [...TREE_AREAS,...LOWER_BRIDGE_TREES].findIndex(t=>((x-t.x)/t.rx)**2+((y-t.y)/t.ry)**2<=1);
   }
   function shouldPlayTreeEffects(player,moved) {return Boolean(moved && treeAreaAt(player.x,player.y)>=0);}
 
@@ -311,7 +325,7 @@
 
   // Geometry and animation can be verified directly in Node without asset stubs.
   if(typeof module!=='undefined' && module.exports) {
-    module.exports={TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
+    module.exports={STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
     return;
   }
 
