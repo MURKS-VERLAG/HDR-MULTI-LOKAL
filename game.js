@@ -1,4 +1,4 @@
-/* Renchtal — Neubau 02: Laufanimationen und Brücken-Feinabstimmung. Keine externen Bibliotheken, Musik oder fremden Hitboxen.
+/* Renchtal — Neubau 03: W-Lauf und vertikale Animationskadenz. Keine externen Bibliotheken, Musik oder fremden Hitboxen.
  * Weltkoordinaten 10000 x 6667: identisch zur Oberkirch-Referenz.
  * Karte: Anhang 2048 x 1365, nach 12288 x 8190 hochskaliert (keine neuen Details).
  * Die zwei Uferpolygone wurden an diesem Kartenanhang neu nachgezeichnet.
@@ -209,11 +209,16 @@
   const SPRITE_BOUNDS={"stand-down":{"top":3,"bottom":1498},"stand-left":{"top":41,"bottom":1491},"stand-right":{"top":41,"bottom":1491},"stand-up":{"top":281,"bottom":1518},"walk-01":{"top":45,"bottom":1523},"walk-02":{"top":44,"bottom":1524},"walk-03":{"top":45,"bottom":1524},"walk-04":{"top":45,"bottom":1524},"walk-05":{"top":44,"bottom":1524},"walk-06":{"top":45,"bottom":1524},"walk-07":{"top":45,"bottom":1524},"walk-08":{"top":44,"bottom":1524},"walk-09":{"top":46,"bottom":1524},"walk-10":{"top":44,"bottom":1523},"walk-11":{"top":45,"bottom":1523}};
   const WALK_SEQUENCES=Object.freeze({down:[1,2,3,2],up:[4,5,6,7],right:[8,10,9,11],left:[8,10,9,11]});
   const WALK_FRAME_MS=120;
+  const VERTICAL_WALK_FRAME_MS=135;
+  // Small alternating lateral sole separation for the rear-facing gait.
+  // Render-only: the world foot anchor, collision and movement never change.
+  const UP_WALK_OFFSETS=Object.freeze({'walk-04':18,'walk-05':-18,'walk-06':18,'walk-07':-18});
+  function walkFrameDuration(direction) {return direction==='up'||direction==='down'?VERTICAL_WALK_FRAME_MS:WALK_FRAME_MS;}
   const TARGET_VISIBLE_HEIGHT=(1498-3)/1536*PLAYER.height;
   function spriteLayout(key) {
     const bounds=SPRITE_BOUNDS[key];
     const scale=TARGET_VISIBLE_HEIGHT/(bounds.bottom-bounds.top);
-    return {width:1024*scale,height:1536*scale,bottom:-(1536-bounds.bottom)*scale,visibleHeight:(bounds.bottom-bounds.top)*scale};
+    return {width:1024*scale,height:1536*scale,bottom:-(1536-bounds.bottom)*scale,visibleHeight:(bounds.bottom-bounds.top)*scale,offsetX:(UP_WALK_OFFSETS[key]||0)*scale};
   }
   function directionForInput(dx,dy) {return dy<0?'up':dy>0?'down':dx<0?'left':'right';}
   function advanceWalkAnimation(animation,direction,moving,dt) {
@@ -221,7 +226,8 @@
     if(!animation.moving || animation.direction!==direction){animation.index=0;animation.elapsed=0;}
     else {
       animation.elapsed+=Math.max(0,dt)*1000;
-      while(animation.elapsed>=WALK_FRAME_MS){animation.elapsed-=WALK_FRAME_MS;animation.index=(animation.index+1)%WALK_SEQUENCES[direction].length;}
+      const duration=walkFrameDuration(direction);
+      while(animation.elapsed>=duration){animation.elapsed-=duration;animation.index=(animation.index+1)%WALK_SEQUENCES[direction].length;}
     }
     animation.moving=true;animation.direction=direction;
     return `walk-${String(WALK_SEQUENCES[direction][animation.index]).padStart(2,'0')}`;
@@ -229,13 +235,21 @@
 
   // Geometry and animation can be verified directly in Node without asset stubs.
   if(typeof module!=='undefined' && module.exports) {
-    module.exports={SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
+    module.exports={VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
     return;
   }
 
   const menu=document.getElementById('menu'),game=document.getElementById('game');
   const world=document.getElementById('world'),map=document.getElementById('map');
-  const playerEl=document.getElementById('player'),sprite=document.getElementById('playerSprite');
+  const playerEl=document.getElementById('player');
+  const originalSprite=document.getElementById('playerSprite');
+  // One opaque frame transaction: clear the complete backing bitmap, then draw
+  // exactly one already-decoded source. No old DOM image or crossfade survives.
+  const sprite=document.createElement('canvas');
+  sprite.id='playerSprite';sprite.width=1024;sprite.height=1536;
+  sprite.setAttribute('aria-hidden','true');
+  originalSprite.replaceWith(sprite);
+  const spriteContext=sprite.getContext('2d');
   const startButton=document.getElementById('singleplayer'),status=document.getElementById('status');
   const state={playing:false,starting:false,player:{x:4950,y:3750,facing:'down'},bridge:null};
   const camera={x:5000,y:3333.5,scale:1};
@@ -246,12 +260,14 @@
   function showPlayerSprite(key,mirror=false) {
     if(activeSpriteKey===key && activeMirror===mirror) return;
     const layout=spriteLayout(key);
-    sprite.style.position='absolute';sprite.style.left='50%';
+    sprite.style.position='absolute';sprite.style.left=`calc(50% + ${layout.offsetX}px)`;
     sprite.style.width=`${layout.width}px`;sprite.style.height=`${layout.height}px`;
     sprite.style.bottom=`${layout.bottom}px`;
     sprite.style.transform=`translateX(-50%) scaleX(${mirror?-1:1})`;
     sprite.style.transformOrigin='50% 100%';
-    sprite.src=images[key].src;
+    spriteContext.setTransform(1,0,0,1,0,0);
+    spriteContext.clearRect(0,0,sprite.width,sprite.height);
+    spriteContext.drawImage(images[key],0,0,sprite.width,sprite.height);
     activeSpriteKey=key;activeMirror=mirror;
   }
   function updateAnimation(moving,dt) {
