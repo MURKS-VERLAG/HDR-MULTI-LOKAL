@@ -298,19 +298,21 @@
     if(activeMapId!=='oberkirch'||!worldPointInPolygon(x,y,COVERED_STRUCTURE))return false;
     return closestPointOnBridgePath(x,y,COVERED_BRIDGE_PATH).distance>BRIDGE_CONFIG.coveredCorridor;
   }
-  const WINTER_CASTLE=Object.freeze({x:1059.6494915121968,y:605.0907042154288,width:4336.72663106489,height:2891.1510873765938,sourceWidth:1536,sourceHeight:1024,splitY:512});
+  const WINTER_CASTLE=Object.freeze({x:1059.6494915121968,y:605.0907042154288,width:4336.72663106489,height:2891.1510873765938,sourceWidth:1536,sourceHeight:1024,splitY:550});
   // Ground footprints are independent of the sprite's front/back depth split.
-  const CASTLE_COMPOUND_LOCAL=Object.freeze([[271,452],[277,420],[320,391],[340,380],[340,355],[405,331],[485,325],[599,349],[609,377],[652,379],[712,399],[785,420],[863,445],[928,472],[986,505],[1025,542],[1044,575],[1051,612],[1057,635],[1035,660],[999,704],[969,701],[938,706],[894,725],[839,744],[774,748],[704,743],[629,725],[558,704],[479,674],[405,644],[345,609],[304,567],[280,516]]);
+  const CASTLE_COMPOUND_LOCAL=Object.freeze([[271,452],[278,425],[298,405],[330,390],[373,379],[423,372],[477,368],[531,368],[586,373],[640,384],[699,401],[756,416],[812,433],[866,451],[918,475],[963,501],[999,534],[1027,568],[1045,602],[1057,635],[1035,660],[999,704],[969,701],[938,706],[894,725],[839,744],[774,748],[704,743],[629,725],[558,704],[479,674],[405,644],[345,609],[304,567],[280,516]]);
   const CASTLE_ROCKS_LOCAL=Object.freeze([[[279,454],[247,471],[214,492],[192,521],[176,555],[177,584],[166,607],[186,624],[207,605],[219,577],[230,543],[253,521],[282,509]],[[178,593],[156,615],[131,646],[104,682],[96,710],[105,724],[123,716],[151,684],[177,665],[205,650],[225,645],[231,629],[216,615],[193,610]],[[225,636],[248,645],[285,649],[300,662],[304,689],[287,718],[281,739],[297,749],[317,745],[334,766],[350,800],[350,826],[332,849],[310,849],[295,831],[282,800],[259,790],[237,789],[218,776],[219,752],[234,728],[242,707],[231,692],[214,690],[194,702],[181,723],[168,748],[151,750],[150,731],[165,705],[186,677],[205,654]],[[300,785],[320,796],[354,805],[375,821],[377,845],[389,849],[412,827],[443,819],[472,801],[498,798],[514,811],[519,830],[543,835],[567,835],[600,849],[625,861],[637,885],[637,910],[620,930],[593,942],[579,968],[554,968],[535,951],[510,948],[494,953],[478,966],[457,970],[444,957],[426,947],[414,929],[399,926],[377,913],[352,916],[333,901],[316,891],[307,868],[296,856],[289,835]],[[688,842],[704,830],[721,843],[731,868],[724,885],[704,885],[689,870]],[[734,965],[746,949],[767,953],[786,972],[772,985],[746,985]],[[249,870],[265,858],[284,867],[287,881],[270,890],[252,884]]]);
   const CASTLE_GATE_LEAF_LOCAL=Object.freeze([[1031,552],[1087,581],[1086,653],[1031,626]]);
   const CASTLE_COLLIDERS=Object.freeze([CASTLE_COMPOUND_LOCAL,CASTLE_GATE_LEAF_LOCAL,...CASTLE_ROCKS_LOCAL].map(poly=>Object.freeze(poly.map(([x,y])=>Object.freeze([WINTER_CASTLE.x+x/1536*WINTER_CASTLE.width,WINTER_CASTLE.y+y/1024*WINTER_CASTLE.height])))));
-  const CASTLE_GATE=Object.freeze({x:WINTER_CASTLE.x+1035/1536*WINTER_CASTLE.width,y:WINTER_CASTLE.y+660/1024*WINTER_CASTLE.height,radius:WINTER_CASTLE.width/1536*55});
+  const CASTLE_GATE=Object.freeze({x:WINTER_CASTLE.x+1035/1536*WINTER_CASTLE.width,y:WINTER_CASTLE.y+660/1024*WINTER_CASTLE.height,radius:WINTER_CASTLE.width/1536*67,lowerRadius:WINTER_CASTLE.width/1536*92});
   function castleLocal(x,y){return {x:(x-WINTER_CASTLE.x)/WINTER_CASTLE.width*1536,y:(y-WINTER_CASTLE.y)/WINTER_CASTLE.height*1024};}
+  // A continuous ground apron replaces the jagged alpha/mountain seam only around this prop.
+  const CASTLE_TRAVEL_ENVELOPE_LOCAL=Object.freeze([[250,365],[190,420],[145,485],[125,545],[80,595],[25,630],[-20,690],[-10,755],[35,815],[95,860],[170,900],[230,960],[350,1025],[520,1055],[690,1050],[840,1010],[1010,945],[1140,865],[1240,815],[1550,815],[1580,675],[1360,610],[1140,510],[1080,460],[980,390],[860,330],[700,300],[560,300],[420,310],[310,340]]);
   function castleGroundOverridesMountain(x,y){
     const p=castleLocal(x,y);
-    return p.x>=0&&p.x<=1536&&p.y>=430&&p.y<=1024&&sampleWeatherGrid(CASTLE_ART_ALPHA_GRID,64,43,p.x/1536,p.y/1024)>.5;
+    return worldPointInPolygon(p.x,p.y,CASTLE_TRAVEL_ENVELOPE_LOCAL);
   }
-  function castleBehindFoot(x,y){const p=castleLocal(x,y);return activeMapId==='winterbach'&&p.x>=0&&p.x<=1536&&p.y>=0&&p.y<512;}
+  function castleBehindFoot(x,y){const p=castleLocal(x,y);return activeMapId==='winterbach'&&p.x>=0&&p.x<=1536&&p.y>=0&&p.y<WINTER_CASTLE.splitY;}
   function castleBlockedFoot(x,y){
     if(activeMapId!=='winterbach')return false;
     const p=castleLocal(x,y);if(p.x<80||p.x>1095||p.y<315||p.y>990)return false;
@@ -319,7 +321,8 @@
   function castleGateHighlighted(player){
     if(activeMapId!=='winterbach'||castleBlockedFoot(player.x,player.y))return false;
     const dx=CASTLE_GATE.x-player.x,dy=CASTLE_GATE.y-player.y,d=Math.hypot(dx,dy);
-    if(d>CASTLE_GATE.radius)return false;
+    const ry=dy<0?CASTLE_GATE.lowerRadius:CASTLE_GATE.radius;
+    if((dx/CASTLE_GATE.radius)**2+(dy/ry)**2>1)return false;
     const facing={left:[-1,0],right:[1,0],up:[0,-1],down:[0,1]}[player.facing];
     if(!facing)return false;
     if(d<1)return facing[0]<0;
@@ -389,7 +392,18 @@
     // Exactly ten WORLD pixels of downward extension, independent of camera zoom.
     return Math.max(winterSnowBaseAt(x,y),winterSnowBaseAt(x,Math.max(0,y-10)));
   }
-  function winterSnowCoverage(x,y){return activeMapId==='winterbach'?winterSnowCoverageAt(x,y):0;}
+  function castleSnowfallCoverageAt(x,y){
+    const p=castleLocal(x,y);
+    if(p.x<0||p.x>1536||p.y<0||p.y>1024)return 0;
+    // Snow falls in front of the whole prop, including tower walls and the grassy slope.
+    // The frost tint still uses the separate snow/grass mask above.
+    return .95*sampleWeatherGrid(CASTLE_ART_ALPHA_GRID,64,43,p.x/1536,p.y/1024);
+  }
+  function winterSnowParticleCoverageAt(x,y){
+    if(x<0||y<0||x>10000||y>6006)return 0;
+    return Math.max(winterSnowCoverageAt(x,y),castleSnowfallCoverageAt(x,y),castleSnowfallCoverageAt(x,Math.max(0,y-10)));
+  }
+  function winterSnowCoverage(x,y){return activeMapId==='winterbach'?winterSnowParticleCoverageAt(x,y):0;}
   function canMoveFootTo(x,y) {
     return footWithinMap(x,y) && !isRiverBlockedFootPoint(x,y) && !isStoneStructureBlocked(x,y) && !isCoveredStructureBlocked(x,y) && !winterTerrainBlocked(x,y) && !castleBlockedFoot(x,y);
   }
@@ -491,7 +505,7 @@
 
   // Geometry and animation can be verified directly in Node without asset stubs.
   if(typeof module!=='undefined' && module.exports) {
-    module.exports={WINTER_CASTLE,CASTLE_COLLIDERS,CASTLE_COMPOUND_LOCAL,CASTLE_ROCKS_LOCAL,CASTLE_GATE,castleGroundOverridesMountain,castleLocal,castleBlockedFoot,castleBehindFoot,castleGateHighlighted,castleFirstHit,slideAgainstCastle,CASTLE_SNOW_GRID,CASTLE_ART_ALPHA_GRID,sampleWeatherGrid,winterSnowBaseAt,winterSnowCoverageAt,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
+    module.exports={CASTLE_TRAVEL_ENVELOPE_LOCAL,castleSnowfallCoverageAt,winterSnowParticleCoverageAt,WINTER_CASTLE,CASTLE_COLLIDERS,CASTLE_COMPOUND_LOCAL,CASTLE_ROCKS_LOCAL,CASTLE_GATE,castleGroundOverridesMountain,castleLocal,castleBlockedFoot,castleBehindFoot,castleGateHighlighted,castleFirstHit,slideAgainstCastle,CASTLE_SNOW_GRID,CASTLE_ART_ALPHA_GRID,sampleWeatherGrid,winterSnowBaseAt,winterSnowCoverageAt,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
     return;
   }
 
@@ -547,10 +561,10 @@
   frostContext.putImageData(frostImage,0,0);
   function snowSpawn(){
     let x=0,y=0;
-    for(let i=0;i<60;i++){x=Math.random()*10000;y=Math.random()*6006;if(winterSnowCoverageAt(x,y)>.25)break;}
+    for(let i=0;i<60;i++){x=Math.random()*10000;y=Math.random()*6006;if(winterSnowParticleCoverageAt(x,y)>.25)break;}
     return {x,y};
   }
-  const snowflakes=Array.from({length:850},()=>({...snowSpawn(),speed:38+Math.random()*35,size:.9+Math.random()*1.7,phase:Math.random()*Math.PI*2,age:Math.random()*20}));
+  const snowflakes=Array.from({length:850},()=>({...snowSpawn(),speed:(38+Math.random()*35)*1.12,size:.9+Math.random()*1.7,phase:Math.random()*Math.PI*2,age:Math.random()*20}));
   function renderWinterWeather(dt){
     if(activeMapId!=='winterbach')return;
     weatherCanvas.style.display='block';
