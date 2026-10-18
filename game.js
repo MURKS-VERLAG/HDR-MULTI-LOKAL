@@ -9,7 +9,8 @@
   "use strict";
   const MAPS=Object.freeze({
     oberkirch:Object.freeze({id:'oberkirch',width:10000,height:6667,image:'assets/maps/oberkirch-12k.webp',name:'Oberkirch'}),
-    winterbach:Object.freeze({id:'winterbach',width:10000,height:6006,image:'assets/maps/winterbach-12k.webp',name:'Winterbach'})
+    winterbach:Object.freeze({id:'winterbach',width:10000,height:6006,image:'assets/maps/winterbach-12k.webp',name:'Winterbach'}),
+    lautenbach:Object.freeze({id:'lautenbach',width:10000,height:10000*1365/2048,image:'assets/maps/lautenbach.webp',name:'Lautenbach'})
   });
   let activeMapId='oberkirch';
   function setActiveMap(id){if(!MAPS[id])throw new Error('Unknown map');activeMapId=id;}
@@ -18,14 +19,18 @@
     oberkirch:[{x1:2150,x2:3250,side:'north',target:'winterbach',spawn:{x:5485,y:5925}},
                {x1:5750,x2:6750,side:'north',target:'winterbach',spawn:{x:8175,y:5925}}],
     winterbach:[{x1:4900,x2:6150,side:'south',target:'oberkirch',spawn:{x:2590,y:673}},
-                {x1:7750,x2:8600,side:'south',target:'oberkirch',spawn:{x:6225,y:760}}]
+                {x1:7750,x2:8600,side:'south',target:'oberkirch',spawn:{x:6225,y:760}},
+                {x1:5270,x2:5670,side:'north',target:'lautenbach',spawn:{x:4780,y:10000*1365/2048-85}},
+                {x1:7090,x2:7480,side:'north',target:'lautenbach',spawn:{x:7920,y:10000*1365/2048-85}}],
+    lautenbach:[{x1:4520,x2:4920,side:'south',target:'winterbach',spawn:{x:5470,y:680}},
+                {x1:7730,x2:8080,side:'south',target:'winterbach',spawn:{x:7310,y:680}}]
   });
   function exitRoute(player,dy){return MAP_ROUTES[activeMapId].find(r=>player.x>=r.x1&&player.x<=r.x2&&
     (r.side==='north'?dy<0&&player.y<=-18:dy>0&&player.y>=WORLD.height+PLAYER.height+18));}
   function footWithinMap(x,y){
-    const lane=MAP_ROUTES[activeMapId].find(r=>x>=r.x1&&x<=r.x2);
-    const minY=lane?.side==='north'?-30:PLAYER.height;
-    const maxY=lane?.side==='south'?WORLD.height+PLAYER.height+35:WORLD.height-10;
+    const lanes=MAP_ROUTES[activeMapId].filter(r=>x>=r.x1&&x<=r.x2);
+    const minY=lanes.some(r=>r.side==='north')?-30:PLAYER.height;
+    const maxY=lanes.some(r=>r.side==='south')?WORLD.height+PLAYER.height+35:WORLD.height-10;
     return x>=PLAYER.width/2&&x<=WORLD.width-PLAYER.width/2&&y>=minY&&y<=maxY;
   }
   const PLAYER = Object.freeze({ width: 420, height: 630, speed: 520 });
@@ -268,9 +273,57 @@
   const WINTER_RIVER=Object.freeze([[930,0],[932,36],[942,72],[954,108],[964,144],[967,180],[975,216],[978,240],[984,252],[962,264],[965,276],[988,288],[991,300],[1000,312],[975,324],[993,336],[1001,348],[1007,360],[1017,372],[1021,384],[1018,396],[1024,408],[1027,420],[1031,432],[1039,444],[1038,456],[1039,468],[1051,480],[1050,492],[1057,504],[1057,516],[1053,528],[1057,540],[1059,552],[1062,564],[1027,576],[1033,588],[1051,600],[1045,612],[1044,624],[1043,636],[1039,648],[1039,660],[1029,672],[1034,684],[1030,696],[1016,708],[1023,720],[1019,732],[1017,744],[1012,756],[1011,768],[1007,780],[1009,792],[1005,804],[1016,816],[1017,828],[1022,840],[1027,852],[1028,864],[1031,876],[1039,888],[1043,900],[1044,912],[1044,924],[1044,936],[1047,948],[1059,960],[1059,960],[1159,960],[1159,960],[1157,948],[1149,936],[1150,924],[1146,912],[1148,900],[1144,888],[1135,876],[1131,864],[1130,852],[1127,840],[1125,828],[1121,816],[1118,804],[1116,792],[1115,780],[1119,768],[1116,756],[1117,744],[1116,732],[1121,720],[1115,708],[1121,696],[1127,684],[1132,672],[1141,660],[1147,648],[1142,636],[1143,624],[1144,612],[1149,600],[1149,588],[1148,576],[1150,564],[1155,552],[1154,540],[1162,528],[1161,516],[1162,504],[1152,492],[1153,480],[1154,468],[1150,456],[1146,444],[1141,432],[1135,420],[1135,408],[1133,396],[1131,384],[1125,372],[1120,360],[1117,348],[1114,336],[1116,324],[1110,312],[1109,300],[1114,288],[1114,276],[1117,264],[1120,252],[1128,240],[1128,216],[1137,180],[1140,144],[1134,108],[1127,72],[1124,36],[1112,0]].map(winterPoint));
   const WINTER_ICE=Object.freeze([[930,0],[932,36],[942,72],[954,108],[964,144],[967,180],[975,216],[978,240],[979,248],[995,253],[1016,260],[1033,265],[1054,260],[1077,253],[1099,254],[1125,244],[1128,240],[1128,216],[1137,180],[1140,144],[1134,108],[1127,72],[1124,36],[1112,0]].map(winterPoint));
   const WINTER_MOUNTAINS=Object.freeze([[0,0],[122,0],[160,35],[175,80],[203,118],[207,160],[225,180],[221,225],[244,251],[257,300],[244,326],[274,360],[263,398],[241,430],[232,471],[215,500],[183,530],[160,559],[131,580],[102,615],[0,645]].map(winterPoint));
+
+  // Lautenbach geometry traced against the supplied 2048 x 1365 artwork.
+  const lautenPoint=([x,y])=>Object.freeze([x/1800*10000,y/1200*(10000*1365/2048)]);
+  const LAUTEN_RIVER=Object.freeze([[1192,0],[1195,40],[1207,80],[1203,116],[1204,144],[1204,190],[1215,221],[1233,258],[1240,296],[1248,333],[1252,371],[1259,407],[1277,442],[1282,470],[1264,500],[1259,535],[1255,574],[1245,610],[1234,645],[1217,682],[1195,720],[1175,757],[1155,790],[1138,818],[1114,852],[1095,887],[1084,924],[1071,960],[1058,1000],[1048,1040],[1034,1080],[1025,1120],[1017,1160],[1007,1200],[1278,1200],[1280,1160],[1283,1120],[1288,1080],[1291,1040],[1297,1000],[1305,960],[1310,924],[1311,887],[1312,852],[1308,818],[1305,790],[1312,757],[1320,720],[1326,682],[1335,645],[1340,610],[1342,574],[1344,535],[1352,500],[1360,470],[1356,442],[1343,407],[1331,371],[1324,333],[1314,296],[1306,258],[1298,221],[1288,190],[1284,144],[1282,116],[1277,80],[1266,40],[1258,0]].map(lautenPoint));
+  const LAUTEN_ICE=Object.freeze([[1105,881],[1129,875],[1146,859],[1167,858],[1185,867],[1205,881],[1226,877],[1242,864],[1261,869],[1278,883],[1296,871],[1312,876],[1311,887],[1310,924],[1305,960],[1297,1000],[1291,1040],[1288,1080],[1283,1120],[1280,1160],[1278,1200],[1007,1200],[1017,1160],[1025,1120],[1034,1080],[1048,1040],[1058,1000],[1071,960],[1084,924],[1095,887]].map(lautenPoint));
+  const LAUTEN_VINE_PATH=Object.freeze([[475.0,634.0],[449.009,632.215],[433.627,630.535],[417.824,627.76],[409.518,625.735],[404.627,624.24],[396.438,620.938],[392.913,619.088],[388.0,616.0],[385.141,613.592],[378.004,605.408],[375.0,603.0],[368.701,599.817],[355.497,594.639],[353.301,593.457],[352.492,592.659],[352.564,592.125],[353.249,591.504],[353.37,591.0],[348.0,579.3],[343.966,572.4],[340.791,565.5],[339.714,561.9],[339.667,558.6],[340.071,556.2],[340.788,553.8],[343.376,548.4],[345.6,544.8],[351.377,537.3],[354.666,530.4],[359.123,522.9],[360.007,520.5],[360.593,517.8],[360.798,515.4],[360.679,513.3],[359.444,509.4],[354.197,497.7],[351.846,493.5],[349.669,490.5],[346.856,487.2],[334.397,474.3],[326.099,464.1],[321.399,456.6],[318.497,450.3],[315.852,445.8],[314.907,443.7],[314.429,441.6],[314.381,439.5],[314.732,437.4],[316.556,431.4],[316.503,425.7],[316.7,423.0],[319.039,412.5],[319.979,405.6],[321.314,400.2],[321.291,398.1],[320.613,395.7],[318.825,392.4],[315.46,387.3],[312.81,384.0],[309.82,381.0],[305.017,377.4],[290.59,369.0],[283.582,364.2],[270.914,353.7],[263.981,347.1],[257.62,342.0],[255.522,339.9],[254.012,337.8],[252.655,334.8],[251.442,330.6],[251.189,327.9],[251.527,325.8],[252.464,323.4],[254.53,319.8],[268.185,299.4],[272.111,291.6],[273.205,288.6],[273.517,285.9],[273.138,283.2],[271.865,279.6],[265.987,267.9],[260.681,258.6],[258.002,254.7],[254.957,251.4],[251.263,248.4],[245.755,244.8],[223.766,232.2],[214.259,225.3],[205.005,219.3],[202.348,217.2],[199.82,214.8],[196.39,210.9],[193.923,207.6],[189.877,201.3],[188.933,198.9],[188.761,197.1],[189.411,194.1],[192.53,186.0],[193.86,183.0],[197.38,177.0],[198.885,171.9],[199.331,168.9],[199.271,166.5],[198.078,159.9],[196.982,156.3],[195.702,153.6],[193.877,150.6],[187.13,141.0],[184.448,137.7],[181.123,134.4],[173.386,127.5],[166.146,120.3],[156.908,112.5],[154.885,110.4]].map(lautenPoint));
+  const LAUTEN_BRIDGE_PATH=Object.freeze([[1165,173],[1183,171],[1204,169],[1235,169],[1268,170],[1294,172],[1315,173]].map(lautenPoint));
+  const LAUTEN_TREES=Object.freeze([[531,169,89,66],[1618,285,111,79],[499,799,102,62]].map(([x,y,rx,ry])=>({x:x/1800*10000,y:y/1200*(10000*1365/2048),rx:rx/1800*10000,ry:ry/1200*(10000*1365/2048)})));
+  function lautenTerrainBlocked(x,y){
+    if(activeMapId!=='lautenbach')return false;
+    const p=closestPointOnBridgePath(x,y,LAUTEN_BRIDGE_PATH);
+    // The bridge cannot be entered sideways through its rails.
+    if(x>LAUTEN_BRIDGE_PATH[0][0]+45&&x<LAUTEN_BRIDGE_PATH.at(-1)[0]-45&&p.distance<115)return true;
+    return worldPointInPolygon(x,y,LAUTEN_RIVER)&&!worldPointInPolygon(x,y,LAUTEN_ICE);
+  }
+  function engageLautenTrack(player,dx,dy){
+    if(activeMapId!=='lautenbach')return null;
+    const vine=LAUTEN_VINE_PATH[0],end=LAUTEN_BRIDGE_PATH.at(-1),start=LAUTEN_BRIDGE_PATH[0];
+    if(dx<0&&dy<0&&Math.hypot(player.x-vine[0],player.y-vine[1])<95)
+      return {id:'vineyard',path:LAUTEN_VINE_PATH,distance:0,snapping:true};
+    if(dx>0&&Math.hypot(player.x-start[0],player.y-start[1])<110)
+      return {id:'lautenBridge',path:LAUTEN_BRIDGE_PATH,distance:0,snapping:true};
+    if(dx<0&&Math.hypot(player.x-end[0],player.y-end[1])<110)
+      return {id:'lautenBridge',path:LAUTEN_BRIDGE_PATH,distance:getPathMetrics(LAUTEN_BRIDGE_PATH).total,snapping:true};
+    return null;
+  }
+  function moveLautenTrack(player,track,dx,dy,dt){
+    const vine=track.id==='vineyard';
+    const direction=vine?(dx<0&&dy<0?1:dx>0&&dy>0?-1:0):Math.sign(dx);
+    if(!direction)return track;
+    if(track.snapping){
+      const anchor=pointAtBridgeDistance(track.path,track.distance),gap=Math.hypot(anchor.x-player.x,anchor.y-player.y);
+      const k=Math.min(1,PLAYER.speed*dt/Math.max(.001,gap));
+      player.x+=(anchor.x-player.x)*k;player.y+=(anchor.y-player.y)*k;
+      if(gap>PLAYER.speed*dt)return track;
+      track.snapping=false;
+    }
+    const total=getPathMetrics(track.path).total;
+    track.distance=clamp(track.distance+direction*PLAYER.speed*dt,0,total);
+    Object.assign(player,pointAtBridgeDistance(track.path,track.distance));
+    if(vine){
+      if(track.distance<=.001&&direction<0){player.x+=12;player.y+=12;return null;}
+    }else if((track.distance<=.001&&direction<0)||(track.distance>=total-.001&&direction>0)){
+      player.x+=direction*12;return null;
+    }
+    return track;
+  }
+
   const ICE_PHYSICS=Object.freeze({acceleration:5200,maxSpeed:PLAYER.speed*2,dragMoving:.985,dragNoInput:.975,minSpeed:14,swayAngle:4.6,swayX:8});
   const iceMotion={vx:0,vy:0,phase:0};
-  function onWinterIce(x,y){return activeMapId==='winterbach'&&worldPointInPolygon(x,y,WINTER_ICE);}
+  function onWinterIce(x,y){return (activeMapId==='winterbach'&&worldPointInPolygon(x,y,WINTER_ICE))||(activeMapId==='lautenbach'&&worldPointInPolygon(x,y,LAUTEN_ICE));}
   function winterTerrainBlocked(x,y){
     if(activeMapId!=='winterbach')return false;
     if(worldPointInPolygon(x,y,WINTER_MOUNTAINS)&&!castleGroundOverridesMountain(x,y))return true;
@@ -403,9 +456,13 @@
   }
   function winterSnowCoverage(x,y){return activeMapId==='winterbach'?winterSnowParticleCoverageAt(x,y):0;}
   function canMoveFootTo(x,y) {
-    return footWithinMap(x,y) && !isRiverBlockedFootPoint(x,y) && !isStoneStructureBlocked(x,y) && !isCoveredStructureBlocked(x,y) && !winterTerrainBlocked(x,y) && !castleBlockedFoot(x,y);
+    return footWithinMap(x,y) && !isRiverBlockedFootPoint(x,y) && !isStoneStructureBlocked(x,y) && !isCoveredStructureBlocked(x,y) && !winterTerrainBlocked(x,y) && !castleBlockedFoot(x,y) && !lautenTerrainBlocked(x,y);
   }
   function movePlayer(player,bridge,dx,dy,dt) {
+    if(activeMapId==='lautenbach'){
+      bridge=bridge||engageLautenTrack(player,dx,dy);
+      if(bridge)return moveLautenTrack(player,bridge,dx,dy,dt);
+    }
     if(onWinterIce(player.x,player.y)){movePlayerOnIce(player,dx,dy,dt);return null;}
     clearIceMotion();
     if(!dx && !dy) return bridge;
@@ -418,6 +475,8 @@
     const steps=Math.max(1,Math.ceil(distance/6));
     const sx=dx/length*distance/steps,sy=dy/length*distance/steps;
     for(let i=0;i<steps;i++) {
+      const localTrack=engageLautenTrack(player,dx,dy);
+      if(localTrack)return moveLautenTrack(player,localTrack,dx,dy,dt*(steps-i)/steps);
       const stone=engageStoneBridge(player,dx,dy);
       if(stone) return moveAlongStoneBridge(player,stone,dx,dy,dt*(steps-i)/steps);
       if(slideAgainstCastle(player,sx,sy))continue;
@@ -464,6 +523,7 @@
     return ny>=-.25 || Math.abs(nx)<=(ny+1)/.75;
   }
   function treeAreaAt(x,y) {
+    if(activeMapId==='lautenbach')return LAUTEN_TREES.findIndex(t=>((x-t.x)/t.rx)**2+((y-t.y)/t.ry)**2<=1);
     if(activeMapId!=='oberkirch')return -1;
     const first=TREE_AREAS.findIndex(t=>((x-t.x)/t.rx)**2+((y-t.y)/t.ry)**2<=1);
     if(first>=0)return first;
@@ -503,7 +563,7 @@
 
   // Geometry and animation can be verified directly in Node without asset stubs.
   if(typeof module!=='undefined' && module.exports) {
-    module.exports={CASTLE_GATE_ZONE_LOCAL,CASTLE_GATE_ZONE,CASTLE_TRAVEL_ENVELOPE_LOCAL,castleSnowfallCoverageAt,winterSnowParticleCoverageAt,WINTER_CASTLE,CASTLE_COLLIDERS,CASTLE_COMPOUND_LOCAL,CASTLE_ROCKS_LOCAL,CASTLE_GATE,castleGroundOverridesMountain,castleLocal,castleBlockedFoot,castleBehindFoot,castleGateHighlighted,castleFirstHit,slideAgainstCastle,CASTLE_SNOW_GRID,CASTLE_ART_ALPHA_GRID,sampleWeatherGrid,winterSnowBaseAt,winterSnowCoverageAt,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
+    module.exports={LAUTEN_RIVER,LAUTEN_ICE,LAUTEN_VINE_PATH,LAUTEN_BRIDGE_PATH,LAUTEN_TREES,lautenTerrainBlocked,engageLautenTrack,moveLautenTrack,CASTLE_GATE_ZONE_LOCAL,CASTLE_GATE_ZONE,CASTLE_TRAVEL_ENVELOPE_LOCAL,castleSnowfallCoverageAt,winterSnowParticleCoverageAt,WINTER_CASTLE,CASTLE_COLLIDERS,CASTLE_COMPOUND_LOCAL,CASTLE_ROCKS_LOCAL,CASTLE_GATE,castleGroundOverridesMountain,castleLocal,castleBlockedFoot,castleBehindFoot,castleGateHighlighted,castleFirstHit,slideAgainstCastle,CASTLE_SNOW_GRID,CASTLE_ART_ALPHA_GRID,sampleWeatherGrid,winterSnowBaseAt,winterSnowCoverageAt,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
     return;
   }
 
