@@ -446,17 +446,8 @@
   }
 
   // Geometry and animation can be verified directly in Node without asset stubs.
-  // Approved LPC body and eight-frame gait, with a reduced head and five equipment sets.
-  const PLAYER_VARIANTS=Object.freeze({"knight":{"name":"Plattenritter","image":"assets/player/medieval/knight.png","referenceHeight":196,"animations":{"up-idle":[[2,2,166,196,97,193,110]],"up-walk":[[172,2,166,196,97,193,110],[342,2,166,196,97,196,110],[512,2,162,193,97,193,110],[682,2,162,196,93,196,110],[852,2,162,196,93,193,110],[1022,2,162,196,93,196,110],[1192,2,158,193,89,193,110],[1362,2,162,196,93,196,110]],"left-idle":[[2,202,134,193,53,193,110]],"left-walk":[[172,202,146,190,65,190,110],[342,202,138,193,57,190,110],[512,202,129,193,44,190,110],[682,202,138,193,49,193,110],[852,202,150,190,57,190,110],[1022,202,142,193,49,193,110],[1192,202,133,193,44,193,110],[1362,202,129,193,44,193,110]],"down-idle":[[2,402,158,196,69,196,110]],"down-walk":[[172,402,158,196,69,196,110],[342,402,158,196,69,196,110],[512,402,158,193,65,193,110],[682,402,158,196,69,196,110],[852,402,158,196,69,196,110],[1022,402,158,196,69,196,110],[1192,402,154,193,69,193,110],[1362,402,158,196,69,196,110]],"right-idle":[[2,602,134,193,81,193,110]],"right-walk":[[172,602,146,190,81,190,110],[342,602,138,193,81,190,110],[512,602,129,193,85,190,110],[682,602,138,193,89,193,110],[852,602,150,190,93,190,110],[1022,602,142,193,93,193,110],[1192,602,133,193,89,193,110],[1362,602,129,193,85,193,110]]}},"crusader":{"name":"Goldritter","image":"assets/player/medieval/crusader.png","referenceHeight":209,"animations":{"up-idle":[[2,2,174,209,97,206,110]],"up-walk":[[180,2,174,209,97,206,110],[358,2,174,209,97,209,110],[536,2,170,206,97,206,110],[714,2,170,209,93,209,110],[892,2,170,209,93,206,110],[1070,2,170,209,93,209,110],[1248,2,166,206,89,206,110],[1426,2,170,209,93,209,110]],"left-idle":[[2,215,134,209,53,209,110]],"left-walk":[[180,215,146,206,65,206,110],[358,215,138,209,57,206,110],[536,215,129,209,44,206,110],[714,215,138,209,49,209,110],[892,215,150,206,57,206,110],[1070,215,142,209,49,209,110],[1248,215,133,209,44,209,110],[1426,215,129,209,44,209,110]],"down-idle":[[2,428,166,209,77,209,110]],"down-walk":[[180,428,166,209,77,209,110],[358,428,166,209,77,209,110],[536,428,166,206,73,206,110],[714,428,166,209,77,209,110],[892,428,166,209,77,209,110],[1070,428,166,209,77,209,110],[1248,428,162,206,77,206,110],[1426,428,166,209,77,209,110]],"right-idle":[[2,641,134,209,81,209,110]],"right-walk":[[180,641,146,206,81,206,110],[358,641,138,209,81,206,110],[536,641,129,209,85,206,110],[714,641,138,209,89,209,110],[892,641,150,206,93,206,110],[1070,641,142,209,93,209,110],[1248,641,133,209,89,209,110],[1426,641,129,209,85,209,110]]}},"ranger":{"name":"Waldl\u00e4ufer","image":"assets/player/medieval/ranger.png","referenceHeight":193,"animations":{"up-idle":[[2,2,141,190,69,190,110]],"up-walk":[[187,2,141,190,69,190,110],[372,2,138,193,69,193,110],[557,2,137,190,69,190,110],[742,2,138,193,69,193,110],[927,2,138,190,69,190,110],[1112,2,141,193,69,193,110],[1297,2,137,190,65,190,110],[1482,2,141,193,69,193,110]],"left-idle":[[2,199,176,190,108,190,110]],"left-walk":[[187,199,176,186,108,186,110],[372,199,176,187,104,187,110],[557,199,176,187,104,187,110],[742,199,176,190,108,190,110],[927,199,181,186,108,186,110],[1112,199,176,190,104,190,110],[1297,199,176,190,104,190,110],[1482,199,176,190,104,190,110]],"down-idle":[[2,396,145,193,76,193,110]],"down-walk":[[187,396,145,193,76,193,110],[372,396,145,193,76,193,110],[557,396,145,190,76,190,110],[742,396,145,193,76,193,110],[927,396,145,193,76,193,110],[1112,396,145,193,76,193,110],[1297,396,141,190,76,190,110],[1482,396,145,193,76,193,110]],"right-idle":[[2,593,176,190,76,190,110]],"right-walk":[[187,593,176,186,76,186,110],[372,593,176,187,76,187,110],[557,593,176,187,76,187,110],[742,593,176,190,76,190,110],[927,593,177,186,73,186,110],[1112,593,176,190,76,190,110],[1297,593,176,190,76,190,110],[1482,593,176,190,76,190,110]]}},"guard":{"name":"Kettenwache","image":"assets/player/medieval/guard.png","referenceHeight":196,"animations":{"up-idle":[[2,2,234,190,121,190,110]],"up-walk":[[240,2,222,190,109,190,110],[478,2,178,201,81,201,110],[716,2,134,241,69,241,110],[954,2,178,201,81,201,110],[1192,2,222,190,109,190,110],[1430,2,178,193,81,193,110],[1668,2,134,237,65,237,110],[1906,2,178,193,85,193,110]],"left-idle":[[2,247,222,193,125,193,110]],"left-walk":[[240,247,178,190,117,190,110],[478,247,217,190,128,190,110],[716,247,234,190,109,190,110],[954,247,233,193,105,193,110],[1192,247,222,190,105,190,110],[1430,247,233,193,105,193,110],[1668,247,222,193,121,193,110],[1906,247,178,193,105,193,110]],"down-idle":[[2,492,234,196,121,196,110]],"down-walk":[[240,492,213,196,128,196,110],[478,492,197,196,128,196,110],[716,492,217,193,128,193,110],[954,492,197,196,128,196,110],[1192,492,213,196,128,196,110],[1430,492,197,196,128,196,110],[1668,492,193,193,128,193,110],[1906,492,213,196,128,196,110]],"right-idle":[[2,737,222,193,97,193,110]],"right-walk":[[240,737,178,190,61,190,110],[478,737,217,190,89,190,110],[716,737,234,190,125,190,110],[954,737,233,193,128,193,110],[1192,737,222,190,117,190,110],[1430,737,233,193,128,193,110],[1668,737,222,193,101,193,110],[1906,737,178,193,73,193,110]]}},"veteran":{"name":"S\u00f6ldner","image":"assets/player/medieval/veteran.png","referenceHeight":196,"animations":{"up-idle":[[2,2,138,193,69,193,110]],"up-walk":[[144,2,138,193,69,193,110],[286,2,138,196,69,196,110],[428,2,134,193,69,193,110],[570,2,138,196,69,196,110],[712,2,138,193,69,193,110],[854,2,138,196,69,196,110],[996,2,134,193,65,193,110],[1138,2,138,196,69,196,110]],"left-idle":[[2,202,98,193,45,193,110]],"left-walk":[[144,202,118,190,61,190,110],[286,202,106,192,53,190,110],[428,202,105,190,44,190,110],[570,202,114,193,49,193,110],[712,202,130,190,57,190,110],[854,202,110,193,45,193,110],[996,202,105,193,44,193,110],[1138,202,101,193,44,193,110]],"down-idle":[[2,402,138,196,69,196,110]],"down-walk":[[144,402,138,196,69,196,110],[286,402,138,196,69,196,110],[428,402,134,193,65,193,110],[570,402,138,196,69,196,110],[712,402,138,196,69,196,110],[854,402,138,196,69,196,110],[996,402,134,193,69,193,110],[1138,402,138,196,69,196,110]],"right-idle":[[2,602,98,193,53,193,110]],"right-walk":[[144,602,118,190,57,190,110],[286,602,106,190,53,190,110],[428,602,105,190,61,190,110],[570,602,114,193,65,193,110],[712,602,130,190,73,190,110],[854,602,110,193,65,193,110],[996,602,105,193,61,193,110],[1138,602,101,193,57,193,110]]}}});
-  function variantFrameAt(id,direction,moving,elapsed){
-    const frames=PLAYER_VARIANTS[id].animations[`${direction}-${moving?'walk':'idle'}`];
-    const duration=frames.reduce((n,f)=>n+f[6],0);
-    let t=((elapsed%duration)+duration)%duration;
-    for(let i=0;i<frames.length;i++){if(t<frames[i][6])return {frame:frames[i],index:i};t-=frames[i][6];}
-    return {frame:frames[0],index:0};
-  }
   if(typeof module!=='undefined' && module.exports) {
-    module.exports={PLAYER_VARIANTS,variantFrameAt,WINTER_CASTLE,CASTLE_ROAD,castleLocal,castleBlockedFoot,castleBehindFoot,castleRoadContains,tryCastleRoad,moveCastleRoad,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
+    module.exports={WINTER_CASTLE,CASTLE_ROAD,castleLocal,castleBlockedFoot,castleBehindFoot,castleRoadContains,tryCastleRoad,moveCastleRoad,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
     return;
   }
 
@@ -478,42 +469,8 @@
   const keys=new Set(),images={};
   const animation={moving:false,index:0,elapsed:0,direction:'down'};
   let activeSpriteKey='',activeMirror=false;
-  let playerVariant='original';
-  const variantImages={};
-  const variantAnimation={elapsed:0,direction:'down',moving:false};
-  function setPlayerVariant(id){
-    if(state.transitioning||!state.playing)return;
-    if(id!=='original'&&!variantImages[id])return;
-    playerVariant=id===playerVariant?'original':id;
-    activeSpriteKey='';activeMirror=false;
-    variantAnimation.elapsed=0;variantAnimation.direction=state.player.facing;variantAnimation.moving=false;
-    animation.moving=false;animation.index=0;animation.elapsed=0;
-    updateAnimation(false,0);
-  }
-  function updateVariantAnimation(moving,dt){
-    const direction=state.player.facing;
-    if(variantAnimation.direction!==direction||variantAnimation.moving!==moving)variantAnimation.elapsed=0;
-    else variantAnimation.elapsed+=Math.max(0,dt)*1000;
-    variantAnimation.direction=direction;variantAnimation.moving=moving;
-    const cfg=PLAYER_VARIANTS[playerVariant];
-    const {frame:f,index}=variantFrameAt(playerVariant,direction,moving,variantAnimation.elapsed);
-    const key=`variant:${playerVariant}:${direction}:${moving}:${index}`;
-    if(activeSpriteKey===key)return;
-    const box=1000,scale=TARGET_VISIBLE_HEIGHT/cfg.referenceHeight;
-    Object.assign(sprite.style,{position:'absolute',left:'50%',width:`${box}px`,height:`${box}px`,bottom:'0px',transform:'translateX(-50%)',transformOrigin:'50% 100%',imageRendering:'auto'});
-    spriteContext.setTransform(1,0,0,1,0,0);spriteContext.clearRect(0,0,sprite.width,sprite.height);
-    spriteContext.imageSmoothingEnabled=true;
-    spriteContext.drawImage(variantImages[playerVariant],f[0],f[1],f[2],f[3],
-      (box/2-f[4]*scale)*sprite.width/box,(box-f[5]*scale)*sprite.height/box,
-      f[2]*scale*sprite.width/box,f[3]*scale*sprite.height/box);
-    activeSpriteKey=key;activeMirror=false;
-  }
-  const artCredits=document.createElement('a');artCredits.href='credits.html';
-  artCredits.textContent='Grafiknachweise';artCredits.target='_blank';artCredits.rel='noopener';
-  Object.assign(artCredits.style,{position:'absolute',right:'14px',bottom:'10px',color:'#302519',font:'12px Georgia,serif'});menu.appendChild(artCredits);
   function showPlayerSprite(key,mirror=false) {
     if(activeSpriteKey===key && activeMirror===mirror) return;
-    sprite.style.imageRendering='auto';spriteContext.imageSmoothingEnabled=true;
     const layout=spriteLayout(key);
     sprite.style.position='absolute';sprite.style.left=`calc(50% + ${layout.offsetX}px)`;
     sprite.style.width=`${layout.width}px`;sprite.style.height=`${layout.height}px`;
@@ -526,7 +483,6 @@
     activeSpriteKey=key;activeMirror=mirror;
   }
   function updateAnimation(moving,dt) {
-    if(playerVariant!=='original'){updateVariantAnimation(moving,dt);return;}
     const key=advanceWalkAnimation(animation,state.player.facing,moving,dt);
     showPlayerSprite(key,moving && state.player.facing==='left');
   }
@@ -733,9 +689,6 @@
     state.starting=true;status.hidden=false;status.textContent='Oberkirch wird geöffnet …';
     try {
       const jobs=[waitForImage(map),waitForImage(castleImage)];
-      for(const [id,cfg]of Object.entries(PLAYER_VARIANTS)){
-        const image=new Image();image.src=cfg.image;variantImages[id]=image;jobs.push(waitForImage(image));
-      }
       for(const direction of ['down','left','right','up']) {
         const image=new Image();image.src=`assets/player/stand-${direction}.png`;
         images[`stand-${direction}`]=image;jobs.push(waitForImage(image));
@@ -758,10 +711,6 @@
   // MEHRSPIELER (LOKAL) deliberately has no click handler, navigation or action.
   addEventListener('keydown',event=>{
     if(!state.playing) return;
-    const variantKeys={Digit0:'original',Numpad0:'original',Digit1:'knight',Numpad1:'knight',Digit2:'crusader',Numpad2:'crusader',Digit3:'ranger',Numpad3:'ranger',Digit4:'guard',Numpad4:'guard',Digit5:'veteran',Numpad5:'veteran'};
-    if(Object.prototype.hasOwnProperty.call(variantKeys,event.code)){
-      event.preventDefault();if(!event.repeat)setPlayerVariant(variantKeys[event.code]);return;
-    }
     if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(event.code)) {
       event.preventDefault();keys.add(event.code);
     }
