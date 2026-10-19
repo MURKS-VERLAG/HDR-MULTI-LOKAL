@@ -25,10 +25,10 @@
                 {x1:7090,x2:7480,side:'north',target:'lautenbach',spawn:{x:7920,y:10000*1365/2048-85}}],
     lautenbach:[{x1:4520,x2:4920,side:'south',target:'winterbach',spawn:{x:5470,y:680}},
                 {x1:7730,x2:8080,side:'south',target:'winterbach',spawn:{x:7310,y:680}},
-                {x1:5020,x2:5330,side:'north',target:'hubacker',spawn:{x:2960,y:10000*1365/2048-85}},
-                {x1:7160,x2:7490,side:'north',target:'hubacker',spawn:{x:5920,y:10000*1365/2048-85}}],
-    hubacker:[{x1:2780,x2:3120,side:'south',target:'lautenbach',spawn:{x:5160,y:680}},
-              {x1:5740,x2:6070,side:'south',target:'lautenbach',spawn:{x:7330,y:680}}]
+                {x1:5000,x2:5500,side:'north',target:'hubacker',spawn:{x:2960,y:10000*1365/2048-85}},
+                {x1:7160,x2:7780,side:'north',target:'hubacker',spawn:{x:5920,y:10000*1365/2048-85}}],
+    hubacker:[{x1:2780,x2:3120,side:'south',target:'lautenbach',spawn:{x:5260,y:680}},
+              {x1:5740,x2:6070,side:'south',target:'lautenbach',spawn:{x:7560,y:680}}]
   });
   function exitRoute(player,dy){return MAP_ROUTES[activeMapId].find(r=>player.x>=r.x1&&player.x<=r.x2&&
     (r.side==='north'?dy<0&&player.y<=-18:dy>0&&player.y>=WORLD.height+PLAYER.height+18));}
