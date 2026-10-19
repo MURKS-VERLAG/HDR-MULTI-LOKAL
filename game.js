@@ -34,7 +34,8 @@
     (r.side==='north'?dy<0&&player.y<=-18:dy>0&&player.y>=WORLD.height+PLAYER.height+18));}
   function footWithinMap(x,y){
     const lanes=MAP_ROUTES[activeMapId].filter(r=>x>=r.x1&&x<=r.x2);
-    const minY=lanes.some(r=>r.side==='north')?-30:PLAYER.height;
+    const rearPassage=activeMapId==='hubacker'&&x>=HUB_PROPS[0].x&&x<=HUB_PROPS[0].x+HUB_PROPS[0].width;
+    const minY=lanes.some(r=>r.side==='north')?-30:rearPassage?PLAYER.height*.65:PLAYER.height;
     const maxY=lanes.some(r=>r.side==='south')?WORLD.height+PLAYER.height+35:WORLD.height-10;
     return x>=PLAYER.width/2&&x<=WORLD.width-PLAYER.width/2&&y>=minY&&y<=maxY;
   }
@@ -374,6 +375,49 @@
     player.x+=tx*along*lo;player.y+=ty*along*lo;return true;
   }
 
+
+  // Hubacker props matched to the supplied 872x580 placement reference.
+  const HUB_PROPS=Object.freeze([{"id":"tower","image":"assets/props/hubacker-tower.png","x":1199.4821556206546,"y":30.533026440829644,"width":2603.5824471240776,"height":4078.56746686072,"gate":[208.6513557735134,273.2039526761808],"backY":66.9828656476397},{"id":"outpost","image":"assets/props/hubacker-outpost.png","x":5958.337195208889,"y":329.2135010174247,"width":2845.034240205221,"height":3089.8316538387758,"gate":[641.1296264377039,236.21468027542377],"backY":0}].map(p=>Object.freeze(p)));
+  const hubRefPoint=([x,y])=>Object.freeze([x/872*10000,y/580*(10000*1365/2048)]);
+  const HUB_PROP_COLLIDERS=Object.freeze([[[183.7156316722641,67.7093692936852],[190.04983533622334,66.9828656476397],[277.9567765077291,66.9828656476397],[284.1320574991159,67.77747901050196],[286.7959042012828,79.4318083324819],[287.2726722190002,81.04373829714537],[291.60142311002124,93.03104845689614],[292.12359760561645,94.66568166049852],[295.453405983325,106.65299182024933],[296.0890966736148,108.33303150172955],[302.0827517534902,120.98630333702206],[303.1043975057417,122.68904625744122],[312.09488012555477,135.00933725496284],[313.0938226388673,136.712080175382],[318.75449688097194,149.3653520106745],[319.0496389871779,151.02268845321584],[317.71771563609445,162.67701777519576],[317.2409476183771,164.10732182834784],[311.58027337627254,173.43078528593182],[311.1035053585552,174.838386100145],[309.77158200747175,186.15973458435403],[309.8623949632275,187.72625807113965],[312.5262416653943,199.38058739311958],[312.5489449043332,200.90170440202738],[310.21807903993727,211.55709121069475],[309.7867175000977,212.89658230809113],[305.79094744684744,221.88706492790422],[305.17795999549656,223.27196250317846],[300.1832474289337,234.59331098738755],[299.6383696943996,236.1825377131121],[296.6415421544619,248.1698478728629],[296.41450976507264,249.7136681207096],[296.08152892730186,260.3690549293769],[295.6501673874623,261.79935898252893],[289.65651230758687,272.1217649534255],[288.6575697942743,273.3931463340051],[280.0000680122321,281.7176672782765],[278.6378736758968,282.69390655265016],[267.31652519168773,288.6875616325255],[265.7272984659632,289.2324393670596],[253.73998830621238,291.2303243936848],[252.05994862473216,291.184917915807],[239.40667678943964,288.52107121364014],[237.9082630194708,287.93078700122817],[228.58479956188685,281.9371319213528],[227.56315380963537,280.983595885918],[221.90247956753083,272.9920557794175],[220.04081397453922,272.4244748059445],[198.3970595194336,272.0914939681736],[196.3310647759917,272.74988789740235],[187.67356299394947,282.7393130305281],[186.42488485230876,283.96528793322983],[176.76844055695395,291.9568280397303],[175.51976241531324,292.8649575972872],[166.862260633271,298.1926510016209],[165.6135824916303,298.39698015207125],[155.9571381962755,296.0661142876752],[154.8900859661462,295.3623138805686],[148.89643088627076,287.3707737740681],[147.8974883729582,286.34912802181657],[139.23998659091598,279.3565304286286],[137.96860521033634,278.4484008710717],[127.97918007721069,272.12176495342555],[126.73050193556998,271.21363539586866],[118.40598099129859,264.2210378026807],[117.45244495586387,263.10857909467353],[111.79177071375933,253.78511563708958],[111.4512221296755,252.5364374954489],[112.11718380521721,243.5459548756358],[112.48043562823996,242.31997997293402],[117.14216735703194,233.32949735312093],[117.77785804732176,232.14892892829698],[122.43958977611372,223.82440798402558],[123.16609342215922,222.6211363202627],[129.15974850203466,213.29767286267875],[129.79543919232447,212.00358824316018],[133.125247570033,202.34714394780536],[133.69282854350604,201.09846580616465],[138.68754111006885,192.44096402412242],[139.232418844603,191.1922858824817],[142.22924638454072,181.53584158712692],[142.6379046854413,180.24175696760838],[145.63473222537903,170.91829351002445],[146.06609376521854,169.71502184626158],[149.39590214292707,161.39050090199018],[149.87267016064445,160.2553389550441],[153.53545937612384,151.9308180107727],[154.0122273938412,150.72754634700982],[157.34203577154975,141.40408288942587],[157.77339731138926,140.15540474778516],[160.77022485132696,131.16492212797206],[161.06536695753294,129.89354074739245],[162.39729030861636,120.2370964520376],[162.51080650331096,118.92030859358013],[162.84378734108185,109.26386429822534],[163.09352296941,107.9697796787068],[166.42333134711853,98.64631622112285],[167.05902203740834,97.44304455735998],[173.05267711728374,89.11852361308858],[173.7564775243903,87.98336166614249],[178.08522841541145,79.65884072187112],[178.72091910570128,78.36475610235257]],[[531.6736483266149,117.79449241271645],[531.0534308622501,118.66279686282708],[535.7836227238053,135.03653792205614],[536.5278836810429,137.26932079376923],[542.7135191923071,153.6430618529983],[543.7802932310145,155.87584472471138],[553.2406769541246,172.24958578394043],[554.6547727728763,174.18466427275843],[565.934461058123,186.19207438285974],[567.5718351640459,187.60617020161135],[580.3069670990018,196.33883209986686],[582.2172368892452,197.4056061385742],[597.4993952111923,204.31896347469313],[599.75698678148,205.21207662337838],[617.5861714904185,211.39771213464272],[618.9010325148716,212.73738185767056],[620.356476164581,226.20023561748116],[622.8373460220399,227.61433143623276],[657.7679936150619,234.891549684779],[660.2736721710954,234.44499311043637],[662.092976733232,220.6182784381985],[663.358220360536,219.4026522080436],[680.0958223321924,215.40018217134315],[682.4030312996292,214.65592121410546],[699.504494183713,207.74256387798653],[701.6628509597023,206.67578983927916],[716.2172874567949,197.94312794102365],[718.1523659456128,196.6034582179958],[731.9790806178506,185.68763084517644],[733.5668373266244,184.0750654378281],[743.0272210497345,171.33993350287216],[744.1684211841657,169.5537072055017],[751.445639432712,156.09085344569112],[752.3883699785464,154.13096625829857],[758.937866402238,138.8488079363514],[759.4092316751552,136.98815554325716],[759.7730925875825,124.98074543315586],[759.2521099175161,123.51703221725508],[751.2471698441152,114.05664849414494],[749.4857522453193,112.79140486684088],[731.656567536381,103.69488205615805],[729.2005063774966,102.45444712742858],[711.007460756131,93.35792431674577],[708.5265908986721,92.11748938801628],[690.3335452773064,83.02096657733345],[687.7286319269745,81.73091425145479],[667.7162817434723,71.90666961591732],[664.9873249002675,70.61661729003868],[644.9749747167652,61.52009447935586],[643.114322323671,60.825450919267354],[635.8371040751248,59.733868181985414],[634.3485821606494,60.15561605775344],[619.7941456635568,67.4328343062997],[617.5613627918439,68.59884313930542],[599.3683171704781,78.42308777484286],[597.135534298765,79.73794879929609],[582.5810978016725,89.19833252240625],[581.1421932843463,90.14106306824064],[574.5926968606548,94.50739401736838],[574.1461402863122,96.29362031473883],[574.1461402863122,118.12527506037762],[573.3522619319253,119.8370752620243],[561.7087127342512,123.11182347387013],[560.0465299297538,123.23586696674309],[547.3113979947977,121.78042331703382],[545.5003629988527,121.43310153698957]],[[500,111],[534,115],[535,123],[500,121]],[[756,120],[790,123],[796,134],[755,130]]].map(poly=>Object.freeze(poly.map(hubRefPoint))));
+  const HUB_TOWER_BACK_Y=66.9828656476397/580*(10000*1365/2048);
+  function hubPropBlocked(x,y){return activeMapId==='hubacker'&&HUB_PROP_COLLIDERS.some(poly=>worldPointInPolygon(x,y,poly));}
+  function hubTowerBehindFoot(x,y){const p=HUB_PROPS[0];return activeMapId==='hubacker'&&x>=p.x&&x<=p.x+p.width&&y>=p.y&&y<HUB_TOWER_BACK_Y;}
+  function hubPropGateZone(index){
+    const p=HUB_PROPS[index],gate=hubRefPoint(p.gate);
+    // Translate the original Map 2 gate zone without rescaling it: identical world size.
+    return CASTLE_GATE_ZONE.map(([x,y])=>[x-CASTLE_GATE.x+gate[0],y-CASTLE_GATE.y+gate[1]]);
+  }
+  function hubPropHighlighted(player,index){return activeMapId==='hubacker'&&worldPointInPolygon(player.x,player.y,HUB_PROP_GATE_ZONES[index]);}
+  function hubPropFirstHit(x,y,dx,dy){
+    let hit=null;
+    for(const polygon of HUB_PROP_COLLIDERS)for(let i=0;i<polygon.length;i++){
+      const [ax,ay]=polygon[i],[bx,by]=polygon[(i+1)%polygon.length],ex=bx-ax,ey=by-ay;
+      const det=dx*ey-dy*ex;if(Math.abs(det)<1e-10)continue;
+      const qx=ax-x,qy=ay-y,t=(qx*ey-qy*ex)/det,u=(qx*dy-qy*dx)/det;
+      if(t>=-1e-8&&t<=1+1e-8&&u>=-1e-8&&u<=1+1e-8&&(!hit||t<hit.t))hit={t:Math.max(0,t),ax,ay,ex,ey};
+    }
+    return hit;
+  }
+  function slideAgainstHubProps(player,dx,dy){
+    if(activeMapId!=='hubacker'||!hubPropBlocked(player.x+dx,player.y+dy))return false;
+    const hit=hubPropFirstHit(player.x,player.y,dx,dy);
+    if(!hit)return true;
+    const len=Math.hypot(hit.ex,hit.ey),tx=hit.ex/len,ty=hit.ey/len;
+    const hx=player.x+dx*hit.t,hy=player.y+dy*hit.t;
+    let nx=-ty,ny=tx;
+    if((player.x-hx)*nx+(player.y-hy)*ny<0){nx=-nx;ny=-ny;}
+    // A sub-pixel clearance prevents re-colliding with the same polygon edge.
+    const safe={x:hx+nx*.45,y:hy+ny*.45};
+    if(canMoveFootTo(safe.x,safe.y)){player.x=safe.x;player.y=safe.y;}
+    const along=(dx*tx+dy*ty)*(1-hit.t);
+    const target={x:player.x+tx*along,y:player.y+ty*along};
+    if(canMoveFootTo(target.x,target.y)){player.x=target.x;player.y=target.y;return true;}
+    // At a second edge, consume the valid portion instead of jumping into a corner.
+    let lo=0,hi=1;for(let i=0;i<9;i++){const t=(lo+hi)/2;if(canMoveFootTo(player.x+tx*along*t,player.y+ty*along*t))lo=t;else hi=t;}
+    player.x+=tx*along*lo;player.y+=ty*along*lo;return true;
+  }
+
   const ICE_PHYSICS=Object.freeze({acceleration:5200,maxSpeed:PLAYER.speed*2,dragMoving:.985,dragNoInput:.975,minSpeed:14,swayAngle:4.6,swayX:8});
   const iceMotion={vx:0,vy:0,phase:0};
   function onWinterIce(x,y){return (activeMapId==='winterbach'&&worldPointInPolygon(x,y,WINTER_ICE))||(activeMapId==='lautenbach'&&worldPointInPolygon(x,y,LAUTEN_ICE));}
@@ -509,7 +553,7 @@
   }
   function winterSnowCoverage(x,y){return activeMapId==='winterbach'?winterSnowParticleCoverageAt(x,y):0;}
   function canMoveFootTo(x,y) {
-    return footWithinMap(x,y) && !isRiverBlockedFootPoint(x,y) && !isStoneStructureBlocked(x,y) && !isCoveredStructureBlocked(x,y) && !winterTerrainBlocked(x,y) && !castleBlockedFoot(x,y) && !lautenTerrainBlocked(x,y) && !hubTerrainBlocked(x,y);
+    return footWithinMap(x,y) && !isRiverBlockedFootPoint(x,y) && !isStoneStructureBlocked(x,y) && !isCoveredStructureBlocked(x,y) && !winterTerrainBlocked(x,y) && !castleBlockedFoot(x,y) && !lautenTerrainBlocked(x,y) && !hubTerrainBlocked(x,y) && !hubPropBlocked(x,y);
   }
   function movePlayer(player,bridge,dx,dy,dt) {
     if(activeMapId==='hubacker'){
@@ -534,6 +578,7 @@
     for(let i=0;i<steps;i++) {
       const hubTrack=engageHubBridge(player,dx);
       if(hubTrack)return moveLautenTrack(player,hubTrack,dx,dy,dt*(steps-i)/steps);
+      if(slideAgainstHubProps(player,sx,sy))continue;
       if(slideAgainstHubPlateau(player,sx,sy))continue;
       const localTrack=engageLautenTrack(player,dx,dy);
       if(localTrack)return moveLautenTrack(player,localTrack,dx,dy,dt*(steps-i)/steps);
@@ -622,8 +667,9 @@
   }
 
   // Geometry and animation can be verified directly in Node without asset stubs.
+  const HUB_PROP_GATE_ZONES=Object.freeze([hubPropGateZone(0),hubPropGateZone(1)]);
   if(typeof module!=='undefined' && module.exports) {
-    module.exports={HUB_RIVER,HUB_PLATEAU_ROCK,HUB_BRIDGE_PATH,HUB_BRIDGE_STRUCTURE,hubTerrainBlocked,engageHubBridge,hubPlateauFirstHit,slideAgainstHubPlateau,LAUTEN_RIVER,LAUTEN_ICE,LAUTEN_VINE_PATH,LAUTEN_BRIDGE_PATH,LAUTEN_TREES,lautenTerrainBlocked,engageLautenTrack,moveLautenTrack,CASTLE_GATE_ZONE_LOCAL,CASTLE_GATE_ZONE,CASTLE_TRAVEL_ENVELOPE_LOCAL,castleSnowfallCoverageAt,winterSnowParticleCoverageAt,WINTER_CASTLE,CASTLE_COLLIDERS,CASTLE_COMPOUND_LOCAL,CASTLE_ROCKS_LOCAL,CASTLE_GATE,castleGroundOverridesMountain,castleLocal,castleBlockedFoot,castleBehindFoot,castleGateHighlighted,castleFirstHit,slideAgainstCastle,CASTLE_SNOW_GRID,CASTLE_ART_ALPHA_GRID,sampleWeatherGrid,winterSnowBaseAt,winterSnowCoverageAt,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
+    module.exports={HUB_PROPS,HUB_PROP_COLLIDERS,HUB_TOWER_BACK_Y,HUB_PROP_GATE_ZONES,hubPropBlocked,hubTowerBehindFoot,hubPropHighlighted,slideAgainstHubProps,HUB_RIVER,HUB_PLATEAU_ROCK,HUB_BRIDGE_PATH,HUB_BRIDGE_STRUCTURE,hubTerrainBlocked,engageHubBridge,hubPlateauFirstHit,slideAgainstHubPlateau,LAUTEN_RIVER,LAUTEN_ICE,LAUTEN_VINE_PATH,LAUTEN_BRIDGE_PATH,LAUTEN_TREES,lautenTerrainBlocked,engageLautenTrack,moveLautenTrack,CASTLE_GATE_ZONE_LOCAL,CASTLE_GATE_ZONE,CASTLE_TRAVEL_ENVELOPE_LOCAL,castleSnowfallCoverageAt,winterSnowParticleCoverageAt,WINTER_CASTLE,CASTLE_COLLIDERS,CASTLE_COMPOUND_LOCAL,CASTLE_ROCKS_LOCAL,CASTLE_GATE,castleGroundOverridesMountain,castleLocal,castleBlockedFoot,castleBehindFoot,castleGateHighlighted,castleFirstHit,slideAgainstCastle,CASTLE_SNOW_GRID,CASTLE_ART_ALPHA_GRID,sampleWeatherGrid,winterSnowBaseAt,winterSnowCoverageAt,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
     return;
   }
 
@@ -663,6 +709,12 @@
     showPlayerSprite(key,moving && state.player.facing==='left');
   }
 
+  const hubPropImages=HUB_PROPS.map(p=>{
+    const image=new Image();image.src=p.image;image.alt='';image.draggable=false;
+    Object.assign(image.style,{position:'absolute',left:`${p.x}px`,top:`${p.y}px`,width:`${p.width}px`,height:`${p.height}px`,zIndex:'9',pointerEvents:'none',userSelect:'none',display:'none',transition:'filter 140ms ease-out'});
+    world.appendChild(image);return image;
+  });
+  const hubPropGlow=[false,false];
   const castleImage=new Image();castleImage.src='assets/props/winterbach-tower.png';castleImage.alt='';castleImage.draggable=false;
   Object.assign(castleImage.style,{position:'absolute',left:`${WINTER_CASTLE.x}px`,top:`${WINTER_CASTLE.y}px`,width:`${WINTER_CASTLE.width}px`,height:`${WINTER_CASTLE.height}px`,zIndex:'9',pointerEvents:'none',userSelect:'none',display:'none',transition:'filter 140ms ease-out'});
   world.appendChild(castleImage);
@@ -835,7 +887,15 @@
       castleIsHighlighted=highlight;
       castleImage.style.filter=highlight?'drop-shadow(0 0 9px #fff) drop-shadow(0 0 18px rgba(255,255,255,.95)) brightness(1.12)':'';
     }
-    playerEl.style.zIndex=castleBehindFoot(state.player.x,state.player.y)?'8':'10';
+    for(let i=0;i<hubPropImages.length;i++){
+      const image=hubPropImages[i];image.style.display=activeMapId==='hubacker'?'block':'none';
+      const highlighted=hubPropHighlighted(state.player,i);
+      if(highlighted!==hubPropGlow[i]){
+        hubPropGlow[i]=highlighted;
+        image.style.filter=highlighted?(i===0?'drop-shadow(0 0 3px #898989) drop-shadow(0 0 9px #111) drop-shadow(0 0 18px rgba(25,25,25,.98)) brightness(.92)':'drop-shadow(0 0 5px #8cff71) drop-shadow(0 0 15px #39d62f) brightness(1.08)'):'';
+      }
+    }
+    playerEl.style.zIndex=(castleBehindFoot(state.player.x,state.player.y)||hubTowerBehindFoot(state.player.x,state.player.y))?'8':'10';
     weatherCanvas.style.display=activeMapId==='winterbach'?'block':'none';
   }
   function face(dx,dy) {
@@ -871,7 +931,7 @@
     if(state.starting || state.playing) return;
     state.starting=true;status.hidden=false;status.textContent='Oberkirch wird geöffnet …';
     try {
-      const jobs=[waitForImage(map),waitForImage(castleImage)];
+      const jobs=[waitForImage(map),waitForImage(castleImage),...hubPropImages.map(waitForImage)];
       for(const direction of ['down','left','right','up']) {
         const image=new Image();image.src=`assets/player/stand-${direction}.png`;
         images[`stand-${direction}`]=image;jobs.push(waitForImage(image));
