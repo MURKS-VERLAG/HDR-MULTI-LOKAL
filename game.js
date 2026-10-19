@@ -386,7 +386,7 @@
   function hubPropGateZone(index){
     const p=HUB_PROPS[index],gate=hubRefPoint(p.gate);
     // Translate the original Map 2 gate zone without rescaling it: identical world size.
-    return CASTLE_GATE_ZONE.map(([x,y])=>[x-CASTLE_GATE.x+gate[0],y-CASTLE_GATE.y+gate[1]]);
+    return CASTLE_GATE_ZONE.map(([x,y])=>[(x-CASTLE_GATE.x)/.85+gate[0],(y-CASTLE_GATE.y)/.85+gate[1]]);
   }
   function hubPropHighlighted(player,index){return activeMapId==='hubacker'&&worldPointInPolygon(player.x,player.y,HUB_PROP_GATE_ZONES[index]);}
   function hubPropFirstHit(x,y,dx,dy){
@@ -448,7 +448,7 @@
     if(activeMapId!=='oberkirch'||!worldPointInPolygon(x,y,COVERED_STRUCTURE))return false;
     return closestPointOnBridgePath(x,y,COVERED_BRIDGE_PATH).distance>BRIDGE_CONFIG.coveredCorridor;
   }
-  const WINTER_CASTLE=Object.freeze({x:1059.6494915121968,y:605.0907042154288,width:4336.72663106489,height:2891.1510873765938,sourceWidth:1536,sourceHeight:1024,splitY:550});
+  const WINTER_CASTLE=Object.freeze({x:1709.7349777118654,y:923.5690661842566,width:3686.2176364051566,height:2457.478424270105,sourceWidth:1536,sourceHeight:1024,splitY:550});
   // Ground footprints are independent of the sprite's front/back depth split.
   const CASTLE_COMPOUND_LOCAL=Object.freeze([[271,452],[278,425],[298,405],[330,390],[373,379],[423,372],[477,368],[531,368],[586,373],[640,384],[699,401],[756,416],[812,433],[866,451],[918,475],[963,501],[999,534],[1027,568],[1045,602],[1057,635],[1035,660],[999,704],[969,701],[938,706],[894,725],[839,744],[774,748],[704,743],[629,725],[558,704],[479,674],[405,644],[345,609],[304,567],[280,516]]);
   const CASTLE_ROCKS_LOCAL=Object.freeze([[[169.124,606.613],[199.225,606.613],[291.843,724.701],[333.521,766.379],[368.252,791.849],[453.924,831.211],[588.22,868.258],[625.267,872.889],[659.999,902.99],[669.26,916.883],[669.26,930.775],[657.683,942.353],[629.898,951.614],[481.709,951.614],[358.991,898.359],[257.111,842.788],[201.54,784.902],[166.809,710.808],[136.708,615.875],[143.654,608.928]],[[277.95,490.841],[268.688,490.841],[133.235,610.086],[200.383,610.086],[301.104,562.619],[305.735,562.619]]]);
@@ -711,13 +711,49 @@
 
   const hubPropImages=HUB_PROPS.map(p=>{
     const image=new Image();image.src=p.image;image.alt='';image.draggable=false;
-    Object.assign(image.style,{position:'absolute',left:`${p.x}px`,top:`${p.y}px`,width:`${p.width}px`,height:`${p.height}px`,zIndex:'9',pointerEvents:'none',userSelect:'none',display:'none',transition:'filter 140ms ease-out'});
+    Object.assign(image.style,{position:'absolute',left:`${p.x}px`,top:`${p.y}px`,width:`${p.width}px`,height:`${p.height}px`,zIndex:'9',pointerEvents:'none',userSelect:'none',display:'none'});
     world.appendChild(image);return image;
   });
   const hubPropGlow=[false,false];
   const castleImage=new Image();castleImage.src='assets/props/winterbach-tower.png';castleImage.alt='';castleImage.draggable=false;
-  Object.assign(castleImage.style,{position:'absolute',left:`${WINTER_CASTLE.x}px`,top:`${WINTER_CASTLE.y}px`,width:`${WINTER_CASTLE.width}px`,height:`${WINTER_CASTLE.height}px`,zIndex:'9',pointerEvents:'none',userSelect:'none',display:'none',transition:'filter 140ms ease-out'});
+  Object.assign(castleImage.style,{position:'absolute',left:`${WINTER_CASTLE.x}px`,top:`${WINTER_CASTLE.y}px`,width:`${WINTER_CASTLE.width}px`,height:`${WINTER_CASTLE.height}px`,zIndex:'9',pointerEvents:'none',userSelect:'none',display:'none'});
   world.appendChild(castleImage);
+  // Stable, fixed-size heraldry and cached raster glow. No filter changes during play.
+  const buildingPresentation=[
+    {map:'winterbach',prop:WINTER_CASTLE,image:castleImage,title:'TURRIS LAPIDEA',crest:'assets/ui/crest-turris-lapidea.png',fill:'#fff',outline:'#111',glow:'#fff',brightness:1.12},
+    {map:'hubacker',prop:HUB_PROPS[0],image:hubPropImages[0],title:'NUWENSTEIN',crest:'assets/ui/crest-nuwenstein.png',fill:'#080808',outline:'#d6ae42',glow:'#333',brightness:.92},
+    {map:'hubacker',prop:HUB_PROPS[1],image:hubPropImages[1],title:'HUWENEST',crest:'assets/ui/crest-huwenest.png',fill:'#259238',outline:'#d7b58a',glow:'#4cef3a',brightness:1.08}
+  ].map(def=>{
+    const p=def.prop,crest=new Image();crest.src=def.crest;crest.alt=def.title;crest.draggable=false;
+    const label=document.createElement('div');label.setAttribute('aria-hidden','true');
+    const crestHeight=Math.min(880,p.height*.38),fontSize=140,labelHeight=crestHeight+190;
+    Object.assign(label.style,{position:'absolute',left:`${p.x+p.width*.5}px`,top:`${p.y+p.height*.5-labelHeight*.5}px`,width:'1250px',height:`${labelHeight}px`,marginLeft:'-625px',display:'none',opacity:'0',transition:'opacity 140ms ease-out',willChange:'opacity',zIndex:'14',pointerEvents:'none',textAlign:'center'});
+    const title=document.createElement('div');title.textContent=def.title;
+    Object.assign(title.style,{height:'190px',font:`bold ${fontSize}px/1.15 Georgia,serif`,whiteSpace:'nowrap',letterSpacing:'3px',color:def.fill,webkitTextStroke:`9px ${def.outline}`,paintOrder:'stroke fill',textShadow:`0 0 18px ${def.outline},0 0 28px ${def.outline}`});
+    Object.assign(crest.style,{display:'block',width:'100%',height:`${crestHeight}px`,objectFit:'contain',pointerEvents:'none'});
+    label.appendChild(title);label.appendChild(crest);world.appendChild(label);
+    return {...def,crest,label,titleNode:title,glowLayer:null,active:false,visible:false};
+  });
+  function prepareBuildingGlows(){
+    for(const entry of buildingPresentation){
+      if(entry.glowLayer)continue;
+      const image=entry.image,p=entry.prop,artWidth=Math.min(1200,image.naturalWidth),ratio=artWidth/image.naturalWidth;
+      const artHeight=Math.round(image.naturalHeight*ratio),pad=64;
+      const layer=document.createElement('canvas');layer.width=artWidth+pad*2;layer.height=artHeight+pad*2;layer.setAttribute('aria-hidden','true');
+      const ctx=layer.getContext('2d');
+      for(const blur of [5,13,22]){ctx.shadowColor=entry.glow;ctx.shadowBlur=blur;ctx.shadowOffsetX=0;ctx.shadowOffsetY=0;ctx.drawImage(image,pad,pad,artWidth,artHeight);}
+      ctx.shadowBlur=0;ctx.filter=`brightness(${entry.brightness})`;ctx.drawImage(image,pad,pad,artWidth,artHeight);ctx.filter='none';
+      const px=p.width/artWidth,py=p.height/artHeight;
+      Object.assign(layer.style,{position:'absolute',left:`${p.x-pad*px}px`,top:`${p.y-pad*py}px`,width:`${p.width+2*pad*px}px`,height:`${p.height+2*pad*py}px`,zIndex:'9',pointerEvents:'none',display:'none',opacity:'0',transition:'opacity 140ms ease-out',willChange:'opacity',transform:'translateZ(0)'});
+      world.appendChild(layer);entry.glowLayer=layer;
+    }
+  }
+  function updateBuildingPresentation(entry,active){
+    const visible=activeMapId===entry.map;
+    if(visible!==entry.visible){entry.visible=visible;entry.label.style.display=visible?'block':'none';if(entry.glowLayer)entry.glowLayer.style.display=visible?'block':'none';}
+    const next=visible&&active;
+    if(next!==entry.active){entry.active=next;entry.label.style.opacity=next?'1':'0';entry.label.setAttribute('aria-hidden',next?'false':'true');if(entry.glowLayer)entry.glowLayer.style.opacity=next?'1':'0';}
+  }
   let castleIsHighlighted=false;
   const weatherCanvas=document.createElement('canvas');weatherCanvas.setAttribute('aria-hidden','true');
   Object.assign(weatherCanvas.style,{position:'absolute',inset:'0',width:'100%',height:'100%',pointerEvents:'none',zIndex:'30',display:'none'});game.appendChild(weatherCanvas);
@@ -885,16 +921,19 @@
     const highlight=castleGateHighlighted(state.player);
     if(highlight!==castleIsHighlighted){
       castleIsHighlighted=highlight;
-      castleImage.style.filter=highlight?'drop-shadow(0 0 9px #fff) drop-shadow(0 0 18px rgba(255,255,255,.95)) brightness(1.12)':'';
+      // Cached glow and label are updated below; the source image never changes filters.
     }
     for(let i=0;i<hubPropImages.length;i++){
       const image=hubPropImages[i];image.style.display=activeMapId==='hubacker'?'block':'none';
       const highlighted=hubPropHighlighted(state.player,i);
       if(highlighted!==hubPropGlow[i]){
         hubPropGlow[i]=highlighted;
-        image.style.filter=highlighted?(i===0?'drop-shadow(0 0 3px #898989) drop-shadow(0 0 9px #111) drop-shadow(0 0 18px rgba(25,25,25,.98)) brightness(.92)':'drop-shadow(0 0 5px #8cff71) drop-shadow(0 0 15px #39d62f) brightness(1.08)'):'';
+        // Opacity-only presentation: no live full-image filter rasterization.
       }
     }
+    updateBuildingPresentation(buildingPresentation[0],highlight);
+    updateBuildingPresentation(buildingPresentation[1],hubPropGlow[0]);
+    updateBuildingPresentation(buildingPresentation[2],hubPropGlow[1]);
     playerEl.style.zIndex=(castleBehindFoot(state.player.x,state.player.y)||hubTowerBehindFoot(state.player.x,state.player.y))?'8':'10';
     weatherCanvas.style.display=activeMapId==='winterbach'?'block':'none';
   }
@@ -931,7 +970,7 @@
     if(state.starting || state.playing) return;
     state.starting=true;status.hidden=false;status.textContent='Oberkirch wird geöffnet …';
     try {
-      const jobs=[waitForImage(map),waitForImage(castleImage),...hubPropImages.map(waitForImage)];
+      const jobs=[waitForImage(map),waitForImage(castleImage),...hubPropImages.map(waitForImage),...buildingPresentation.map(e=>waitForImage(e.crest))];
       for(const direction of ['down','left','right','up']) {
         const image=new Image();image.src=`assets/player/stand-${direction}.png`;
         images[`stand-${direction}`]=image;jobs.push(waitForImage(image));
@@ -943,6 +982,7 @@
       }
       // All frames stay resident and decoded before control is enabled.
       await Promise.all(jobs);
+      prepareBuildingGlows();
       updateAnimation(false,0);
       menu.hidden=true;game.hidden=false;state.playing=true;keys.clear();
       camera.x=state.player.x;camera.y=state.player.y-PLAYER.height*.5;
