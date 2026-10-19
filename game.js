@@ -10,7 +10,8 @@
   const MAPS=Object.freeze({
     oberkirch:Object.freeze({id:'oberkirch',width:10000,height:6667,image:'assets/maps/oberkirch-12k.webp',name:'Oberkirch'}),
     winterbach:Object.freeze({id:'winterbach',width:10000,height:6006,image:'assets/maps/winterbach-12k.webp',name:'Winterbach'}),
-    lautenbach:Object.freeze({id:'lautenbach',width:10000,height:10000*1365/2048,image:'assets/maps/lautenbach.webp',name:'Lautenbach'})
+    lautenbach:Object.freeze({id:'lautenbach',width:10000,height:10000*1365/2048,image:'assets/maps/lautenbach.webp',name:'Lautenbach'}),
+    hubacker:Object.freeze({id:'hubacker',width:10000,height:10000*1365/2048,image:'assets/maps/hubacker.webp',name:'Hubacker'})
   });
   let activeMapId='oberkirch';
   function setActiveMap(id){if(!MAPS[id])throw new Error('Unknown map');activeMapId=id;}
@@ -23,7 +24,11 @@
                 {x1:5270,x2:5670,side:'north',target:'lautenbach',spawn:{x:4780,y:10000*1365/2048-85}},
                 {x1:7090,x2:7480,side:'north',target:'lautenbach',spawn:{x:7920,y:10000*1365/2048-85}}],
     lautenbach:[{x1:4520,x2:4920,side:'south',target:'winterbach',spawn:{x:5470,y:680}},
-                {x1:7730,x2:8080,side:'south',target:'winterbach',spawn:{x:7310,y:680}}]
+                {x1:7730,x2:8080,side:'south',target:'winterbach',spawn:{x:7310,y:680}},
+                {x1:5020,x2:5330,side:'north',target:'hubacker',spawn:{x:2960,y:10000*1365/2048-85}},
+                {x1:7160,x2:7490,side:'north',target:'hubacker',spawn:{x:5920,y:10000*1365/2048-85}}],
+    hubacker:[{x1:2780,x2:3120,side:'south',target:'lautenbach',spawn:{x:5160,y:680}},
+              {x1:5740,x2:6070,side:'south',target:'lautenbach',spawn:{x:7330,y:680}}]
   });
   function exitRoute(player,dy){return MAP_ROUTES[activeMapId].find(r=>player.x>=r.x1&&player.x<=r.x2&&
     (r.side==='north'?dy<0&&player.y<=-18:dy>0&&player.y>=WORLD.height+PLAYER.height+18));}
@@ -321,6 +326,54 @@
     return track;
   }
 
+
+  // Hubacker: footline collisions traced on the supplied map, without changing old maps.
+  const hubPoint=([x,y])=>Object.freeze([x/1800*10000,y/1200*(10000*1365/2048)]);
+  const HUB_RIVER=Object.freeze([[853,0],[849,34],[857,69],[851,103],[853,133],[861,164],[861,198],[860,229],[847,262],[846,296],[847,328],[837,363],[842,396],[847,428],[843,463],[849,493],[854,526],[841,558],[848,591],[847,625],[848,659],[843,695],[840,731],[832,765],[823,801],[831,835],[836,867],[832,901],[819,936],[805,970],[813,1004],[795,1040],[775,1073],[764,1105],[748,1137],[749,1168],[716,1200],[847,1200],[839,1168],[849,1137],[863,1105],[877,1073],[896,1040],[899,1004],[903,970],[914,936],[921,901],[921,867],[916,835],[918,801],[922,765],[923,731],[927,695],[928,659],[916,625],[924,591],[919,558],[911,526],[920,493],[916,463],[909,428],[914,396],[920,363],[927,328],[923,296],[924,262],[925,229],[927,198],[932,164],[934,133],[930,103],[918,69],[921,34],[922,0]].map(hubPoint));
+  const HUB_PLATEAU_ROCK=Object.freeze([[1398,862],[1407.25,861.0],[1425.75,859.0],[1443.75,854.75],[1461.25,848.25],[1479.25,840.5],[1497.75,831.5],[1515.5,821.5],[1532.5,810.5],[1548.75,798.25],[1564.25,784.75],[1579.0,771.0],[1593.0,757.0],[1605.75,742.25],[1617.25,726.75],[1627.75,710.0],[1637.25,692.0],[1645.75,673.0],[1653.25,653.0],[1660.5,632.0],[1667.5,610.0],[1674.0,587.75],[1680.0,565.25],[1683.75,543.0],[1685.25,521.0],[1685.5,499.25],[1684.5,477.75],[1682.75,456.75],[1680.25,436.25],[1678.25,415.5],[1676.75,394.5],[1674.75,374.25],[1672.25,354.75],[1669.5,335.5],[1666.5,316.5],[1662.25,298.5],[1656.75,281.5],[1650.0,265.75],[1642.0,251.25],[1632.75,237.75],[1622.25,225.25],[1610.25,213.75],[1596.75,203.25],[1584.0,193.25],[1572.0,183.75],[1558.5,174.5],[1543.5,165.5],[1527.25,156.5],[1509.75,147.5],[1492.25,139.5],[1474.75,132.5],[1456.0,126.0],[1436.0,120.0],[1415.0,114.75],[1393.0,110.25],[1370.25,106.75],[1346.75,104.25],[1322.25,102.75],[1296.75,102.25],[1272.75,102.5],[1250.25,103.5],[1228.0,105.75],[1206.0,109.25],[1185.5,113.75],[1166.5,119.25],[1148.5,125.5],[1131.5,132.5],[1114.0,140.5],[1096.0,149.5],[1080.0,160.0],[1066.0,172.0],[1053.75,184.5],[1043.25,197.5],[1034.0,212.5],[1026.0,229.5],[1019.25,247.75],[1013.75,267.25],[1010.0,287.5],[1008.0,308.5],[1007.0,329.75],[1007.0,351.25],[1007.25,372.75],[1007.75,394.25],[1009.5,415.75],[1012.5,437.25],[1015.75,459.0],[1019.25,481.0],[1023.25,502.75],[1027.75,524.25],[1033.25,545.75],[1039.75,567.25],[1047.5,588.0],[1056.5,608.0],[1066.5,627.5],[1077.5,646.5],[1089.5,665.5],[1102.5,684.5],[1116.25,702.75],[1130.75,720.25],[1146.0,736.5],[1162.0,751.5],[1178.5,766.0],[1195.5,780.0],[1213.5,793.25],[1232.5,805.75],[1251.5,817.0],[1270.5,827.0],[1288.5,835.25],[1305.5,841.75],[1323.5,847.5],[1342.5,852.5],[1352,855],[1352,768],[1342.75,765.75],[1324.25,761.25],[1305.75,756.0],[1287.25,750.0],[1268.5,742.75],[1249.5,734.25],[1231.5,725.25],[1214.5,715.75],[1198.0,705.75],[1182.0,695.25],[1167.0,683.25],[1153.0,669.75],[1140.5,656.0],[1129.5,642.0],[1119.25,627.5],[1109.75,612.5],[1100.75,597.25],[1092.25,581.75],[1084.25,565.25],[1076.75,547.75],[1070.25,529.75],[1064.75,511.25],[1060.0,492.25],[1056.0,472.75],[1052.25,453.0],[1048.75,433.0],[1046.0,413.25],[1044.0,393.75],[1042.0,374.0],[1040.0,354.0],[1039.0,334.25],[1039.0,314.75],[1039.75,295.5],[1041.25,276.5],[1044.25,258.5],[1048.75,241.5],[1054.5,226.0],[1061.5,212.0],[1070.5,199.75],[1081.5,189.25],[1094.25,179.75],[1108.75,171.25],[1124.0,163.5],[1140.0,156.5],[1156.75,150.0],[1174.25,144.0],[1192.75,139.0],[1212.25,135.0],[1232.5,131.75],[1253.5,129.25],[1274.75,127.5],[1296.25,126.5],[1317.75,126.75],[1339.25,128.25],[1360.5,130.75],[1381.5,134.25],[1401.5,138.5],[1420.5,143.5],[1439.25,149.25],[1457.75,155.75],[1475.5,163.0],[1492.5,171.0],[1509.0,179.25],[1525.0,187.75],[1540.0,197.5],[1554.0,208.5],[1567.75,219.75],[1581.25,231.25],[1593.5,243.5],[1604.5,256.5],[1613.5,270.0],[1620.5,284.0],[1626.5,299.0],[1631.5,315.0],[1635.75,332.25],[1639.25,350.75],[1642.5,369.75],[1645.5,389.25],[1648.0,408.75],[1650.0,428.25],[1652.25,447.75],[1654.75,467.25],[1656.5,486.75],[1657.5,506.25],[1656.75,525.5],[1654.25,544.5],[1650.5,563.25],[1645.5,581.75],[1639.25,599.5],[1631.75,616.5],[1623.5,632.75],[1614.5,648.25],[1604.5,663.25],[1593.5,677.75],[1581.0,691.5],[1567.0,704.5],[1552.5,716.25],[1537.5,726.75],[1522.0,736.0],[1506.0,744.0],[1489.5,751.0],[1472.5,757.0],[1455.25,762.0],[1437.75,766.0],[1421.25,769.25],[1405.75,771.75],[1398,773]].map(hubPoint));
+  const HUB_BRIDGE_PATH=Object.freeze([[754,741],[766,741],[810,740],[870,740],[930,741],[989,741],[1000,742]].map(hubPoint));
+  const HUB_BRIDGE_STRUCTURE=Object.freeze([[763,704],[990,704],[990,783],[763,783]].map(hubPoint));
+  function hubTerrainBlocked(x,y){
+    return activeMapId==='hubacker'&&(worldPointInPolygon(x,y,HUB_RIVER)||worldPointInPolygon(x,y,HUB_PLATEAU_ROCK)||worldPointInPolygon(x,y,HUB_BRIDGE_STRUCTURE));
+  }
+  function engageHubBridge(player,dx){
+    if(activeMapId!=='hubacker'||!dx)return null;
+    const start=HUB_BRIDGE_PATH[0],end=HUB_BRIDGE_PATH.at(-1);
+    if(dx>0&&Math.hypot(player.x-start[0],player.y-start[1])<110)
+      return {id:'hubBridge',path:HUB_BRIDGE_PATH,distance:0,snapping:true};
+    if(dx<0&&Math.hypot(player.x-end[0],player.y-end[1])<110)
+      return {id:'hubBridge',path:HUB_BRIDGE_PATH,distance:getPathMetrics(HUB_BRIDGE_PATH).total,snapping:true};
+    return null;
+  }
+  function hubPlateauFirstHit(x,y,dx,dy){
+    let hit=null;const polygon=HUB_PLATEAU_ROCK;
+    for(let i=0;i<polygon.length;i++){
+      const [ax,ay]=polygon[i],[bx,by]=polygon[(i+1)%polygon.length],ex=bx-ax,ey=by-ay;
+      const det=dx*ey-dy*ex;if(Math.abs(det)<1e-10)continue;
+      const qx=ax-x,qy=ay-y,t=(qx*ey-qy*ex)/det,u=(qx*dy-qy*dx)/det;
+      if(t>=-1e-8&&t<=1+1e-8&&u>=-1e-8&&u<=1+1e-8&&(!hit||t<hit.t))hit={t:Math.max(0,t),ax,ay,ex,ey};
+    }
+    return hit;
+  }
+  function slideAgainstHubPlateau(player,dx,dy){
+    if(activeMapId!=='hubacker'||!worldPointInPolygon(player.x+dx,player.y+dy,HUB_PLATEAU_ROCK))return false;
+    const hit=hubPlateauFirstHit(player.x,player.y,dx,dy);
+    if(!hit)return true;
+    const len=Math.hypot(hit.ex,hit.ey),tx=hit.ex/len,ty=hit.ey/len;
+    const hx=player.x+dx*hit.t,hy=player.y+dy*hit.t;
+    let nx=-ty,ny=tx;
+    if((player.x-hx)*nx+(player.y-hy)*ny<0){nx=-nx;ny=-ny;}
+    // A sub-pixel clearance prevents re-colliding with the same polygon edge.
+    const safe={x:hx+nx*.45,y:hy+ny*.45};
+    if(canMoveFootTo(safe.x,safe.y)){player.x=safe.x;player.y=safe.y;}
+    const along=(dx*tx+dy*ty)*(1-hit.t);
+    const target={x:player.x+tx*along,y:player.y+ty*along};
+    if(canMoveFootTo(target.x,target.y)){player.x=target.x;player.y=target.y;return true;}
+    // At a second edge, consume the valid portion instead of jumping into a corner.
+    let lo=0,hi=1;for(let i=0;i<9;i++){const t=(lo+hi)/2;if(canMoveFootTo(player.x+tx*along*t,player.y+ty*along*t))lo=t;else hi=t;}
+    player.x+=tx*along*lo;player.y+=ty*along*lo;return true;
+  }
+
   const ICE_PHYSICS=Object.freeze({acceleration:5200,maxSpeed:PLAYER.speed*2,dragMoving:.985,dragNoInput:.975,minSpeed:14,swayAngle:4.6,swayX:8});
   const iceMotion={vx:0,vy:0,phase:0};
   function onWinterIce(x,y){return (activeMapId==='winterbach'&&worldPointInPolygon(x,y,WINTER_ICE))||(activeMapId==='lautenbach'&&worldPointInPolygon(x,y,LAUTEN_ICE));}
@@ -456,9 +509,13 @@
   }
   function winterSnowCoverage(x,y){return activeMapId==='winterbach'?winterSnowParticleCoverageAt(x,y):0;}
   function canMoveFootTo(x,y) {
-    return footWithinMap(x,y) && !isRiverBlockedFootPoint(x,y) && !isStoneStructureBlocked(x,y) && !isCoveredStructureBlocked(x,y) && !winterTerrainBlocked(x,y) && !castleBlockedFoot(x,y) && !lautenTerrainBlocked(x,y);
+    return footWithinMap(x,y) && !isRiverBlockedFootPoint(x,y) && !isStoneStructureBlocked(x,y) && !isCoveredStructureBlocked(x,y) && !winterTerrainBlocked(x,y) && !castleBlockedFoot(x,y) && !lautenTerrainBlocked(x,y) && !hubTerrainBlocked(x,y);
   }
   function movePlayer(player,bridge,dx,dy,dt) {
+    if(activeMapId==='hubacker'){
+      bridge=bridge||engageHubBridge(player,dx);
+      if(bridge)return moveLautenTrack(player,bridge,dx,dy,dt);
+    }
     if(activeMapId==='lautenbach'){
       bridge=bridge||engageLautenTrack(player,dx,dy);
       if(bridge)return moveLautenTrack(player,bridge,dx,dy,dt);
@@ -475,6 +532,9 @@
     const steps=Math.max(1,Math.ceil(distance/6));
     const sx=dx/length*distance/steps,sy=dy/length*distance/steps;
     for(let i=0;i<steps;i++) {
+      const hubTrack=engageHubBridge(player,dx);
+      if(hubTrack)return moveLautenTrack(player,hubTrack,dx,dy,dt*(steps-i)/steps);
+      if(slideAgainstHubPlateau(player,sx,sy))continue;
       const localTrack=engageLautenTrack(player,dx,dy);
       if(localTrack)return moveLautenTrack(player,localTrack,dx,dy,dt*(steps-i)/steps);
       const stone=engageStoneBridge(player,dx,dy);
@@ -563,7 +623,7 @@
 
   // Geometry and animation can be verified directly in Node without asset stubs.
   if(typeof module!=='undefined' && module.exports) {
-    module.exports={LAUTEN_RIVER,LAUTEN_ICE,LAUTEN_VINE_PATH,LAUTEN_BRIDGE_PATH,LAUTEN_TREES,lautenTerrainBlocked,engageLautenTrack,moveLautenTrack,CASTLE_GATE_ZONE_LOCAL,CASTLE_GATE_ZONE,CASTLE_TRAVEL_ENVELOPE_LOCAL,castleSnowfallCoverageAt,winterSnowParticleCoverageAt,WINTER_CASTLE,CASTLE_COLLIDERS,CASTLE_COMPOUND_LOCAL,CASTLE_ROCKS_LOCAL,CASTLE_GATE,castleGroundOverridesMountain,castleLocal,castleBlockedFoot,castleBehindFoot,castleGateHighlighted,castleFirstHit,slideAgainstCastle,CASTLE_SNOW_GRID,CASTLE_ART_ALPHA_GRID,sampleWeatherGrid,winterSnowBaseAt,winterSnowCoverageAt,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
+    module.exports={HUB_RIVER,HUB_PLATEAU_ROCK,HUB_BRIDGE_PATH,HUB_BRIDGE_STRUCTURE,hubTerrainBlocked,engageHubBridge,hubPlateauFirstHit,slideAgainstHubPlateau,LAUTEN_RIVER,LAUTEN_ICE,LAUTEN_VINE_PATH,LAUTEN_BRIDGE_PATH,LAUTEN_TREES,lautenTerrainBlocked,engageLautenTrack,moveLautenTrack,CASTLE_GATE_ZONE_LOCAL,CASTLE_GATE_ZONE,CASTLE_TRAVEL_ENVELOPE_LOCAL,castleSnowfallCoverageAt,winterSnowParticleCoverageAt,WINTER_CASTLE,CASTLE_COLLIDERS,CASTLE_COMPOUND_LOCAL,CASTLE_ROCKS_LOCAL,CASTLE_GATE,castleGroundOverridesMountain,castleLocal,castleBlockedFoot,castleBehindFoot,castleGateHighlighted,castleFirstHit,slideAgainstCastle,CASTLE_SNOW_GRID,CASTLE_ART_ALPHA_GRID,sampleWeatherGrid,winterSnowBaseAt,winterSnowCoverageAt,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
     return;
   }
 
