@@ -49,6 +49,16 @@
     westmap:[{side:'east',y1:5125,y2:6255,target:'hubacker',spawn:{x:1450,y:680}},
              {x1:9400,x2:10300,side:'south',target:'hubacker',spawn:{x:1450,y:680}}]
   });
+  const TELEPORT_MAP_ORDER=Object.freeze(['oberkirch','winterbach','lautenbach','hubacker','ramsbach','westmap','oppenau','sendelbach','lierbach','allerheiligen']);
+  const TELEPORT_DESTINATIONS=Object.freeze(TELEPORT_MAP_ORDER.map(id=>{
+    if(id==='oberkirch')return Object.freeze({id,name:MAPS[id].name,spawn:Object.freeze({x:4950,y:3750}),facing:'down'});
+    const arrival=Object.values(MAP_ROUTES).flat().find(r=>r.target===id&&!r.autoOppDescent&&!r.autoLierDescent);
+    if(!arrival)throw new Error('Missing teleport waypoint: '+id);
+    const facing=arrival.side==='north'||arrival.trigger==='lierTrail'?'up':arrival.side==='east'?'right':arrival.side==='west'?'left':'down';
+    return Object.freeze({id,name:MAPS[id].name,spawn:Object.freeze({...arrival.spawn}),facing});
+  }));
+  function getTeleportRoute(id){const p=TELEPORT_DESTINATIONS.find(p=>p.id===id);return p?{target:p.id,spawn:{...p.spawn},side:'teleport',facing:p.facing}:null;}
+
   const HUB_WEST_APPROACH=Object.freeze([[151,-6],[204,-6],[220,25],[240,50],[278,71],[320,82],[378,87],[378,143],[308,139],[250,129],[207,105],[180,70],[159,35]].map(([x,y])=>[x/1800*10000,y/1200*(10000*1365/2048)]));
   function exitRoute(player,dy,dx=0){if(activeMapId==='lierbach'&&player.lierTrailExit&&dy<0)return MAP_ROUTES.lierbach.find(r=>r.trigger==='lierTrail');return MAP_ROUTES[activeMapId].find(r=>r.side==='east'
     ?dx>0&&player.y>=r.y1&&player.y<=r.y2&&player.x>=WORLD.width+PLAYER.width/2+18
@@ -652,6 +662,29 @@
     if(dir<0&&track.distance<=.001){player.y+=20;player.trailScale=1;return null;}
     return track;
   }
+  const LIER_PERSPECTIVE_LINES=Object.freeze({"upper":{"a":-0.9233065285432038,"b":518.9831921354214,"x1":365,"x2":562},"lower":{"a":-0.9296390107977852,"b":762.9790774210688,"x1":485,"x2":597}});
+  const LIER_MIN_AREA_SCALE=.35;
+  // Right bank only: the separate yellow trail on the left retains its existing vanish-to-zero rule.
+  function lierRightBankX(y){
+    let right=-Infinity;
+    for(let i=0;i<LIER_RIVER.length;i++){
+      const a=LIER_RIVER[i],b=LIER_RIVER[(i+1)%LIER_RIVER.length];
+      if(a[1]===b[1])continue;
+      if(y<Math.min(a[1],b[1])||y>Math.max(a[1],b[1]))continue;
+      const x=a[0]+(b[0]-a[0])*(y-a[1])/(b[1]-a[1]);right=Math.max(right,x);
+    }
+    return right;
+  }
+  function lierAreaPerspective(x,y){
+    if(activeMapId!=='lierbach'||x<=lierRightBankX(y))return 1;
+    const rx=x/10000*1235,ry=y/(10000*1365/2048)*824;
+    const lower=LIER_PERSPECTIVE_LINES.lower.a*rx+LIER_PERSPECTIVE_LINES.lower.b;
+    const upper=LIER_PERSPECTIVE_LINES.upper.a*rx+LIER_PERSPECTIVE_LINES.upper.b;
+    const t=clamp((lower-ry)/(lower-upper),0,1);
+    return 1-(1-LIER_MIN_AREA_SCALE)*t;
+  }
+  function lierRenderedScale(player){return activeMapId==='lierbach'?(player.trailScale??1)*lierAreaPerspective(player.x,player.y):1;}
+
   function lierTerrainBlocked(x,y){return activeMapId==='lierbach'&&(worldPointInPolygon(x,y,LIER_RIVER)||worldPointInPolygon(x,y,LIER_BRIDGE_STRUCTURE)||worldPointInPolygon(x,y,LIER_TRAIL_GATE)||LIER_ROCKS.some(p=>worldPointInPolygon(x,y,p)));}
   function engageLierBridge(player,dx){
     if(activeMapId!=='lierbach'||!dx)return null;
@@ -1063,7 +1096,7 @@
   function oppGateHighlighted(player){return activeMapId==='oppenau'&&worldPointInPolygon(player.x,player.y,OPP_GATE_ZONE);}
 
   if(typeof module!=='undefined' && module.exports) {
-    module.exports={LIER_ROCKS,LIER_FORESTS,LIER_TRAIL_ENTRIES,LIER_TRAIL_COMMON,LIER_TRAIL_PATHS,LIER_TRAIL_GATE,makeLierTrail,engageLierTrail,moveLierTrail,lierTrailScale,OPP_BARRIERS,OPP_NORTH_PATH,OPP_CITY_GATE,LIER_RIVER,LIER_BRIDGE_PATH,LIER_BRIDGE_STRUCTURE,engageOppNorth,moveOppNorth,lierTerrainBlocked,engageLierBridge,SEND_PROPS,SEND_COLLIDERS,SEND_LOCAL_COLLIDERS,SEND_MAP_POND,SEND_DEPTH_LAYERS,sendLocal,sendTerrainBlocked,sendBehindFoot,slideAgainstSend,OPP_GATE_ANCHOR,OPP_GATE_ZONE,oppGateHighlighted,OPP_CASTLE,OPP_WATER,OPP_ROCKS,OPP_FORESTS,OPP_STRUCTURES,OPP_WOOD_PATH,OPP_STONE_PATH,oppCastleBlocked,oppTerrainBlocked,engageOppBridge,moveOppBridge,slideAgainstOpp,BADBERG_PATH,BADBERG_CAPTURE,SULZ_FORESTS,SULZ_GATE_ANCHORS,SULZ_GATE_ZONES,engageBadberg,moveBadberg,sulzHighlighted,WEST_CLIFFS,WEST_WATER,WEST_PROPS,HUB_WEST_APPROACH,westPropBlocked,westTerrainBlocked,slideAgainstWest,RAMS_FORTS,RAMS_FORT_PATHS,RAMS_FORT_GATE_ZONES,ramsFortBlocked,ramsFortBehindFoot,ramsFortRearY,ramsFortOpaque,ramsFortHighlighted,engageRamsFort,moveRamsFort,RAMS_RIVER,RAMS_LEFT_ROCK,RAMS_RIGHT_SURFACE,RAMS_BRIDGE_PATH,RAMS_BRIDGE_STRUCTURE,ramsTerrainBlocked,engageRamsBridge,slideAgainstRams,HUB_PROPS,HUB_PROP_COLLIDERS,HUB_TOWER_BACK_Y,HUB_PROP_GATE_ZONES,hubPropBlocked,hubTowerBehindFoot,hubPropHighlighted,slideAgainstHubProps,HUB_RIVER,HUB_PLATEAU_ROCK,HUB_BRIDGE_PATH,HUB_BRIDGE_STRUCTURE,hubTerrainBlocked,engageHubBridge,hubPlateauFirstHit,slideAgainstHubPlateau,LAUTEN_RIVER,LAUTEN_ICE,LAUTEN_VINE_PATH,LAUTEN_BRIDGE_PATH,LAUTEN_TREES,lautenTerrainBlocked,engageLautenTrack,moveLautenTrack,CASTLE_GATE_ZONE_LOCAL,CASTLE_GATE_ZONE,CASTLE_TRAVEL_ENVELOPE_LOCAL,castleSnowfallCoverageAt,winterSnowParticleCoverageAt,WINTER_CASTLE,CASTLE_COLLIDERS,CASTLE_COMPOUND_LOCAL,CASTLE_ROCKS_LOCAL,CASTLE_GATE,castleGroundOverridesMountain,castleLocal,castleBlockedFoot,castleBehindFoot,castleGateHighlighted,castleFirstHit,slideAgainstCastle,CASTLE_SNOW_GRID,CASTLE_ART_ALPHA_GRID,sampleWeatherGrid,winterSnowBaseAt,winterSnowCoverageAt,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
+    module.exports={TELEPORT_DESTINATIONS,TELEPORT_MAP_ORDER,getTeleportRoute,LIER_PERSPECTIVE_LINES,LIER_MIN_AREA_SCALE,lierRightBankX,lierAreaPerspective,lierRenderedScale,LIER_ROCKS,LIER_FORESTS,LIER_TRAIL_ENTRIES,LIER_TRAIL_COMMON,LIER_TRAIL_PATHS,LIER_TRAIL_GATE,makeLierTrail,engageLierTrail,moveLierTrail,lierTrailScale,OPP_BARRIERS,OPP_NORTH_PATH,OPP_CITY_GATE,LIER_RIVER,LIER_BRIDGE_PATH,LIER_BRIDGE_STRUCTURE,engageOppNorth,moveOppNorth,lierTerrainBlocked,engageLierBridge,SEND_PROPS,SEND_COLLIDERS,SEND_LOCAL_COLLIDERS,SEND_MAP_POND,SEND_DEPTH_LAYERS,sendLocal,sendTerrainBlocked,sendBehindFoot,slideAgainstSend,OPP_GATE_ANCHOR,OPP_GATE_ZONE,oppGateHighlighted,OPP_CASTLE,OPP_WATER,OPP_ROCKS,OPP_FORESTS,OPP_STRUCTURES,OPP_WOOD_PATH,OPP_STONE_PATH,oppCastleBlocked,oppTerrainBlocked,engageOppBridge,moveOppBridge,slideAgainstOpp,BADBERG_PATH,BADBERG_CAPTURE,SULZ_FORESTS,SULZ_GATE_ANCHORS,SULZ_GATE_ZONES,engageBadberg,moveBadberg,sulzHighlighted,WEST_CLIFFS,WEST_WATER,WEST_PROPS,HUB_WEST_APPROACH,westPropBlocked,westTerrainBlocked,slideAgainstWest,RAMS_FORTS,RAMS_FORT_PATHS,RAMS_FORT_GATE_ZONES,ramsFortBlocked,ramsFortBehindFoot,ramsFortRearY,ramsFortOpaque,ramsFortHighlighted,engageRamsFort,moveRamsFort,RAMS_RIVER,RAMS_LEFT_ROCK,RAMS_RIGHT_SURFACE,RAMS_BRIDGE_PATH,RAMS_BRIDGE_STRUCTURE,ramsTerrainBlocked,engageRamsBridge,slideAgainstRams,HUB_PROPS,HUB_PROP_COLLIDERS,HUB_TOWER_BACK_Y,HUB_PROP_GATE_ZONES,hubPropBlocked,hubTowerBehindFoot,hubPropHighlighted,slideAgainstHubProps,HUB_RIVER,HUB_PLATEAU_ROCK,HUB_BRIDGE_PATH,HUB_BRIDGE_STRUCTURE,hubTerrainBlocked,engageHubBridge,hubPlateauFirstHit,slideAgainstHubPlateau,LAUTEN_RIVER,LAUTEN_ICE,LAUTEN_VINE_PATH,LAUTEN_BRIDGE_PATH,LAUTEN_TREES,lautenTerrainBlocked,engageLautenTrack,moveLautenTrack,CASTLE_GATE_ZONE_LOCAL,CASTLE_GATE_ZONE,CASTLE_TRAVEL_ENVELOPE_LOCAL,castleSnowfallCoverageAt,winterSnowParticleCoverageAt,WINTER_CASTLE,CASTLE_COLLIDERS,CASTLE_COMPOUND_LOCAL,CASTLE_ROCKS_LOCAL,CASTLE_GATE,castleGroundOverridesMountain,castleLocal,castleBlockedFoot,castleBehindFoot,castleGateHighlighted,castleFirstHit,slideAgainstCastle,CASTLE_SNOW_GRID,CASTLE_ART_ALPHA_GRID,sampleWeatherGrid,winterSnowBaseAt,winterSnowCoverageAt,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
     return;
   }
 
@@ -1114,6 +1147,41 @@
       ctx.globalCompositeOperation='source-in';ctx.drawImage(sendImages[layer.prop],0,0,1536,1024);ctx.globalCompositeOperation='source-over';sendFrontLayers.push(canvas);
     }
   }
+  const teleportState={open:false};
+  const teleportStyle=document.createElement('style');teleportStyle.id='teleport-style';
+  teleportStyle.textContent=`
+    #teleport-overlay{position:absolute;inset:0;z-index:4000;display:none;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;background:rgba(0,0,0,.18)}
+    #teleport-panel{width:min(660px,100%);max-height:85vh;overflow:auto;box-sizing:border-box;padding:25px;border:2px solid #caa34d;border-radius:8px;background:rgba(13,15,19,.86);box-shadow:0 0 25px #d9b45b38,inset 0 0 22px #0008;color:#f6e6bd;font-family:Georgia,serif}
+    #teleport-title{margin:0 0 21px;text-align:center;color:#e8c576;font-size:25px;letter-spacing:3px}
+    #teleport-places{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    #teleport-panel .teleport-place{box-sizing:border-box;min-height:51px;padding:12px 8px;border:1px solid #a5894d;border-radius:3px;background:rgba(0,0,0,.22);color:#f5e8c9;font:bold 17px Georgia,serif;letter-spacing:1px;cursor:inherit;transition:background 140ms,border-color 140ms,box-shadow 140ms,color 140ms}
+    #teleport-panel .teleport-place:hover,#teleport-panel .teleport-place:focus-visible{background:rgba(218,172,61,.2);border-color:#ffe098;box-shadow:0 0 17px #e9bd656b,inset 0 0 11px #edc16b38;color:#fff4d8;outline:1px solid #ffe098}
+    #teleport-hint{margin:18px 0 0;text-align:center;font-size:14px;color:#cfb98b}
+    @media(max-width:420px){#teleport-panel{padding:18px}#teleport-places{grid-template-columns:1fr}#teleport-panel .teleport-place{min-height:42px;padding:9px}}
+    @media(prefers-reduced-motion:reduce){#teleport-panel .teleport-place{transition:none}}
+  `;document.head.appendChild(teleportStyle);
+  const teleportOverlay=document.createElement('div');teleportOverlay.id='teleport-overlay';teleportOverlay.setAttribute('aria-hidden','true');
+  const teleportPanel=document.createElement('section');teleportPanel.id='teleport-panel';teleportPanel.setAttribute('role','dialog');teleportPanel.setAttribute('aria-modal','true');teleportPanel.setAttribute('aria-labelledby','teleport-title');
+  const teleportTitle=document.createElement('h2');teleportTitle.id='teleport-title';teleportTitle.textContent='TELEPORTATION';
+  const teleportPlaces=document.createElement('div');teleportPlaces.id='teleport-places';
+  const teleportButtons=TELEPORT_DESTINATIONS.map(p=>{
+    const button=document.createElement('button');button.type='button';button.className='teleport-place';button.textContent=p.name.toLocaleUpperCase('de-DE');button.setAttribute('data-map',p.id);
+    button.addEventListener('click',()=>teleportTo(p.id));teleportPlaces.appendChild(button);return button;
+  });
+  const teleportHint=document.createElement('p');teleportHint.id='teleport-hint';teleportHint.textContent='T · SCHLIESSEN';
+  teleportPanel.appendChild(teleportTitle);teleportPanel.appendChild(teleportPlaces);teleportPanel.appendChild(teleportHint);teleportOverlay.appendChild(teleportPanel);game.appendChild(teleportOverlay);
+  function setTeleportOpen(open){
+    teleportState.open=Boolean(open);teleportOverlay.style.display=open?'flex':'none';teleportOverlay.setAttribute('aria-hidden',open?'false':'true');
+    keys.clear();clearIceMotion();stopTreeLeaves();if(state.playing)updateAnimation(false,0);
+    if(open)teleportButtons[0].focus({preventScroll:true});else if(state.playing)game.focus({preventScroll:true});
+  }
+  function toggleTeleport(){if(state.playing&&!state.transitioning)setTeleportOpen(!teleportState.open);}
+  async function teleportTo(id){
+    if(!state.playing||state.transitioning)return;
+    const route=getTeleportRoute(id);if(!route)return;
+    setTeleportOpen(false);await switchMap(route);
+  }
+
   const oppGateImage=new Image();oppGateImage.src=OPP_CITY_GATE.image;oppGateImage.alt='';oppGateImage.style.visibility='hidden';
   const oppCastleImage=new Image();oppCastleImage.src=OPP_CASTLE.image;oppCastleImage.alt='';
   Object.assign(oppCastleImage.style,{visibility:'hidden',pointerEvents:'none'});
@@ -1368,7 +1436,7 @@
       if(route.autoLierDescent){state.bridge=makeLierTrail(1,true);state.autoTravel='lierDescent';state.player.trailScale=0;}
       if(route.autoOppDescent){state.bridge={id:'oppNorth',path:OPP_NORTH_PATH,distance:getPathMetrics(OPP_NORTH_PATH).total,snapping:false};state.autoTravel='oppDescent';}
       state.player.x=route.spawn.x;state.player.y=route.spawn.y;
-      state.player.facing=(route.side==='north'||route.trigger==='lierTrail')?'up':'down';updateAnimation(false,0);
+      state.player.facing=route.facing||((route.side==='north'||route.trigger==='lierTrail')?'up':'down');updateAnimation(false,0);
       game.setAttribute('aria-label',next.name);map.alt=next.name;
       world.style.width=`${WORLD.width}px`;world.style.height=`${WORLD.height}px`;
       camera.x=state.player.x;camera.y=state.player.y-PLAYER.height*.5;
@@ -1388,7 +1456,7 @@
     Object.assign(camera,c);
     // One camera transform is applied to map and props together in renderScene.
     playerEl.style.left=`${state.player.x}px`;playerEl.style.top=`${state.player.y}px`;
-    const perspective=activeMapId==='lierbach'?(state.player.trailScale??1):1;
+    const perspective=lierRenderedScale(state.player);
     playerEl.style.transformOrigin='50% 100%';playerEl.style.transform=`translate(-50%, -100%) scale(${perspective})`;
     playerEl.style.opacity=playerInsideCoveredBridgeInterior(state.player,state.bridge)?'0':'1';
     castleImage.style.display=activeMapId==='winterbach'?'block':'none';
@@ -1427,7 +1495,7 @@
   }
   function frame(now) {
     const dt=lastTime?clamp((now-lastTime)/1000,0,.05):0;lastTime=now;
-    if(state.playing && !state.transitioning && !document.hidden) {
+    if(state.playing && !state.transitioning && !teleportState.open && !document.hidden) {
       const automatic=Boolean(state.autoTravel);
       const dx=automatic?0:Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft'));
       const dy=automatic?1:Number(keys.has('KeyS')||keys.has('ArrowDown'))-Number(keys.has('KeyW')||keys.has('ArrowUp'));
@@ -1478,6 +1546,8 @@
   // MEHRSPIELER (LOKAL) deliberately has no click handler, navigation or action.
   addEventListener('keydown',event=>{
     if(!state.playing) return;
+    if(event.code==='KeyT'){event.preventDefault();if(!event.repeat)toggleTeleport();return;}
+    if(teleportState.open||state.transitioning)return;
     if(state.autoTravel)return;
     if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(event.code)) {
       event.preventDefault();keys.add(event.code);
