@@ -1189,9 +1189,9 @@
     return {width:1024*scale,height:1536*scale,bottom:-(1536-p.bottom)*scale,visibleHeight:TARGET_VISIBLE_HEIGHT,offsetX:(512-p.anchorX)*scale};
   }
   function attackPoseAt(direction,elapsed,duration=ATTACK_TIMING.duration){
-    const t=Math.max(0,elapsed)%duration;
+    const total=Math.max(0,elapsed),t=total%duration;
     let index=-1;for(let i=0;i<4;i++)if(t>=ATTACK_TIMING.peaks[i])index=i;
-    if(index<0||t>=duration-ATTACK_TIMING.recovery)return {key:`stand-${direction}`,mirror:false,index:-1};
+    if(index<0){if(total<duration)return {key:`stand-${direction}`,mirror:false,index:-1};index=3;}
     const [frame,mirror]=ATTACK_SEQUENCES[direction][index];return {key:`attack-${String(frame).padStart(2,'0')}`,mirror,index};
   }
   function spriteLayout(key) {
@@ -1204,6 +1204,12 @@
   const HELMET_POSES=Object.freeze({"stand-down":{"asset":"front","x":520,"y":292,"flip":false,"anchor":[580,1320],"cut":[[290,-320],[750,-320],[750,202],[670,262],[520,270],[360,262],[290,202]]},"stand-right":{"asset":"side-stand","x":550,"y":315,"flip":false,"anchor":[800,1300],"cut":[[290,-320],[770,-320],[770,215],[660,310],[480,320],[320,235]]},"stand-left":{"asset":"side-stand","x":474,"y":315,"flip":true,"anchor":[800,1300],"cut":[[734,-320],[254,-320],[254,215],[364,310],[544,320],[704,235]]},"stand-up":{"asset":"back","x":524,"y":520,"flip":false,"anchor":[580,1140],"cut":[[320,-320],[700,-320],[700,430],[635,505],[510,532],[385,505],[320,430]]},"walk-01":{"asset":"front","x":512,"y":320,"flip":false,"anchor":[580,1320],"cut":[[282,-320],[742,-320],[742,230],[662,282],[512,292],[352,282],[282,230]]},"walk-02":{"asset":"front","x":505,"y":320,"flip":false,"anchor":[580,1320],"cut":[[275,-320],[735,-320],[735,230],[655,282],[505,292],[345,282],[275,230]]},"walk-03":{"asset":"front","x":505,"y":320,"flip":false,"anchor":[580,1320],"cut":[[275,-320],[735,-320],[735,230],[655,282],[505,292],[345,282],[275,230]]},"walk-04":{"asset":"back","x":510,"y":285,"flip":false,"anchor":[580,1140],"cut":[[320,-320],[700,-320],[700,195],[635,270],[510,297],[385,270],[320,195]]},"walk-05":{"asset":"back","x":546,"y":285,"flip":false,"anchor":[580,1140],"cut":[[315,-320],[695,-320],[695,195],[630,270],[505,297],[380,270],[315,195]]},"walk-06":{"asset":"back","x":510,"y":285,"flip":false,"anchor":[580,1140],"cut":[[320,-320],[700,-320],[700,195],[635,270],[510,297],[385,270],[320,195]]},"walk-07":{"asset":"back","x":546,"y":285,"flip":false,"anchor":[580,1140],"cut":[[310,-320],[690,-320],[690,195],[625,270],[500,297],[375,270],[310,195]]},"walk-08":{"asset":"side-walk","x":645,"y":300,"flip":false,"anchor":[800,1160],"cut":[[375,-320],[855,-320],[855,200],[800,275],[790,370],[745,360],[730,345],[710,320],[565,305],[405,220]]},"walk-09":{"asset":"side-walk","x":645,"y":300,"flip":false,"anchor":[800,1160],"cut":[[375,-320],[855,-320],[855,200],[800,275],[790,370],[745,360],[730,345],[710,320],[565,305],[405,220]]},"walk-10":{"asset":"side-walk","x":645,"y":300,"flip":false,"anchor":[800,1160],"cut":[[375,-320],[855,-320],[855,200],[800,275],[790,370],[745,360],[730,345],[710,320],[565,305],[405,220]]},"walk-11":{"asset":"side-walk","x":645,"y":300,"flip":false,"anchor":[800,1160],"cut":[[375,-320],[855,-320],[855,200],[800,275],[790,370],[745,360],[730,345],[710,320],[565,305],[405,220]]}});
   const HELMET_FILES=Object.freeze({front:'assets/player/helmet/front.png',back:'assets/player/helmet/back.png','side-stand':'assets/player/helmet/side-stand.png','side-walk':'assets/player/helmet/side-walk.png'});
   const HUD_LAYOUT=Object.freeze({"status":{"width":2018,"height":270,"crop":[15,220,2033,490],"fills":[{"image":"assets/ui/hud-status-mask-health.png","bounds":[362,54,364,60]},{"image":"assets/ui/hud-status-mask-blessing.png","bounds":[362,181,364,60]}]},"experience":{"width":2003,"height":619,"crop":[24,32,2027,651],"fills":[{"image":"assets/ui/hud-experience-mask-0.png","bounds":[62,85,352,457]},{"image":"assets/ui/hud-experience-mask-1.png","bounds":[570,85,352,457]},{"image":"assets/ui/hud-experience-mask-2.png","bounds":[1079,85,353,457]},{"image":"assets/ui/hud-experience-mask-3.png","bounds":[1588,85,353,457]}]}});
+  function hudScreenAreas(viewWidth,viewHeight){
+    const height=.85*Math.min(viewHeight*.13,viewWidth*.09,150);
+    const leftWidth=height*HUD_LAYOUT.status.width/HUD_LAYOUT.status.height,rightWidth=height*HUD_LAYOUT.experience.width/HUD_LAYOUT.experience.height;
+    return {left:{x:0,y:viewHeight-height,width:leftWidth,height},right:{x:viewWidth-rightWidth,y:viewHeight-height,width:rightWidth,height}};
+  }
+  function hudFootCovered(x,y,area){return x>=area.x&&x<=area.x+area.width&&y>=area.y&&y<=area.y+area.height;}
   function hudValues(stats){
     const ratio=(value,max)=>Number.isFinite(value)&&Number.isFinite(max)&&max>0?Math.min(1,Math.max(0,value/max)):0;
     const experience=ratio(stats.experience,stats.experienceToNextLevel);
@@ -1243,7 +1249,7 @@
   function oppGateHighlighted(player){return activeMapId==='oppenau'&&worldPointInPolygon(player.x,player.y,OPP_GATE_ZONE);}
 
   if(typeof module!=='undefined' && module.exports) {
-    module.exports={ATTACK_TIMING,ATTACK_SEQUENCES,ATTACK_BOUNDS,attackSpriteLayout,attackPoseAt,HUD_LAYOUT,hudValues,INVENTORY_LAYOUT,inventoryCellRect,HELMET_POSES,HELMET_FILES,HELMET_PADDING,helmetLayout,SEND_MILL_WHEEL,sendWheelWorldTransform,advanceSendWheel,ALLER_MONASTERY_GATE,ALLER_MONASTERY_GATE_ZONE,allerMonasteryHighlighted,ALLER_EDGE_SEALS,ALLER_BRIDGE_PATHS,ALLER_BRIDGE_GUARDS,ALLER_NEW_FORESTS,ALLER_CAVE,ALLER_CAVE_COLLIDERS,ALLER_CAVE_GATE,ALLER_CAVE_GATE_ZONE,allerCaveHighlighted,allerLandingOpen,engageAllerTrack,moveAllerTrack,allerTrackDirection,LIER_CAPTURE_FUNNEL,ALLER_MONASTERY,ALLER_PINK_Y,ALLER_BARRIERS,ALLER_FORESTS,ALLER_BUILDING_COLLIDERS,ALLER_STAIR_GATE,ALLER_STAIR_PATH,allerBehindFoot,allerTerrainBlocked,engageAllerStair,moveAllerStair,slideAgainstAller,lierTrailSpeedFactor,lierAreaSpeedFactor,TELEPORT_DESTINATIONS,TELEPORT_MAP_ORDER,getTeleportRoute,LIER_PERSPECTIVE_LINES,LIER_MIN_AREA_SCALE,lierRightBankX,lierAreaPerspective,lierRenderedScale,LIER_ROCKS,LIER_FORESTS,LIER_TRAIL_ENTRIES,LIER_TRAIL_COMMON,LIER_TRAIL_PATHS,LIER_TRAIL_GATE,makeLierTrail,engageLierTrail,moveLierTrail,lierTrailScale,OPP_BARRIERS,OPP_NORTH_PATH,OPP_CITY_GATE,LIER_RIVER,LIER_BRIDGE_PATH,LIER_BRIDGE_STRUCTURE,engageOppNorth,moveOppNorth,lierTerrainBlocked,engageLierBridge,SEND_PROPS,SEND_COLLIDERS,SEND_LOCAL_COLLIDERS,SEND_MAP_POND,SEND_DEPTH_LAYERS,sendLocal,sendTerrainBlocked,sendBehindFoot,slideAgainstSend,OPP_GATE_ANCHOR,OPP_GATE_ZONE,oppGateHighlighted,OPP_CASTLE,OPP_WATER,OPP_ROCKS,OPP_FORESTS,OPP_STRUCTURES,OPP_WOOD_PATH,OPP_STONE_PATH,oppCastleBlocked,oppTerrainBlocked,engageOppBridge,moveOppBridge,slideAgainstOpp,BADBERG_PATH,BADBERG_CAPTURE,SULZ_FORESTS,SULZ_GATE_ANCHORS,SULZ_GATE_ZONES,engageBadberg,moveBadberg,sulzHighlighted,WEST_CLIFFS,WEST_WATER,WEST_PROPS,HUB_WEST_APPROACH,westPropBlocked,westTerrainBlocked,slideAgainstWest,RAMS_FORTS,RAMS_FORT_PATHS,RAMS_FORT_GATE_ZONES,ramsFortBlocked,ramsFortBehindFoot,ramsFortRearY,ramsFortOpaque,ramsFortHighlighted,engageRamsFort,moveRamsFort,RAMS_RIVER,RAMS_LEFT_ROCK,RAMS_RIGHT_SURFACE,RAMS_BRIDGE_PATH,RAMS_BRIDGE_STRUCTURE,ramsTerrainBlocked,engageRamsBridge,slideAgainstRams,HUB_PROPS,HUB_PROP_COLLIDERS,HUB_TOWER_BACK_Y,HUB_PROP_GATE_ZONES,hubPropBlocked,hubTowerBehindFoot,hubPropHighlighted,slideAgainstHubProps,HUB_RIVER,HUB_PLATEAU_ROCK,HUB_BRIDGE_PATH,HUB_BRIDGE_STRUCTURE,hubTerrainBlocked,engageHubBridge,hubPlateauFirstHit,slideAgainstHubPlateau,LAUTEN_RIVER,LAUTEN_ICE,LAUTEN_VINE_PATH,LAUTEN_BRIDGE_PATH,LAUTEN_TREES,lautenTerrainBlocked,engageLautenTrack,moveLautenTrack,CASTLE_GATE_ZONE_LOCAL,CASTLE_GATE_ZONE,CASTLE_TRAVEL_ENVELOPE_LOCAL,castleSnowfallCoverageAt,winterSnowParticleCoverageAt,WINTER_CASTLE,CASTLE_COLLIDERS,CASTLE_COMPOUND_LOCAL,CASTLE_ROCKS_LOCAL,CASTLE_GATE,castleGroundOverridesMountain,castleLocal,castleBlockedFoot,castleBehindFoot,castleGateHighlighted,castleFirstHit,slideAgainstCastle,CASTLE_SNOW_GRID,CASTLE_ART_ALPHA_GRID,sampleWeatherGrid,winterSnowBaseAt,winterSnowCoverageAt,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
+    module.exports={hudScreenAreas,hudFootCovered,ATTACK_TIMING,ATTACK_SEQUENCES,ATTACK_BOUNDS,attackSpriteLayout,attackPoseAt,HUD_LAYOUT,hudValues,INVENTORY_LAYOUT,inventoryCellRect,HELMET_POSES,HELMET_FILES,HELMET_PADDING,helmetLayout,SEND_MILL_WHEEL,sendWheelWorldTransform,advanceSendWheel,ALLER_MONASTERY_GATE,ALLER_MONASTERY_GATE_ZONE,allerMonasteryHighlighted,ALLER_EDGE_SEALS,ALLER_BRIDGE_PATHS,ALLER_BRIDGE_GUARDS,ALLER_NEW_FORESTS,ALLER_CAVE,ALLER_CAVE_COLLIDERS,ALLER_CAVE_GATE,ALLER_CAVE_GATE_ZONE,allerCaveHighlighted,allerLandingOpen,engageAllerTrack,moveAllerTrack,allerTrackDirection,LIER_CAPTURE_FUNNEL,ALLER_MONASTERY,ALLER_PINK_Y,ALLER_BARRIERS,ALLER_FORESTS,ALLER_BUILDING_COLLIDERS,ALLER_STAIR_GATE,ALLER_STAIR_PATH,allerBehindFoot,allerTerrainBlocked,engageAllerStair,moveAllerStair,slideAgainstAller,lierTrailSpeedFactor,lierAreaSpeedFactor,TELEPORT_DESTINATIONS,TELEPORT_MAP_ORDER,getTeleportRoute,LIER_PERSPECTIVE_LINES,LIER_MIN_AREA_SCALE,lierRightBankX,lierAreaPerspective,lierRenderedScale,LIER_ROCKS,LIER_FORESTS,LIER_TRAIL_ENTRIES,LIER_TRAIL_COMMON,LIER_TRAIL_PATHS,LIER_TRAIL_GATE,makeLierTrail,engageLierTrail,moveLierTrail,lierTrailScale,OPP_BARRIERS,OPP_NORTH_PATH,OPP_CITY_GATE,LIER_RIVER,LIER_BRIDGE_PATH,LIER_BRIDGE_STRUCTURE,engageOppNorth,moveOppNorth,lierTerrainBlocked,engageLierBridge,SEND_PROPS,SEND_COLLIDERS,SEND_LOCAL_COLLIDERS,SEND_MAP_POND,SEND_DEPTH_LAYERS,sendLocal,sendTerrainBlocked,sendBehindFoot,slideAgainstSend,OPP_GATE_ANCHOR,OPP_GATE_ZONE,oppGateHighlighted,OPP_CASTLE,OPP_WATER,OPP_ROCKS,OPP_FORESTS,OPP_STRUCTURES,OPP_WOOD_PATH,OPP_STONE_PATH,oppCastleBlocked,oppTerrainBlocked,engageOppBridge,moveOppBridge,slideAgainstOpp,BADBERG_PATH,BADBERG_CAPTURE,SULZ_FORESTS,SULZ_GATE_ANCHORS,SULZ_GATE_ZONES,engageBadberg,moveBadberg,sulzHighlighted,WEST_CLIFFS,WEST_WATER,WEST_PROPS,HUB_WEST_APPROACH,westPropBlocked,westTerrainBlocked,slideAgainstWest,RAMS_FORTS,RAMS_FORT_PATHS,RAMS_FORT_GATE_ZONES,ramsFortBlocked,ramsFortBehindFoot,ramsFortRearY,ramsFortOpaque,ramsFortHighlighted,engageRamsFort,moveRamsFort,RAMS_RIVER,RAMS_LEFT_ROCK,RAMS_RIGHT_SURFACE,RAMS_BRIDGE_PATH,RAMS_BRIDGE_STRUCTURE,ramsTerrainBlocked,engageRamsBridge,slideAgainstRams,HUB_PROPS,HUB_PROP_COLLIDERS,HUB_TOWER_BACK_Y,HUB_PROP_GATE_ZONES,hubPropBlocked,hubTowerBehindFoot,hubPropHighlighted,slideAgainstHubProps,HUB_RIVER,HUB_PLATEAU_ROCK,HUB_BRIDGE_PATH,HUB_BRIDGE_STRUCTURE,hubTerrainBlocked,engageHubBridge,hubPlateauFirstHit,slideAgainstHubPlateau,LAUTEN_RIVER,LAUTEN_ICE,LAUTEN_VINE_PATH,LAUTEN_BRIDGE_PATH,LAUTEN_TREES,lautenTerrainBlocked,engageLautenTrack,moveLautenTrack,CASTLE_GATE_ZONE_LOCAL,CASTLE_GATE_ZONE,CASTLE_TRAVEL_ENVELOPE_LOCAL,castleSnowfallCoverageAt,winterSnowParticleCoverageAt,WINTER_CASTLE,CASTLE_COLLIDERS,CASTLE_COMPOUND_LOCAL,CASTLE_ROCKS_LOCAL,CASTLE_GATE,castleGroundOverridesMountain,castleLocal,castleBlockedFoot,castleBehindFoot,castleGateHighlighted,castleFirstHit,slideAgainstCastle,CASTLE_SNOW_GRID,CASTLE_ART_ALPHA_GRID,sampleWeatherGrid,winterSnowBaseAt,winterSnowCoverageAt,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
     return;
   }
 
@@ -1333,7 +1339,7 @@
   }
   function startAttack(){
     if(attack.active||helmetEquipped||!state.playing||state.transitioning||state.autoTravel||inventoryState.open||teleportState.open||document.hidden)return;
-    clearIceMotion();stopTreeLeaves();attack.active=true;attack.facing=state.player.facing;attack.audioStarted=false;
+    clearIceMotion();stopTreeLeaves();attack.active=true;attack.facing=state.player.facing;attack.audioStarted=false;attack.fallbackLastTime=0;attack.fallbackLooped=false;
     const generation=++attack.generation;showPlayerSprite(`stand-${attack.facing}`,false);sprite.style.transform='translateX(-50%) scaleX(1)';
     if(attackAudioContext&&attackAudioBuffer){
       const begin=()=>{
@@ -1349,8 +1355,13 @@
   function updateAttack(){
     if(!attack.active)return;
     if(helmetEquipped){stopAttack();return;}
-    const elapsed=attack.audioStarted?(attack.source?Math.max(0,attackAudioContext.currentTime-attack.startedAt):attackFallback.currentTime):0;
+    let elapsed=attack.audioStarted?(attack.source?Math.max(0,attackAudioContext.currentTime-attack.startedAt):attackFallback.currentTime):0;
     const duration=attack.source?attackAudioBuffer.duration:(Number.isFinite(attackFallback.duration)&&attackFallback.duration>0?attackFallback.duration:ATTACK_TIMING.duration);
+    // HTMLAudio.currentTime resets at a loop; preserve the initial-vs-repeat distinction.
+    if(!attack.source&&attack.audioStarted){
+      if(elapsed+.01<attack.fallbackLastTime)attack.fallbackLooped=true;
+      attack.fallbackLastTime=elapsed;if(attack.fallbackLooped)elapsed+=duration;
+    }
     const pose=attackPoseAt(attack.facing,elapsed,duration);showPlayerSprite(pose.key,pose.mirror);
   }
 
@@ -1465,8 +1476,8 @@
   // Screen-space HUD; one shared visual height, unaffected by world/camera transforms.
   state.stats={health:100,maxHealth:100,blessing:100,maxBlessing:100,experience:0,experienceToNextLevel:100};state.hudMode=0;
   const hudStyle=document.createElement('style');hudStyle.textContent=`
-    #renchtal-hud{position:absolute;inset:0;z-index:25;pointer-events:none;--hud-height:min(13vh,9vw,150px)}
-    #hud-status,#hud-experience{position:absolute;bottom:0;height:var(--hud-height);width:auto;display:block;pointer-events:none}
+    #renchtal-hud{position:absolute;inset:0;z-index:25;pointer-events:none;--hud-height:min(11.05vh,7.65vw,127.5px)}
+    #hud-status,#hud-experience{position:absolute;bottom:0;height:var(--hud-height);width:auto;display:block;pointer-events:none;transition:opacity 180ms ease-in-out}
     #hud-status{left:0}#hud-experience{right:0}
   `;document.head.appendChild(hudStyle);
   const hudRoot=document.createElement('div');hudRoot.id='renchtal-hud';
@@ -1477,7 +1488,7 @@
   const hudArt={status:makeHudImage('assets/ui/hud-status.png'),experience:makeHudImage('assets/ui/hud-experience.png')};
   const hudMasks={status:HUD_LAYOUT.status.fills.map(f=>makeHudImage(f.image)),experience:HUD_LAYOUT.experience.fills.map(f=>makeHudImage(f.image))};
   const hudImages=[...Object.values(hudArt),...hudMasks.status,...hudMasks.experience];
-  const hudScratch=document.createElement('canvas'),hudScratchContext=hudScratch.getContext('2d');let hudRenderKey='';
+  const hudScratch=document.createElement('canvas'),hudScratchContext=hudScratch.getContext('2d');let hudRenderKey='',hudVisibilityMap='';
   function paintHudFill(ctx,mask,rect,fraction,color,vertical,w,h){
     if(fraction<=0)return;
     if(hudScratch.width!==w||hudScratch.height!==h){hudScratch.width=w;hudScratch.height=h;}
@@ -1487,7 +1498,13 @@
     s.globalCompositeOperation='destination-in';s.drawImage(mask,0,0,w,h);s.globalCompositeOperation='source-over';ctx.drawImage(hudScratch,0,0,w,h);
   }
   function renderHud(){
-    hudStatus.style.display=state.hudMode===2?'none':'block';hudExperience.style.display=state.hudMode===0?'block':'none';
+    const dpr=typeof devicePixelRatio==='number'?Math.min(2,Math.max(1,devicePixelRatio)):1;
+    const matrix=sceneCamera(width,height,camera.x,camera.y,camera.scale,dpr),footX=state.player.x*matrix.scale+matrix.tx,footY=state.player.y*matrix.scale+matrix.ty,areas=hudScreenAreas(width,height);
+    const instant=state.transitioning||state.starting||hudVisibilityMap!==activeMapId;hudVisibilityMap=activeMapId;
+    for(const [canvas,area,enabled] of [[hudStatus,areas.left,state.hudMode!==2],[hudExperience,areas.right,state.hudMode===0]]){
+      const covered=hudFootCovered(footX,footY,area);
+      canvas.style.display=enabled?'block':'none';canvas.style.transition=instant?'none':'opacity 180ms ease-in-out';canvas.style.opacity=covered?'0':'1';canvas.setAttribute('aria-hidden',!enabled||covered?'true':'false');
+    }
     const values=hudValues(state.stats),key=JSON.stringify(values);if(key===hudRenderKey||!hudImages.every(im=>im.complete&&im.naturalWidth))return;hudRenderKey=key;
     const statusCtx=hudStatus.getContext('2d'),expCtx=hudExperience.getContext('2d'),a=HUD_LAYOUT.status,b=HUD_LAYOUT.experience;
     statusCtx.clearRect(0,0,a.width,a.height);statusCtx.drawImage(hudArt.status,0,0,a.width,a.height);
