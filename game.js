@@ -773,11 +773,20 @@
 
 
   // Sendelbach: only buildings and the two ponds block the foot line.
-  const SEND_PROPS=Object.freeze([{"image":"assets/props/sendelbach-fischer.png","x":741.3614230847982,"y":182.56712072746734,"width":2477.286143288873,"height":1647.7852936406252},{"image":"assets/props/sendelbach-muehle.png","x":5610.1206892180735,"y":2613.66271689811,"width":2782.861646854392,"height":1851.0411113975551}].map(Object.freeze));
+  const SEND_PROPS=Object.freeze([{"image":"assets/props/sendelbach-fischer.png","x":741.3614230847982,"y":182.56712072746734,"width":2477.286143288873,"height":1647.7852936406252},{"image":"assets/props/sendelbach-muehle-ohne-rad.png","x":5610.1206892180735,"y":2613.66271689811,"width":2782.861646854392,"height":1851.0411113975551}].map(Object.freeze));
   const sendLocal=(index,[x,y])=>{const p=SEND_PROPS[index];return Object.freeze([p.x+x/1536*p.width,p.y+y/1024*p.height]);};
   const SEND_LOCAL_COLLIDERS=Object.freeze([[0,[[224,300],[446,359],[746,297],[746,428],[598,480],[600,510],[510,544],[454,532],[454,522],[224,451]]],[0,[[870,302],[1160,395],[1392,311],[1395,489],[1169,548],[1122,562],[1050,548],[1050,530],[868,458]]],[0,[[254,674],[320,651],[424,640],[539,630],[658,630],[749,624],[852,638],[948,657],[1056,685],[1140,716],[1191,752],[1208,788],[1174,823],[1112,851],[1021,873],[913,891],[795,897],[676,885],[566,864],[469,838],[385,810],[319,772],[280,732]]],[1,[[502,403],[666,426],[859,393],[861,591],[682,628],[502,596]]],[1,[[1001,710],[1246,749],[1366,711],[1366,858],[1284,893],[1163,875],[1023,848],[1000,813]]]]);
   const SEND_COLLIDERS=Object.freeze(SEND_LOCAL_COLLIDERS.map(([i,poly])=>Object.freeze(poly.map(q=>sendLocal(i,q)))));
   const SEND_MAP_POND=Object.freeze([[1140,931],[1172,932],[1206,940],[1242,947],[1273,956],[1296,970],[1318,986],[1324,1007],[1320,1030],[1300,1051],[1280,1072],[1248,1091],[1214,1099],[1177,1099],[1145,1090],[1118,1078],[1095,1060],[1080,1038],[1071,1013],[1067,989],[1076,967],[1106,951]].map(([x,y])=>Object.freeze([x/2048*10000,y/1365*(10000*1365/2048)])));
+  // Separate rotor, aligned to the supplied composite in the original 1536 x 1024 prop frame.
+  // The pivot is the visible axle cap, deliberately NOT the center of the transparent PNG.
+  const SEND_MILL_WHEEL=Object.freeze({image:'assets/props/sendelbach-muehlenrad.png',width:1536,height:1024,pivotX:688,pivotY:516,anchorX:507,anchorY:388,scaleX:.75,scaleY:.75,period:18});
+  function sendWheelWorldTransform(angle){
+    const p=SEND_PROPS[1],w=SEND_MILL_WHEEL,kx=p.width/1536*w.scaleX,ky=p.height/1024*w.scaleY,cs=Math.cos(angle),sn=Math.sin(angle);
+    const a=kx*cs,b=ky*sn,c=-kx*sn,d=ky*cs,axisX=p.x+w.anchorX/1536*p.width,axisY=p.y+w.anchorY/1024*p.height;
+    return {a,b,c,d,e:axisX-a*w.pivotX-c*w.pivotY,f:axisY-b*w.pivotX-d*w.pivotY,axisX,axisY};
+  }
+  function advanceSendWheel(angle,dt){return (angle+Math.max(0,dt)*Math.PI*2/SEND_MILL_WHEEL.period)%(Math.PI*2);}
   const SEND_DEPTH_LAYERS=Object.freeze([{"prop":0,"kind":"fishLeft","depth":300,"polys":[[[175,0],[780,0],[780,560],[175,560]]]},{"prop":0,"kind":"fishRight","depth":302,"polys":[[[820,0],[1450,0],[1450,575],[820,575]]]},{"prop":1,"kind":"mill","depth":403,"polys":[[[490,180],[930,180],[930,640],[490,640]]]},{"prop":1,"kind":"wings","depth":850,"polys":[[[205,92],[290,7],[578,343],[489,401]],[[490,350],[755,0],[847,93],[573,415]],[[490,386],[577,447],[350,700],[250,610]],[[510,405],[601,349],[891,774],[782,850]]]},{"prop":1,"kind":"bakery","depth":710,"polys":[[[955,510],[1400,510],[1400,906],[955,906]]]}]);
   function sendTerrainBlocked(x,y){return activeMapId==='sendelbach'&&(worldPointInPolygon(x,y,SEND_MAP_POND)||SEND_COLLIDERS.some(poly=>worldPointInPolygon(x,y,poly)));}
   function sendBehindFoot(x,y,index){
@@ -1204,7 +1213,7 @@
   function oppGateHighlighted(player){return activeMapId==='oppenau'&&worldPointInPolygon(player.x,player.y,OPP_GATE_ZONE);}
 
   if(typeof module!=='undefined' && module.exports) {
-    module.exports={ALLER_MONASTERY_GATE,ALLER_MONASTERY_GATE_ZONE,allerMonasteryHighlighted,ALLER_EDGE_SEALS,ALLER_BRIDGE_PATHS,ALLER_BRIDGE_GUARDS,ALLER_NEW_FORESTS,ALLER_CAVE,ALLER_CAVE_COLLIDERS,ALLER_CAVE_GATE,ALLER_CAVE_GATE_ZONE,allerCaveHighlighted,allerLandingOpen,engageAllerTrack,moveAllerTrack,allerTrackDirection,LIER_CAPTURE_FUNNEL,ALLER_MONASTERY,ALLER_PINK_Y,ALLER_BARRIERS,ALLER_FORESTS,ALLER_BUILDING_COLLIDERS,ALLER_STAIR_GATE,ALLER_STAIR_PATH,allerBehindFoot,allerTerrainBlocked,engageAllerStair,moveAllerStair,slideAgainstAller,lierTrailSpeedFactor,lierAreaSpeedFactor,TELEPORT_DESTINATIONS,TELEPORT_MAP_ORDER,getTeleportRoute,LIER_PERSPECTIVE_LINES,LIER_MIN_AREA_SCALE,lierRightBankX,lierAreaPerspective,lierRenderedScale,LIER_ROCKS,LIER_FORESTS,LIER_TRAIL_ENTRIES,LIER_TRAIL_COMMON,LIER_TRAIL_PATHS,LIER_TRAIL_GATE,makeLierTrail,engageLierTrail,moveLierTrail,lierTrailScale,OPP_BARRIERS,OPP_NORTH_PATH,OPP_CITY_GATE,LIER_RIVER,LIER_BRIDGE_PATH,LIER_BRIDGE_STRUCTURE,engageOppNorth,moveOppNorth,lierTerrainBlocked,engageLierBridge,SEND_PROPS,SEND_COLLIDERS,SEND_LOCAL_COLLIDERS,SEND_MAP_POND,SEND_DEPTH_LAYERS,sendLocal,sendTerrainBlocked,sendBehindFoot,slideAgainstSend,OPP_GATE_ANCHOR,OPP_GATE_ZONE,oppGateHighlighted,OPP_CASTLE,OPP_WATER,OPP_ROCKS,OPP_FORESTS,OPP_STRUCTURES,OPP_WOOD_PATH,OPP_STONE_PATH,oppCastleBlocked,oppTerrainBlocked,engageOppBridge,moveOppBridge,slideAgainstOpp,BADBERG_PATH,BADBERG_CAPTURE,SULZ_FORESTS,SULZ_GATE_ANCHORS,SULZ_GATE_ZONES,engageBadberg,moveBadberg,sulzHighlighted,WEST_CLIFFS,WEST_WATER,WEST_PROPS,HUB_WEST_APPROACH,westPropBlocked,westTerrainBlocked,slideAgainstWest,RAMS_FORTS,RAMS_FORT_PATHS,RAMS_FORT_GATE_ZONES,ramsFortBlocked,ramsFortBehindFoot,ramsFortRearY,ramsFortOpaque,ramsFortHighlighted,engageRamsFort,moveRamsFort,RAMS_RIVER,RAMS_LEFT_ROCK,RAMS_RIGHT_SURFACE,RAMS_BRIDGE_PATH,RAMS_BRIDGE_STRUCTURE,ramsTerrainBlocked,engageRamsBridge,slideAgainstRams,HUB_PROPS,HUB_PROP_COLLIDERS,HUB_TOWER_BACK_Y,HUB_PROP_GATE_ZONES,hubPropBlocked,hubTowerBehindFoot,hubPropHighlighted,slideAgainstHubProps,HUB_RIVER,HUB_PLATEAU_ROCK,HUB_BRIDGE_PATH,HUB_BRIDGE_STRUCTURE,hubTerrainBlocked,engageHubBridge,hubPlateauFirstHit,slideAgainstHubPlateau,LAUTEN_RIVER,LAUTEN_ICE,LAUTEN_VINE_PATH,LAUTEN_BRIDGE_PATH,LAUTEN_TREES,lautenTerrainBlocked,engageLautenTrack,moveLautenTrack,CASTLE_GATE_ZONE_LOCAL,CASTLE_GATE_ZONE,CASTLE_TRAVEL_ENVELOPE_LOCAL,castleSnowfallCoverageAt,winterSnowParticleCoverageAt,WINTER_CASTLE,CASTLE_COLLIDERS,CASTLE_COMPOUND_LOCAL,CASTLE_ROCKS_LOCAL,CASTLE_GATE,castleGroundOverridesMountain,castleLocal,castleBlockedFoot,castleBehindFoot,castleGateHighlighted,castleFirstHit,slideAgainstCastle,CASTLE_SNOW_GRID,CASTLE_ART_ALPHA_GRID,sampleWeatherGrid,winterSnowBaseAt,winterSnowCoverageAt,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
+    module.exports={SEND_MILL_WHEEL,sendWheelWorldTransform,advanceSendWheel,ALLER_MONASTERY_GATE,ALLER_MONASTERY_GATE_ZONE,allerMonasteryHighlighted,ALLER_EDGE_SEALS,ALLER_BRIDGE_PATHS,ALLER_BRIDGE_GUARDS,ALLER_NEW_FORESTS,ALLER_CAVE,ALLER_CAVE_COLLIDERS,ALLER_CAVE_GATE,ALLER_CAVE_GATE_ZONE,allerCaveHighlighted,allerLandingOpen,engageAllerTrack,moveAllerTrack,allerTrackDirection,LIER_CAPTURE_FUNNEL,ALLER_MONASTERY,ALLER_PINK_Y,ALLER_BARRIERS,ALLER_FORESTS,ALLER_BUILDING_COLLIDERS,ALLER_STAIR_GATE,ALLER_STAIR_PATH,allerBehindFoot,allerTerrainBlocked,engageAllerStair,moveAllerStair,slideAgainstAller,lierTrailSpeedFactor,lierAreaSpeedFactor,TELEPORT_DESTINATIONS,TELEPORT_MAP_ORDER,getTeleportRoute,LIER_PERSPECTIVE_LINES,LIER_MIN_AREA_SCALE,lierRightBankX,lierAreaPerspective,lierRenderedScale,LIER_ROCKS,LIER_FORESTS,LIER_TRAIL_ENTRIES,LIER_TRAIL_COMMON,LIER_TRAIL_PATHS,LIER_TRAIL_GATE,makeLierTrail,engageLierTrail,moveLierTrail,lierTrailScale,OPP_BARRIERS,OPP_NORTH_PATH,OPP_CITY_GATE,LIER_RIVER,LIER_BRIDGE_PATH,LIER_BRIDGE_STRUCTURE,engageOppNorth,moveOppNorth,lierTerrainBlocked,engageLierBridge,SEND_PROPS,SEND_COLLIDERS,SEND_LOCAL_COLLIDERS,SEND_MAP_POND,SEND_DEPTH_LAYERS,sendLocal,sendTerrainBlocked,sendBehindFoot,slideAgainstSend,OPP_GATE_ANCHOR,OPP_GATE_ZONE,oppGateHighlighted,OPP_CASTLE,OPP_WATER,OPP_ROCKS,OPP_FORESTS,OPP_STRUCTURES,OPP_WOOD_PATH,OPP_STONE_PATH,oppCastleBlocked,oppTerrainBlocked,engageOppBridge,moveOppBridge,slideAgainstOpp,BADBERG_PATH,BADBERG_CAPTURE,SULZ_FORESTS,SULZ_GATE_ANCHORS,SULZ_GATE_ZONES,engageBadberg,moveBadberg,sulzHighlighted,WEST_CLIFFS,WEST_WATER,WEST_PROPS,HUB_WEST_APPROACH,westPropBlocked,westTerrainBlocked,slideAgainstWest,RAMS_FORTS,RAMS_FORT_PATHS,RAMS_FORT_GATE_ZONES,ramsFortBlocked,ramsFortBehindFoot,ramsFortRearY,ramsFortOpaque,ramsFortHighlighted,engageRamsFort,moveRamsFort,RAMS_RIVER,RAMS_LEFT_ROCK,RAMS_RIGHT_SURFACE,RAMS_BRIDGE_PATH,RAMS_BRIDGE_STRUCTURE,ramsTerrainBlocked,engageRamsBridge,slideAgainstRams,HUB_PROPS,HUB_PROP_COLLIDERS,HUB_TOWER_BACK_Y,HUB_PROP_GATE_ZONES,hubPropBlocked,hubTowerBehindFoot,hubPropHighlighted,slideAgainstHubProps,HUB_RIVER,HUB_PLATEAU_ROCK,HUB_BRIDGE_PATH,HUB_BRIDGE_STRUCTURE,hubTerrainBlocked,engageHubBridge,hubPlateauFirstHit,slideAgainstHubPlateau,LAUTEN_RIVER,LAUTEN_ICE,LAUTEN_VINE_PATH,LAUTEN_BRIDGE_PATH,LAUTEN_TREES,lautenTerrainBlocked,engageLautenTrack,moveLautenTrack,CASTLE_GATE_ZONE_LOCAL,CASTLE_GATE_ZONE,CASTLE_TRAVEL_ENVELOPE_LOCAL,castleSnowfallCoverageAt,winterSnowParticleCoverageAt,WINTER_CASTLE,CASTLE_COLLIDERS,CASTLE_COMPOUND_LOCAL,CASTLE_ROCKS_LOCAL,CASTLE_GATE,castleGroundOverridesMountain,castleLocal,castleBlockedFoot,castleBehindFoot,castleGateHighlighted,castleFirstHit,slideAgainstCastle,CASTLE_SNOW_GRID,CASTLE_ART_ALPHA_GRID,sampleWeatherGrid,winterSnowBaseAt,winterSnowCoverageAt,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
     return;
   }
 
@@ -1245,12 +1254,16 @@
   }
 
   const sendImages=SEND_PROPS.map(p=>{const image=new Image();image.src=p.image;image.alt='';image.style.visibility='hidden';return image;});
+  const sendWheelImage=new Image();sendWheelImage.src=SEND_MILL_WHEEL.image;sendWheelImage.alt='';sendWheelImage.style.visibility='hidden';
+  let sendWheelAngle=0;
   const sendFrontLayers=[];
   function prepareSendLayers(){
     if(sendFrontLayers.length)return;
     for(const layer of SEND_DEPTH_LAYERS){
       const canvas=document.createElement('canvas');canvas.width=1536;canvas.height=1024;const ctx=canvas.getContext('2d');
       ctx.fillStyle='#fff';
+      // Keep the legacy depth-rule slot, but never render its baked, static wings.
+      if(layer.kind==='wings'){sendFrontLayers.push(canvas);continue;}
       for(const poly of layer.polys){ctx.beginPath();ctx.moveTo(poly[0][0],poly[0][1]);for(let i=1;i<poly.length;i++)ctx.lineTo(poly[i][0],poly[i][1]);ctx.closePath();ctx.fill();}
       ctx.globalCompositeOperation='source-in';ctx.drawImage(sendImages[layer.prop],0,0,1536,1024);ctx.globalCompositeOperation='source-over';sendFrontLayers.push(canvas);
     }
@@ -1382,6 +1395,13 @@
   const sceneMapCache=document.createElement('canvas'),sceneMapCacheContext=sceneMapCache.getContext('2d');
   let sceneMapCacheKey='',sceneLastTime=0;
   function sceneCamera(width,height,cameraX,cameraY,scale,dpr){return {scale,tx:Math.round((width/2-cameraX*scale)*dpr)/dpr,ty:Math.round((height/2-cameraY*scale)*dpr)/dpr};}
+  function drawSendMillWheel(ctx,cameraMatrix,dpr){
+    if(!sendWheelImage.complete||!sendWheelImage.naturalWidth)return;
+    const t=sendWheelWorldTransform(sendWheelAngle),k=dpr*cameraMatrix.scale;
+    ctx.setTransform(k*t.a,k*t.b,k*t.c,k*t.d,k*t.e+dpr*cameraMatrix.tx,k*t.f+dpr*cameraMatrix.ty);
+    ctx.drawImage(sendWheelImage,0,0,SEND_MILL_WHEEL.width,SEND_MILL_WHEEL.height);
+    ctx.setTransform(k,0,0,k,dpr*cameraMatrix.tx,dpr*cameraMatrix.ty);
+  }
   function renderScene(c){
     const dpr=typeof devicePixelRatio==='number'?Math.min(2,Math.max(1,devicePixelRatio)):1;
     const m=sceneCamera(width,height,camera.x,camera.y,c.scale,dpr);
@@ -1409,6 +1429,7 @@
     else if(activeMapId==='allerheiligen')list=[{p:ALLER_MONASTERY,image:allerMonasteryImage,front:allerBehindFoot(state.player.x,state.player.y)},{p:ALLER_CAVE,image:allerCaveImage,front:false}];
     else if(activeMapId==='westmap')list=WEST_PROPS.map((p,i)=>({p,image:westPropImages[i],front:false}));
     const now=performance.now(),dt=sceneLastTime?Math.min(.05,(now-sceneLastTime)/1000):1/60;sceneLastTime=now;
+    if(activeMapId==='sendelbach'&&state.playing&&!state.transitioning&&!teleportState.open&&!document.hidden)sendWheelAngle=advanceSendWheel(sendWheelAngle,dt);
     for(const {p,image,front} of list){
       if(!image.complete||!image.naturalWidth)continue;
       const ctx=front?sceneFrontContext:sceneBaseContext;ctx.drawImage(image,p.x,p.y,p.width,p.height);
@@ -1417,7 +1438,9 @@
       entry.glowLayer.style.visibility='hidden';
       if(entry.sceneOpacity>.002){const layer=entry.glowLayer;ctx.globalAlpha=entry.sceneOpacity;ctx.drawImage(layer,parseFloat(layer.style.left),parseFloat(layer.style.top),parseFloat(layer.style.width),parseFloat(layer.style.height));ctx.globalAlpha=1;}
     }
+    if(activeMapId==='sendelbach'&&!sendBehindFoot(state.player.x,state.player.y,3))drawSendMillWheel(sceneBaseContext,m,dpr);
     if(activeMapId==='sendelbach')for(let i=0;i<sendFrontLayers.length;i++){
+      if(SEND_DEPTH_LAYERS[i].kind==='wings'){if(sendBehindFoot(state.player.x,state.player.y,i))drawSendMillWheel(sceneFrontContext,m,dpr);continue;}
       if(!sendBehindFoot(state.player.x,state.player.y,i))continue;
       const p=SEND_PROPS[SEND_DEPTH_LAYERS[i].prop];sceneFrontContext.drawImage(sendFrontLayers[i],p.x,p.y,p.width,p.height);
     }
@@ -1653,7 +1676,7 @@
     if(state.starting || state.playing) return;
     state.starting=true;status.hidden=false;status.textContent='Oberkirch wird geöffnet …';
     try {
-      const jobs=[waitForImage(map),waitForImage(caveHeraldry.crest),waitForImage(allerCaveSource),waitForImage(allerMonasteryImage),waitForImage(oppGateImage),...sendImages.map(waitForImage),waitForImage(oppCastleImage),waitForImage(castleImage),...hubPropImages.map(waitForImage),...ramsFortImages.map(waitForImage),...westPropImages.map(waitForImage),...buildingPresentation.map(e=>waitForImage(e.crest))];
+      const jobs=[waitForImage(map),waitForImage(sendWheelImage),waitForImage(caveHeraldry.crest),waitForImage(allerCaveSource),waitForImage(allerMonasteryImage),waitForImage(oppGateImage),...sendImages.map(waitForImage),waitForImage(oppCastleImage),waitForImage(castleImage),...hubPropImages.map(waitForImage),...ramsFortImages.map(waitForImage),...westPropImages.map(waitForImage),...buildingPresentation.map(e=>waitForImage(e.crest))];
       for(const direction of ['down','left','right','up']) {
         const image=new Image();image.src=`assets/player/stand-${direction}.png`;
         images[`stand-${direction}`]=image;jobs.push(waitForImage(image));
