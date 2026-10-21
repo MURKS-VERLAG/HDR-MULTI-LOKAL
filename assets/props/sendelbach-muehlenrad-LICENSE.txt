@@ -1,0 +1,5 @@
+Windmill rotor adapted from Windmill by nicubunu.
+Source: https://opengameart.org/node/3096
+Original SVG: https://opengameart.org/sites/default/files/windmill.svg
+License: CC0 1.0 Universal, https://creativecommons.org/publicdomain/zero/1.0/
+Modifications: isolated sail, frontal rectification, fourfold rotational symmetry, centered hub, perspective applied at runtime.
