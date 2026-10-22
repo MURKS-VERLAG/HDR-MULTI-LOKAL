@@ -1325,6 +1325,26 @@
       const core=ctx.createLinearGradient(x,y,x,y+dy*.66);core.addColorStop(0,'rgba(255,250,178,.88)');core.addColorStop(.45,'rgba(255,207,46,.63)');core.addColorStop(1,'rgba(255,143,15,0)');ctx.fillStyle=core;ctx.beginPath();ctx.moveTo(x-w*.42,y);ctx.bezierCurveTo(x-w*.6,y+dy*.27,tx,ty-dy*.5,tx-5,ty-dy*.28);ctx.bezierCurveTo(tx-12,ty-dy*.48,x+w*.65,y+dy*.2,x+w*.42,y);ctx.closePath();ctx.fill();
     }
   }
+  const FALLING_BLADE_FIRE=Object.freeze({rate:52,max:96,frames:8,cellWidth:64,cellHeight:96,gravity:115});
+  function swordBladeWorldPoint(player,key,mirror,u,perspective=1){
+    const h=SWORD_POSES[key].weapon,bladeX=350+Math.max(0,Math.min(1,u))*1650,bladeY=333;
+    const c=Math.cos(h.angle)*h.scale,s=Math.sin(h.angle)*h.scale,scale=swordSpriteLayout(key).width/1024*perspective;
+    const x=512+h.x+c*(bladeX-h.anchor[0])-s*(bladeY-h.anchor[1]);
+    const y=512+h.y+s*(bladeX-h.anchor[0])+c*(bladeY-h.anchor[1]);
+    return {x:player.x+(mirror?-1:1)*(x-1024)*scale,y:player.y+(y-2012)*scale};
+  }
+  function advanceFallingFlame(p,dt){
+    p.age+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt+.5*FALLING_BLADE_FIRE.gravity*p.perspective*dt*dt;
+    p.vy+=FALLING_BLADE_FIRE.gravity*p.perspective*dt;
+    return p.age<p.life;
+  }
+  function paintFallingFlameSprite(ctx,phase){
+    const tipX=32+Math.sin(phase)*9,tipY=7+Math.cos(phase)*3;
+    const glow=ctx.createRadialGradient(32,62,1,32,62,28);glow.addColorStop(0,'rgba(255,186,57,.38)');glow.addColorStop(.45,'rgba(255,79,4,.15)');glow.addColorStop(1,'rgba(255,54,0,0)');ctx.fillStyle=glow;ctx.beginPath();ctx.arc(32,62,28,0,Math.PI*2);ctx.fill();
+    const body=ctx.createLinearGradient(32,82,tipX,tipY);body.addColorStop(0,'rgba(255,184,39,.05)');body.addColorStop(.18,'rgba(255,202,60,.92)');body.addColorStop(.48,'rgba(255,111,9,.88)');body.addColorStop(.82,'rgba(246,55,3,.55)');body.addColorStop(1,'rgba(221,28,0,0)');ctx.fillStyle=body;
+    ctx.beginPath();ctx.moveTo(31,83);ctx.bezierCurveTo(8,78,10,58,21,43);ctx.bezierCurveTo(26,34,25,21,tipX,tipY);ctx.bezierCurveTo(tipX-3,37,47,43,49,60);ctx.bezierCurveTo(53,74,44,84,31,83);ctx.closePath();ctx.fill();
+    const core=ctx.createLinearGradient(32,79,32,38);core.addColorStop(0,'rgba(255,252,190,.95)');core.addColorStop(.5,'rgba(255,220,75,.85)');core.addColorStop(1,'rgba(255,174,24,0)');ctx.fillStyle=core;ctx.beginPath();ctx.moveTo(30,79);ctx.bezierCurveTo(19,72,25,60,32+Math.sin(phase)*4,40);ctx.bezierCurveTo(32,59,46,69,37,78);ctx.closePath();ctx.fill();
+  }
   function findSwordInventorySpace(slots){
     for(let i=0;i<slots.length;i++)if(Math.floor((i%36)/6)<5&&slots[i]===null&&slots[i+6]===null)return i;
     return -1;
@@ -1356,7 +1376,7 @@
   function oppGateHighlighted(player){return activeMapId==='oppenau'&&worldPointInPolygon(player.x,player.y,OPP_GATE_ZONE);}
 
   if(typeof module!=='undefined' && module.exports) {
-    module.exports={FLAME_SWORD_ITEM,FLAME_SWORD_TAIL,SWORD_VARIANTS,swordItemId,BLADE_FIRE,bladeFireTongues,paintBladeFire,SWORD_SIDE_HOOD_OVERHANG,swordSideHoodRuns,clearSwordSideHood,SWORD_SIZE_FACTORS,SIDE_HOOD_OVERHANG,swordSizeFactor,swordHelmetLayout,clearSideHoodOverhang,SWORD_ITEM,SWORD_TAIL,SWORD_FILES,SWORD_POSES,swordSpriteLayout,swordPoseAt,findSwordInventorySpace,ATTACK_HELMET_POSES,attackHelmetLayout,SEND_ROCKS,SEND_FORESTS,SEND_SIGN,SEND_SOLIDS,sendSignBehindFoot,hudScreenAreas,hudFootCovered,ATTACK_TIMING,ATTACK_SEQUENCES,ATTACK_BOUNDS,attackSpriteLayout,attackPoseAt,HUD_LAYOUT,hudValues,INVENTORY_LAYOUT,inventoryCellRect,HELMET_POSES,HELMET_FILES,HELMET_VARIANTS,HELMET_PADDING,helmetLayout,SEND_MILL_WHEEL,sendWheelWorldTransform,advanceSendWheel,ALLER_MONASTERY_GATE,ALLER_MONASTERY_GATE_ZONE,allerMonasteryHighlighted,ALLER_EDGE_SEALS,ALLER_BRIDGE_PATHS,ALLER_BRIDGE_GUARDS,ALLER_NEW_FORESTS,ALLER_CAVE,ALLER_CAVE_COLLIDERS,ALLER_CAVE_GATE,ALLER_CAVE_GATE_ZONE,allerCaveHighlighted,allerLandingOpen,engageAllerTrack,moveAllerTrack,allerTrackDirection,LIER_CAPTURE_FUNNEL,ALLER_MONASTERY,ALLER_PINK_Y,ALLER_BARRIERS,ALLER_FORESTS,ALLER_BUILDING_COLLIDERS,ALLER_STAIR_GATE,ALLER_STAIR_PATH,allerBehindFoot,allerTerrainBlocked,engageAllerStair,moveAllerStair,slideAgainstAller,lierTrailSpeedFactor,lierAreaSpeedFactor,TELEPORT_DESTINATIONS,TELEPORT_MAP_ORDER,getTeleportRoute,LIER_PERSPECTIVE_LINES,LIER_MIN_AREA_SCALE,lierRightBankX,lierAreaPerspective,lierRenderedScale,LIER_ROCKS,LIER_FORESTS,LIER_TRAIL_ENTRIES,LIER_TRAIL_COMMON,LIER_TRAIL_PATHS,LIER_TRAIL_GATE,makeLierTrail,engageLierTrail,moveLierTrail,lierTrailScale,OPP_BARRIERS,OPP_NORTH_PATH,OPP_CITY_GATE,LIER_RIVER,LIER_BRIDGE_PATH,LIER_BRIDGE_STRUCTURE,engageOppNorth,moveOppNorth,lierTerrainBlocked,engageLierBridge,SEND_PROPS,SEND_COLLIDERS,SEND_LOCAL_COLLIDERS,SEND_MAP_POND,SEND_DEPTH_LAYERS,sendLocal,sendTerrainBlocked,sendBehindFoot,slideAgainstSend,OPP_GATE_ANCHOR,OPP_GATE_ZONE,oppGateHighlighted,OPP_CASTLE,OPP_WATER,OPP_ROCKS,OPP_FORESTS,OPP_STRUCTURES,OPP_WOOD_PATH,OPP_STONE_PATH,oppCastleBlocked,oppTerrainBlocked,engageOppBridge,moveOppBridge,slideAgainstOpp,BADBERG_PATH,BADBERG_CAPTURE,SULZ_FORESTS,SULZ_GATE_ANCHORS,SULZ_GATE_ZONES,engageBadberg,moveBadberg,sulzHighlighted,WEST_CLIFFS,WEST_WATER,WEST_PROPS,HUB_WEST_APPROACH,westPropBlocked,westTerrainBlocked,slideAgainstWest,RAMS_FORTS,RAMS_FORT_PATHS,RAMS_FORT_GATE_ZONES,ramsFortBlocked,ramsFortBehindFoot,ramsFortRearY,ramsFortOpaque,ramsFortHighlighted,engageRamsFort,moveRamsFort,RAMS_RIVER,RAMS_LEFT_ROCK,RAMS_RIGHT_SURFACE,RAMS_BRIDGE_PATH,RAMS_BRIDGE_STRUCTURE,ramsTerrainBlocked,engageRamsBridge,slideAgainstRams,HUB_PROPS,HUB_PROP_COLLIDERS,HUB_TOWER_BACK_Y,HUB_PROP_GATE_ZONES,hubPropBlocked,hubTowerBehindFoot,hubPropHighlighted,slideAgainstHubProps,HUB_RIVER,HUB_PLATEAU_ROCK,HUB_BRIDGE_PATH,HUB_BRIDGE_STRUCTURE,hubTerrainBlocked,engageHubBridge,hubPlateauFirstHit,slideAgainstHubPlateau,LAUTEN_RIVER,LAUTEN_ICE,LAUTEN_VINE_PATH,LAUTEN_BRIDGE_PATH,LAUTEN_TREES,lautenTerrainBlocked,engageLautenTrack,moveLautenTrack,CASTLE_GATE_ZONE_LOCAL,CASTLE_GATE_ZONE,CASTLE_TRAVEL_ENVELOPE_LOCAL,castleSnowfallCoverageAt,winterSnowParticleCoverageAt,WINTER_CASTLE,CASTLE_COLLIDERS,CASTLE_COMPOUND_LOCAL,CASTLE_ROCKS_LOCAL,CASTLE_GATE,castleGroundOverridesMountain,castleLocal,castleBlockedFoot,castleBehindFoot,castleGateHighlighted,castleFirstHit,slideAgainstCastle,CASTLE_SNOW_GRID,CASTLE_ART_ALPHA_GRID,sampleWeatherGrid,winterSnowBaseAt,winterSnowCoverageAt,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
+    module.exports={FALLING_BLADE_FIRE,swordBladeWorldPoint,advanceFallingFlame,paintFallingFlameSprite,FLAME_SWORD_ITEM,FLAME_SWORD_TAIL,SWORD_VARIANTS,swordItemId,BLADE_FIRE,bladeFireTongues,paintBladeFire,SWORD_SIDE_HOOD_OVERHANG,swordSideHoodRuns,clearSwordSideHood,SWORD_SIZE_FACTORS,SIDE_HOOD_OVERHANG,swordSizeFactor,swordHelmetLayout,clearSideHoodOverhang,SWORD_ITEM,SWORD_TAIL,SWORD_FILES,SWORD_POSES,swordSpriteLayout,swordPoseAt,findSwordInventorySpace,ATTACK_HELMET_POSES,attackHelmetLayout,SEND_ROCKS,SEND_FORESTS,SEND_SIGN,SEND_SOLIDS,sendSignBehindFoot,hudScreenAreas,hudFootCovered,ATTACK_TIMING,ATTACK_SEQUENCES,ATTACK_BOUNDS,attackSpriteLayout,attackPoseAt,HUD_LAYOUT,hudValues,INVENTORY_LAYOUT,inventoryCellRect,HELMET_POSES,HELMET_FILES,HELMET_VARIANTS,HELMET_PADDING,helmetLayout,SEND_MILL_WHEEL,sendWheelWorldTransform,advanceSendWheel,ALLER_MONASTERY_GATE,ALLER_MONASTERY_GATE_ZONE,allerMonasteryHighlighted,ALLER_EDGE_SEALS,ALLER_BRIDGE_PATHS,ALLER_BRIDGE_GUARDS,ALLER_NEW_FORESTS,ALLER_CAVE,ALLER_CAVE_COLLIDERS,ALLER_CAVE_GATE,ALLER_CAVE_GATE_ZONE,allerCaveHighlighted,allerLandingOpen,engageAllerTrack,moveAllerTrack,allerTrackDirection,LIER_CAPTURE_FUNNEL,ALLER_MONASTERY,ALLER_PINK_Y,ALLER_BARRIERS,ALLER_FORESTS,ALLER_BUILDING_COLLIDERS,ALLER_STAIR_GATE,ALLER_STAIR_PATH,allerBehindFoot,allerTerrainBlocked,engageAllerStair,moveAllerStair,slideAgainstAller,lierTrailSpeedFactor,lierAreaSpeedFactor,TELEPORT_DESTINATIONS,TELEPORT_MAP_ORDER,getTeleportRoute,LIER_PERSPECTIVE_LINES,LIER_MIN_AREA_SCALE,lierRightBankX,lierAreaPerspective,lierRenderedScale,LIER_ROCKS,LIER_FORESTS,LIER_TRAIL_ENTRIES,LIER_TRAIL_COMMON,LIER_TRAIL_PATHS,LIER_TRAIL_GATE,makeLierTrail,engageLierTrail,moveLierTrail,lierTrailScale,OPP_BARRIERS,OPP_NORTH_PATH,OPP_CITY_GATE,LIER_RIVER,LIER_BRIDGE_PATH,LIER_BRIDGE_STRUCTURE,engageOppNorth,moveOppNorth,lierTerrainBlocked,engageLierBridge,SEND_PROPS,SEND_COLLIDERS,SEND_LOCAL_COLLIDERS,SEND_MAP_POND,SEND_DEPTH_LAYERS,sendLocal,sendTerrainBlocked,sendBehindFoot,slideAgainstSend,OPP_GATE_ANCHOR,OPP_GATE_ZONE,oppGateHighlighted,OPP_CASTLE,OPP_WATER,OPP_ROCKS,OPP_FORESTS,OPP_STRUCTURES,OPP_WOOD_PATH,OPP_STONE_PATH,oppCastleBlocked,oppTerrainBlocked,engageOppBridge,moveOppBridge,slideAgainstOpp,BADBERG_PATH,BADBERG_CAPTURE,SULZ_FORESTS,SULZ_GATE_ANCHORS,SULZ_GATE_ZONES,engageBadberg,moveBadberg,sulzHighlighted,WEST_CLIFFS,WEST_WATER,WEST_PROPS,HUB_WEST_APPROACH,westPropBlocked,westTerrainBlocked,slideAgainstWest,RAMS_FORTS,RAMS_FORT_PATHS,RAMS_FORT_GATE_ZONES,ramsFortBlocked,ramsFortBehindFoot,ramsFortRearY,ramsFortOpaque,ramsFortHighlighted,engageRamsFort,moveRamsFort,RAMS_RIVER,RAMS_LEFT_ROCK,RAMS_RIGHT_SURFACE,RAMS_BRIDGE_PATH,RAMS_BRIDGE_STRUCTURE,ramsTerrainBlocked,engageRamsBridge,slideAgainstRams,HUB_PROPS,HUB_PROP_COLLIDERS,HUB_TOWER_BACK_Y,HUB_PROP_GATE_ZONES,hubPropBlocked,hubTowerBehindFoot,hubPropHighlighted,slideAgainstHubProps,HUB_RIVER,HUB_PLATEAU_ROCK,HUB_BRIDGE_PATH,HUB_BRIDGE_STRUCTURE,hubTerrainBlocked,engageHubBridge,hubPlateauFirstHit,slideAgainstHubPlateau,LAUTEN_RIVER,LAUTEN_ICE,LAUTEN_VINE_PATH,LAUTEN_BRIDGE_PATH,LAUTEN_TREES,lautenTerrainBlocked,engageLautenTrack,moveLautenTrack,CASTLE_GATE_ZONE_LOCAL,CASTLE_GATE_ZONE,CASTLE_TRAVEL_ENVELOPE_LOCAL,castleSnowfallCoverageAt,winterSnowParticleCoverageAt,WINTER_CASTLE,CASTLE_COLLIDERS,CASTLE_COMPOUND_LOCAL,CASTLE_ROCKS_LOCAL,CASTLE_GATE,castleGroundOverridesMountain,castleLocal,castleBlockedFoot,castleBehindFoot,castleGateHighlighted,castleFirstHit,slideAgainstCastle,CASTLE_SNOW_GRID,CASTLE_ART_ALPHA_GRID,sampleWeatherGrid,winterSnowBaseAt,winterSnowCoverageAt,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
     return;
   }
 
@@ -1384,6 +1404,9 @@
   const flameSwordInventoryImage=new Image();flameSwordInventoryImage.src=SWORD_VARIANTS[FLAME_SWORD_ITEM].inventory;
   const bladeFireCanvas=document.createElement('canvas');bladeFireCanvas.width=2048;bladeFireCanvas.height=2048;bladeFireCanvas.setAttribute('aria-hidden','true');bladeFireCanvas.style.pointerEvents='none';bladeFireCanvas.style.display='none';playerEl.appendChild(bladeFireCanvas);
   const bladeFireContext=bladeFireCanvas.getContext('2d');let bladeFireAtlas=null;
+  const fallingFireCanvas=document.createElement('canvas');fallingFireCanvas.setAttribute('aria-hidden','true');
+  Object.assign(fallingFireCanvas.style,{position:'absolute',inset:'0',width:'100%',height:'100%',pointerEvents:'none',zIndex:'23',display:'none'});game.appendChild(fallingFireCanvas);
+  const fallingFireContext=fallingFireCanvas.getContext('2d'),fallingFire={particles:[],carry:0,lastTime:null,map:null,atlas:null};
   const helmetFrames=new Map();
   const inventoryState={open:false,page:0,slots:Array.from({length:72},(_,i)=>Object.keys(HELMET_VARIANTS)[i]||null)};
   for(const id of Object.keys(SWORD_VARIANTS)){const index=findSwordInventorySpace(inventoryState.slots);if(index>=0){inventoryState.slots[index]=id;inventoryState.slots[index+6]=SWORD_VARIANTS[id].tail;}}
@@ -1445,6 +1468,36 @@
     const phase=((time%BLADE_FIRE.duration+BLADE_FIRE.duration)%BLADE_FIRE.duration)/BLADE_FIRE.duration*BLADE_FIRE.frames,index=Math.floor(phase),blend=phase-index;
     for(const [i,alpha] of [[index,1-blend],[(index+1)%BLADE_FIRE.frames,blend]]){
       ctx.globalAlpha=alpha;ctx.drawImage(bladeFireAtlas,(i%BLADE_FIRE.columns)*BLADE_FIRE.cellWidth,Math.floor(i/BLADE_FIRE.columns)*BLADE_FIRE.cellHeight,BLADE_FIRE.cellWidth,BLADE_FIRE.cellHeight,-h.anchor[0],-h.anchor[1],2048,768);
+    }
+    ctx.globalAlpha=1;ctx.setTransform(1,0,0,1,0,0);
+  }
+  function prepareFallingFlameAtlas(){
+    const atlas=document.createElement('canvas');atlas.width=FALLING_BLADE_FIRE.frames*FALLING_BLADE_FIRE.cellWidth;atlas.height=FALLING_BLADE_FIRE.cellHeight;
+    const ctx=atlas.getContext('2d');for(let i=0;i<FALLING_BLADE_FIRE.frames;i++){ctx.setTransform(1,0,0,1,i*FALLING_BLADE_FIRE.cellWidth,0);paintFallingFlameSprite(ctx,i/FALLING_BLADE_FIRE.frames*Math.PI*2);}fallingFire.atlas=atlas;
+  }
+  function renderFallingSwordFire(time,cameraMatrix){
+    let dt=fallingFire.lastTime===null?0:Math.max(0,time-fallingFire.lastTime);fallingFire.lastTime=time;
+    if(fallingFire.map!==activeMapId||dt>.3){fallingFire.particles.length=0;fallingFire.carry=0;fallingFire.map=activeMapId;dt=0;}
+    if(!state.playing||state.transitioning||equippedSwordId!==FLAME_SWORD_ITEM||!fallingFire.atlas){fallingFire.particles.length=0;fallingFire.carry=0;fallingFireCanvas.style.display='none';return;}
+    dt=Math.min(.05,dt);const perspective=lierRenderedScale(state.player);
+    for(let i=fallingFire.particles.length-1;i>=0;i--)if(!advanceFallingFlame(fallingFire.particles[i],dt))fallingFire.particles.splice(i,1);
+    if(attack.active&&SWORD_POSES[activeSpriteKey]&&!playerInsideCoveredBridgeInterior(state.player,state.bridge)){
+      fallingFire.carry=Math.min(8,fallingFire.carry+dt*FALLING_BLADE_FIRE.rate);
+      while(fallingFire.carry>=1&&fallingFire.particles.length<FALLING_BLADE_FIRE.max){
+        fallingFire.carry-=1;const at=swordBladeWorldPoint(state.player,activeSpriteKey,activeMirror,Math.random(),perspective);
+        fallingFire.particles.push({...at,vx:(Math.random()-.5)*30*perspective,vy:(22+Math.random()*30)*perspective,age:0,life:.65+Math.random()*.5,size:(18+Math.random()*12)*perspective,perspective,phase:Math.random()*Math.PI*2});
+      }
+    }else fallingFire.carry=0;
+    if(!fallingFire.particles.length){fallingFireCanvas.style.display='none';return;}
+    const dpr=typeof devicePixelRatio==='number'?Math.min(2,Math.max(1,devicePixelRatio)):1,w=Math.round(width*dpr),h=Math.round(height*dpr),ctx=fallingFireContext;
+    if(fallingFireCanvas.width!==w||fallingFireCanvas.height!==h){fallingFireCanvas.width=w;fallingFireCanvas.height=h;}
+    fallingFireCanvas.style.display='block';ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,w,h);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+    const k=cameraMatrix.scale*dpr;
+    for(const p of fallingFire.particles){
+      const flicker=p.age*14+p.phase,frame=Math.floor(flicker)%FALLING_BLADE_FIRE.frames,angle=Math.sin(p.age*3+p.phase)*.16,c=Math.cos(angle),s=Math.sin(angle);
+      ctx.globalAlpha=Math.min(1,p.age/.07)*Math.min(1,(p.life-p.age)/.35)*.94;
+      ctx.setTransform(k*c,k*s,-k*s,k*c,(p.x*cameraMatrix.scale+cameraMatrix.tx)*dpr,(p.y*cameraMatrix.scale+cameraMatrix.ty)*dpr);
+      ctx.drawImage(fallingFire.atlas,frame*64,0,64,96,-p.size/3,-p.size*.8,p.size*2/3,p.size);
     }
     ctx.globalAlpha=1;ctx.setTransform(1,0,0,1,0,0);
   }
@@ -2048,7 +2101,7 @@
     updateBuildingPresentation(buildingPresentation[2],hubPropGlow[1]);
     playerEl.style.zIndex=(castleBehindFoot(state.player.x,state.player.y)||hubTowerBehindFoot(state.player.x,state.player.y)||ramsFortBehindFoot(state.player.x,state.player.y))?'8':'10';
     weatherCanvas.style.display=activeMapId==='winterbach'?'block':'none';
-    renderScene(c);renderHud();
+    renderScene(c);renderFallingSwordFire(performance.now()/1000,sceneCamera(width,height,camera.x,camera.y,c.scale,typeof devicePixelRatio==='number'?Math.min(2,Math.max(1,devicePixelRatio)):1));renderHud();
   }
   function face(dx,dy) {
     state.player.facing=directionForInput(dx,dy);
@@ -2086,7 +2139,7 @@
     if(state.starting || state.playing) return;
     state.starting=true;status.hidden=false;status.textContent='Oberkirch wird geöffnet …';
     try {
-      const jobs=[prepareAttackAudio(),prepareBladeFireAtlas(),waitForImage(flameSwordInventoryImage),waitForImage(swordBlade),waitForImage(swordInventoryImage),...hudImages.map(waitForImage),...inventoryGlows.map(waitForImage),...inventoryPages.map(waitForImage),...Object.values(helmetImages).flatMap(variant=>Object.values(variant).map(waitForImage)),waitForImage(map),waitForImage(sendSignImage),waitForImage(sendWheelImage),waitForImage(caveHeraldry.crest),waitForImage(allerCaveSource),waitForImage(allerMonasteryImage),waitForImage(oppGateImage),...sendImages.map(waitForImage),waitForImage(oppCastleImage),waitForImage(castleImage),...hubPropImages.map(waitForImage),...ramsFortImages.map(waitForImage),...westPropImages.map(waitForImage),...buildingPresentation.map(e=>waitForImage(e.crest))];
+      const jobs=[prepareAttackAudio(),prepareBladeFireAtlas(),prepareFallingFlameAtlas(),waitForImage(flameSwordInventoryImage),waitForImage(swordBlade),waitForImage(swordInventoryImage),...hudImages.map(waitForImage),...inventoryGlows.map(waitForImage),...inventoryPages.map(waitForImage),...Object.values(helmetImages).flatMap(variant=>Object.values(variant).map(waitForImage)),waitForImage(map),waitForImage(sendSignImage),waitForImage(sendWheelImage),waitForImage(caveHeraldry.crest),waitForImage(allerCaveSource),waitForImage(allerMonasteryImage),waitForImage(oppGateImage),...sendImages.map(waitForImage),waitForImage(oppCastleImage),waitForImage(castleImage),...hubPropImages.map(waitForImage),...ramsFortImages.map(waitForImage),...westPropImages.map(waitForImage),...buildingPresentation.map(e=>waitForImage(e.crest))];
       for(const direction of ['down','left','right','up']) {
         const image=new Image();image.src=`assets/player/stand-${direction}.png`;
         images[`stand-${direction}`]=image;jobs.push(waitForImage(image));
