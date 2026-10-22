@@ -1351,8 +1351,8 @@
   }
   const RABBIT_ZONES=Object.freeze([{"polygon":[[0,0],[1701.333,0],[888.023,991.263],[0,580.936]],"walls":[[[1701.333,0],[888.023,991.263]],[[888.023,991.263],[0,580.936]]],"exits":["north","west"]},{"polygon":[[10000,4230.354],[9007.689,4227.754],[8984.067,4263.216],[8960.445,4286.857],[8944.697,4349.9],[8905.327,4420.823],[8905.327,4436.584],[8873.831,4499.627],[8873.831,4515.388],[8818.712,4665.116],[8818.712,4688.757],[8802.964,4720.278],[8802.964,4751.8],[8795.09,4759.68],[8779.342,4870.006],[8739.972,4940.929],[8739.972,4964.571],[8775.405,5019.733],[8830.523,5074.896],[8830.523,5082.777],[9062.807,5311.308],[9637.612,5831.414],[9964.384,6115.108],[9980.132,6138.749],[10000,6146.63]],"walls":[[[10000,4230.354],[9007.689,4227.754]],[[9007.689,4227.754],[8984.067,4263.216]],[[8984.067,4263.216],[8960.445,4286.857]],[[8960.445,4286.857],[8944.697,4349.9]],[[8944.697,4349.9],[8905.327,4420.823]],[[8905.327,4420.823],[8905.327,4436.584]],[[8905.327,4436.584],[8873.831,4499.627]],[[8873.831,4499.627],[8873.831,4515.388]],[[8873.831,4515.388],[8818.712,4665.116]],[[8818.712,4665.116],[8818.712,4688.757]],[[8818.712,4688.757],[8802.964,4720.278]],[[8802.964,4720.278],[8802.964,4751.8]],[[8802.964,4751.8],[8795.09,4759.68]],[[8795.09,4759.68],[8779.342,4870.006]],[[8779.342,4870.006],[8739.972,4940.929]],[[8739.972,4940.929],[8739.972,4964.571]],[[8739.972,4964.571],[8775.405,5019.733]],[[8775.405,5019.733],[8830.523,5074.896]],[[8830.523,5074.896],[8830.523,5082.777]],[[8830.523,5082.777],[9062.807,5311.308]],[[9062.807,5311.308],[9637.612,5831.414]],[[9637.612,5831.414],[9964.384,6115.108]],[[9964.384,6115.108],[9980.132,6138.749]],[[9980.132,6138.749],[10000,6146.63]]],"exits":["east"]}]);
   const RABBIT_SPRITES=Object.freeze({"up-1":{"key":"up-1","file":"assets/animals/rabbit/up-1.webp","width":200,"height":298,"scale":0.36},"up-2":{"key":"up-2","file":"assets/animals/rabbit/up-2.webp","width":143,"height":323,"scale":0.36},"up-3":{"key":"up-3","file":"assets/animals/rabbit/up-3.webp","width":155,"height":261,"scale":0.36},"down-1":{"key":"down-1","file":"assets/animals/rabbit/down-1.webp","width":163,"height":274,"scale":0.36},"down-2":{"key":"down-2","file":"assets/animals/rabbit/down-2.webp","width":138,"height":293,"scale":0.36},"down-3":{"key":"down-3","file":"assets/animals/rabbit/down-3.webp","width":174,"height":261,"scale":0.36},"right-1":{"key":"right-1","file":"assets/animals/rabbit/right-1.webp","width":340,"height":264,"scale":0.36},"right-2":{"key":"right-2","file":"assets/animals/rabbit/right-2.webp","width":445,"height":227,"scale":0.36},"right-3":{"key":"right-3","file":"assets/animals/rabbit/right-3.webp","width":356,"height":275,"scale":0.36},"rest-right-1":{"key":"rest-right-1","file":"assets/animals/rabbit/rest-right-1.webp","width":341,"height":634,"scale":0.24},"rest-right-2":{"key":"rest-right-2","file":"assets/animals/rabbit/rest-right-2.webp","width":401,"height":491,"scale":0.24},"rest-down-2":{"key":"rest-down-2","file":"assets/animals/rabbit/rest-down-2.webp","width":228,"height":591,"scale":0.24},"dead":{"key":"dead","file":"assets/animals/rabbit/dead.webp","width":581,"height":224,"scale":0.24}});
-  const RABBIT_RULES=Object.freeze({hp:100,damage:20,lastHitDamage:40,corpseSeconds:5,margin:12,hopSeconds:.56,hitRadius:32});
-  const RABBIT_FIST_BOXES=Object.freeze({up:{forward:330,halfWidth:175},down:{forward:330,halfWidth:175},left:{forward:355,halfWidth:180},right:{forward:355,halfWidth:180}});
+  const RABBIT_RULES=Object.freeze({hp:100,damage:20,lastHitDamage:40,corpseSeconds:5,margin:12,hopSeconds:.56,hitRadius:37,size:1.15,respawnSeconds:15});
+  const RABBIT_FIST_BOXES=Object.freeze({up:{forward:370,halfWidth:210},down:{forward:370,halfWidth:210},left:{forward:370,halfWidth:210},right:{forward:370,halfWidth:210}});
   function rabbitSegmentDistance(x,y,a,b){const dx=b[0]-a[0],dy=b[1]-a[1],t=Math.max(0,Math.min(1,((x-a[0])*dx+(y-a[1])*dy)/(dx*dx+dy*dy||1)));return Math.hypot(x-a[0]-t*dx,y-a[1]-t*dy);}
   function rabbitAllowed(zone,x,y){
     const z=RABBIT_ZONES[zone],w=10000,h=6667;
@@ -1363,7 +1363,7 @@
   }
   function rabbitHopAllowed(zone,a,b){const steps=Math.max(1,Math.ceil(Math.hypot(b.x-a.x,b.y-a.y)/8));for(let i=0;i<=steps;i++){const t=i/steps;if(!rabbitAllowed(zone,a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t))return false;}return true;}
   function rabbitRandomPoint(zone,rng=Math.random){const poly=RABBIT_ZONES[zone].polygon,x0=Math.max(85,Math.min(...poly.map(p=>p[0]))+30),x1=Math.min(9915,Math.max(...poly.map(p=>p[0]))-30),y0=Math.max(175,Math.min(...poly.map(p=>p[1]))+30),y1=Math.max(...poly.map(p=>p[1]))-30;for(let n=0;n<2000;n++){const p={x:x0+rng()*(x1-x0),y:y0+rng()*(y1-y0)};if(rabbitAllowed(zone,p.x,p.y))return p;}return {x:(x0+x1)/2,y:(y0+y1)/2};}
-  function createRabbits(rng=Math.random){const result=[];for(let zone=0;zone<2;zone++)for(let i=0;i<2;i++){let p;for(let n=0;n<50;n++){p=rabbitRandomPoint(zone,rng);if(result.every(r=>r.zone!==zone||Math.hypot(r.x-p.x,r.y-p.y)>200))break;}result.push({id:`oberkirch-rabbit-${zone}-${i}`,zone,...p,hp:100,mode:'rest',direction:['up','down','right','left'][Math.floor(rng()*4)],restVariant:Math.floor(rng()*2),wait:.3+rng()*1.5,restChange:.6+rng(),hop:null,deadFor:0,awayFor:0,returning:false});}return result;}
+  function createRabbits(rng=Math.random){const result=[];for(let zone=0;zone<2;zone++)for(let i=0;i<(zone===0?2:3);i++){let p;for(let n=0;n<50;n++){p=rabbitRandomPoint(zone,rng);if(result.every(r=>r.zone!==zone||Math.hypot(r.x-p.x,r.y-p.y)>200))break;}result.push({id:`oberkirch-rabbit-${zone}-${i}`,zone,...p,hp:100,mode:'rest',direction:['up','down','right','left'][Math.floor(rng()*4)],restVariant:Math.floor(rng()*2),wait:.3+rng()*1.5,restChange:.6+rng(),hop:null,deadFor:0,awayFor:0,returning:false});}return result;}
   function rabbitRestKey(r){if(r.direction==='up')return 'up-3';if(r.direction==='down')return r.restVariant?'rest-down-2':'down-3';return r.restVariant?'rest-right-2':'rest-right-1';}
   function rabbitVisual(r){if(r.mode==='gone'||r.mode==='away')return null;if(r.mode==='dead')return {key:'dead',mirror:r.direction==='left',lift:0};if(r.mode==='hop'){const t=Math.min(1,r.hop.time/r.hop.duration),index=t<.30?1:t<.70?2:3;return {key:`${r.direction==='left'?'right':r.direction}-${index}`,mirror:r.direction==='left',lift:Math.sin(Math.PI*t)*24};}return {key:rabbitRestKey(r),mirror:r.direction==='left',lift:0};}
   function planRabbitHop(r,rng=Math.random,heading=null,dodge=false){
@@ -1378,7 +1378,7 @@
     }
     r.hop=null;r.mode='rest';r.wait=.35;r.restChange=.4;return false;
   }
-  function rabbitDepart(r,rng){r.exitSide=r.x<0?'west':r.x>10000?'east':r.y<0?'north':'south';r.exitPoint={x:r.x,y:r.y};r.mode='away';r.hop=null;r.awayFor=2.5+rng()*5.5;r.returning=false;}
+  function rabbitDepart(r,rng){r.exitSide=r.x<0?'west':r.x>10000?'east':r.y<0?'north':'south';r.exitPoint={x:r.x,y:r.y};r.mode='away';r.hop=null;r.awayFor=RABBIT_RULES.respawnSeconds;r.returning=false;}
   function rabbitReturn(r,rng){
     const side=r.exitSide;r.x=r.exitPoint.x;r.y=r.exitPoint.y;
     const angles={west:0,east:Math.PI,north:Math.PI/2,south:-Math.PI/2};
@@ -1386,8 +1386,8 @@
     r.returning=true;planRabbitHop(r,rng,angles[side],true);
   }
   function stepRabbit(r,dt,rng=Math.random,active=true){
-    if(r.mode==='gone')return;
-    if(r.mode==='dead'){r.deadFor+=dt;if(r.deadFor>=RABBIT_RULES.corpseSeconds)r.mode='gone';return;}
+    if(r.mode==='gone'){r.respawnIn=Math.max(0,(r.respawnIn??RABBIT_RULES.respawnSeconds)-dt);if(r.respawnIn<=0&&active)respawnRabbitFromEdge(r,rng);return;}
+    if(r.mode==='dead'){r.deadFor+=dt;if(r.deadFor>=RABBIT_RULES.corpseSeconds){r.mode='gone';r.respawnIn=RABBIT_RULES.respawnSeconds;}return;}
     if(!active)return;
     if(r.mode==='away'){r.awayFor-=dt;if(r.awayFor<=0)rabbitReturn(r,rng);return;}
     if(r.mode==='rest'){
@@ -1413,6 +1413,38 @@
     else{const away=Math.atan2(r.y-attacker.y,r.x-attacker.x),turn=(rng()<.5?-1:1)*(.65+rng()*.6);planRabbitHop(r,rng,away+turn,true);}
     return true;
   }
+  const MOLE_SPRITES=Object.freeze({"mound":{"file":"assets/animals/mole/mound.webp","width":1409,"height":434,"scale":0.14},"surface":{"file":"assets/animals/mole/surface.webp","width":1403,"height":541,"scale":0.14},"dead":{"file":"assets/animals/mole/dead.webp","width":1470,"height":459,"scale":0.14}});
+  const ANIMAL_HIT_SOUNDS=Object.freeze(['assets/audio/animals/rabbit-hit-1.mp3','assets/audio/animals/rabbit-hit-2.mp3','assets/audio/animals/rabbit-hit-3.mp3']);
+  const MOLE_RULES=Object.freeze({hp:100,spawnWindow:30,surfaceSeconds:6,digDuration:8.672653,corpseSeconds:5,digSound:'assets/audio/animals/mole-dig.mp3',zones:Object.freeze([0])});
+  function nextAnimalHitSound(bag,rng=Math.random){
+    if(!bag.remaining.length){bag.remaining=[0,1,2];for(let i=2;i>0;i--){const j=Math.floor(rng()*(i+1));[bag.remaining[i],bag.remaining[j]]=[bag.remaining[j],bag.remaining[i]];}if(bag.remaining[0]===bag.last){const j=1+Math.floor(rng()*2);[bag.remaining[0],bag.remaining[j]]=[bag.remaining[j],bag.remaining[0]];}}
+    const index=bag.remaining.shift();bag.last=index;return index;
+  }
+  function respawnRabbitFromEdge(r,rng=Math.random){
+    const z=RABBIT_ZONES[r.zone],side=z.exits[Math.floor(rng()*z.exits.length)];r.hp=RABBIT_RULES.hp;r.deadFor=0;r.respawnIn=0;r.spawnGeneration=(r.spawnGeneration||0)+1;r.exitSide=side;
+    const p=rabbitRandomPoint(r.zone,rng);r.exitPoint=p;r.mode='away';r.awayFor=0;rabbitReturn(r,rng);
+  }
+  function createMole(rng=Math.random){return {id:'oberkirch-mole',kind:'mole',hp:100,mode:'waiting',wait:rng()*MOLE_RULES.spawnWindow,elapsed:0,x:0,y:0,audioFinished:false};}
+  function moleVisual(m){if(m.mode==='waiting')return null;return m.mode==='surface'?'surface':m.mode==='dead'?'dead':'mound';}
+  function stepMole(m,dt,rng=Math.random,digDuration=MOLE_RULES.digDuration,audioFinished=false,awaitAudio=false){
+    if(m.mode==='waiting'){
+      m.wait-=dt;if(m.wait>0)return null;
+      const zone=MOLE_RULES.zones[Math.floor(rng()*MOLE_RULES.zones.length)];Object.assign(m,rabbitRandomPoint(zone,rng),{zone,hp:100,mode:'rising',elapsed:0,audioFinished:false});return 'dig';
+    }
+    m.elapsed+=dt;
+    if(m.mode==='dead'){
+      if(m.elapsed>=MOLE_RULES.corpseSeconds){m.mode='waiting';m.wait=rng()*MOLE_RULES.spawnWindow;m.elapsed=0;return 'hide';}return null;
+    }
+    if(m.mode==='surface'){
+      if(m.elapsed>=MOLE_RULES.surfaceSeconds){m.mode='sinking';m.elapsed=0;m.audioFinished=false;return 'dig';}return null;
+    }
+    if(audioFinished||(!awaitAudio&&m.elapsed>=digDuration)){
+      if(m.mode==='rising'){m.mode='surface';m.elapsed=0;m.audioFinished=false;return 'surface';}
+      if(m.mode==='sinking'){m.mode='waiting';m.elapsed=0;m.wait=rng()*MOLE_RULES.spawnWindow;return 'hide';}
+    }
+    return null;
+  }
+  function damageMole(m,damage){if(m.mode!=='surface'||m.elapsed>=MOLE_RULES.surfaceSeconds||m.hp<=0)return false;m.hp=Math.max(0,m.hp-damage);if(m.hp===0){m.mode='dead';m.elapsed=0;}return true;}
   function directionForInput(dx,dy) {return dy<0?'up':dy>0?'down':dx<0?'left':'right';}
   function advanceWalkAnimation(animation,direction,moving,dt) {
     if(!moving){animation.moving=false;animation.index=0;animation.elapsed=0;animation.direction=direction;return `stand-${direction}`;}
@@ -1440,7 +1472,7 @@
   function oppGateHighlighted(player){return activeMapId==='oppenau'&&worldPointInPolygon(player.x,player.y,OPP_GATE_ZONE);}
 
   if(typeof module!=='undefined' && module.exports) {
-    module.exports={RABBIT_ZONES,RABBIT_SPRITES,RABBIT_RULES,RABBIT_FIST_BOXES,rabbitAllowed,rabbitHopAllowed,rabbitRandomPoint,createRabbits,rabbitRestKey,rabbitVisual,planRabbitHop,rabbitDepart,rabbitReturn,stepRabbit,rabbitInFistBox,damageRabbit,FALLING_BLADE_FIRE,swordBladeWorldPoint,advanceFallingFlame,paintFallingFlameSprite,FLAME_SWORD_ITEM,FLAME_SWORD_TAIL,SWORD_VARIANTS,swordItemId,BLADE_FIRE,bladeFireTongues,paintBladeFire,SWORD_SIDE_HOOD_OVERHANG,swordSideHoodRuns,clearSwordSideHood,SWORD_SIZE_FACTORS,SIDE_HOOD_OVERHANG,swordSizeFactor,swordHelmetLayout,clearSideHoodOverhang,SWORD_ITEM,SWORD_TAIL,SWORD_FILES,SWORD_POSES,swordSpriteLayout,swordPoseAt,findSwordInventorySpace,ATTACK_HELMET_POSES,attackHelmetLayout,SEND_ROCKS,SEND_FORESTS,SEND_SIGN,SEND_SOLIDS,sendSignBehindFoot,hudScreenAreas,hudFootCovered,ATTACK_TIMING,ATTACK_SEQUENCES,ATTACK_BOUNDS,attackSpriteLayout,attackPoseAt,HUD_LAYOUT,hudValues,INVENTORY_LAYOUT,inventoryCellRect,HELMET_POSES,HELMET_FILES,HELMET_VARIANTS,HELMET_PADDING,helmetLayout,SEND_MILL_WHEEL,sendWheelWorldTransform,advanceSendWheel,ALLER_MONASTERY_GATE,ALLER_MONASTERY_GATE_ZONE,allerMonasteryHighlighted,ALLER_EDGE_SEALS,ALLER_BRIDGE_PATHS,ALLER_BRIDGE_GUARDS,ALLER_NEW_FORESTS,ALLER_CAVE,ALLER_CAVE_COLLIDERS,ALLER_CAVE_GATE,ALLER_CAVE_GATE_ZONE,allerCaveHighlighted,allerLandingOpen,engageAllerTrack,moveAllerTrack,allerTrackDirection,LIER_CAPTURE_FUNNEL,ALLER_MONASTERY,ALLER_PINK_Y,ALLER_BARRIERS,ALLER_FORESTS,ALLER_BUILDING_COLLIDERS,ALLER_STAIR_GATE,ALLER_STAIR_PATH,allerBehindFoot,allerTerrainBlocked,engageAllerStair,moveAllerStair,slideAgainstAller,lierTrailSpeedFactor,lierAreaSpeedFactor,TELEPORT_DESTINATIONS,TELEPORT_MAP_ORDER,getTeleportRoute,LIER_PERSPECTIVE_LINES,LIER_MIN_AREA_SCALE,lierRightBankX,lierAreaPerspective,lierRenderedScale,LIER_ROCKS,LIER_FORESTS,LIER_TRAIL_ENTRIES,LIER_TRAIL_COMMON,LIER_TRAIL_PATHS,LIER_TRAIL_GATE,makeLierTrail,engageLierTrail,moveLierTrail,lierTrailScale,OPP_BARRIERS,OPP_NORTH_PATH,OPP_CITY_GATE,LIER_RIVER,LIER_BRIDGE_PATH,LIER_BRIDGE_STRUCTURE,engageOppNorth,moveOppNorth,lierTerrainBlocked,engageLierBridge,SEND_PROPS,SEND_COLLIDERS,SEND_LOCAL_COLLIDERS,SEND_MAP_POND,SEND_DEPTH_LAYERS,sendLocal,sendTerrainBlocked,sendBehindFoot,slideAgainstSend,OPP_GATE_ANCHOR,OPP_GATE_ZONE,oppGateHighlighted,OPP_CASTLE,OPP_WATER,OPP_ROCKS,OPP_FORESTS,OPP_STRUCTURES,OPP_WOOD_PATH,OPP_STONE_PATH,oppCastleBlocked,oppTerrainBlocked,engageOppBridge,moveOppBridge,slideAgainstOpp,BADBERG_PATH,BADBERG_CAPTURE,SULZ_FORESTS,SULZ_GATE_ANCHORS,SULZ_GATE_ZONES,engageBadberg,moveBadberg,sulzHighlighted,WEST_CLIFFS,WEST_WATER,WEST_PROPS,HUB_WEST_APPROACH,westPropBlocked,westTerrainBlocked,slideAgainstWest,RAMS_FORTS,RAMS_FORT_PATHS,RAMS_FORT_GATE_ZONES,ramsFortBlocked,ramsFortBehindFoot,ramsFortRearY,ramsFortOpaque,ramsFortHighlighted,engageRamsFort,moveRamsFort,RAMS_RIVER,RAMS_LEFT_ROCK,RAMS_RIGHT_SURFACE,RAMS_BRIDGE_PATH,RAMS_BRIDGE_STRUCTURE,ramsTerrainBlocked,engageRamsBridge,slideAgainstRams,HUB_PROPS,HUB_PROP_COLLIDERS,HUB_TOWER_BACK_Y,HUB_PROP_GATE_ZONES,hubPropBlocked,hubTowerBehindFoot,hubPropHighlighted,slideAgainstHubProps,HUB_RIVER,HUB_PLATEAU_ROCK,HUB_BRIDGE_PATH,HUB_BRIDGE_STRUCTURE,hubTerrainBlocked,engageHubBridge,hubPlateauFirstHit,slideAgainstHubPlateau,LAUTEN_RIVER,LAUTEN_ICE,LAUTEN_VINE_PATH,LAUTEN_BRIDGE_PATH,LAUTEN_TREES,lautenTerrainBlocked,engageLautenTrack,moveLautenTrack,CASTLE_GATE_ZONE_LOCAL,CASTLE_GATE_ZONE,CASTLE_TRAVEL_ENVELOPE_LOCAL,castleSnowfallCoverageAt,winterSnowParticleCoverageAt,WINTER_CASTLE,CASTLE_COLLIDERS,CASTLE_COMPOUND_LOCAL,CASTLE_ROCKS_LOCAL,CASTLE_GATE,castleGroundOverridesMountain,castleLocal,castleBlockedFoot,castleBehindFoot,castleGateHighlighted,castleFirstHit,slideAgainstCastle,CASTLE_SNOW_GRID,CASTLE_ART_ALPHA_GRID,sampleWeatherGrid,winterSnowBaseAt,winterSnowCoverageAt,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
+    module.exports={ANIMAL_HIT_SOUNDS,MOLE_RULES,MOLE_SPRITES,nextAnimalHitSound,respawnRabbitFromEdge,createMole,moleVisual,stepMole,damageMole,RABBIT_ZONES,RABBIT_SPRITES,RABBIT_RULES,RABBIT_FIST_BOXES,rabbitAllowed,rabbitHopAllowed,rabbitRandomPoint,createRabbits,rabbitRestKey,rabbitVisual,planRabbitHop,rabbitDepart,rabbitReturn,stepRabbit,rabbitInFistBox,damageRabbit,FALLING_BLADE_FIRE,swordBladeWorldPoint,advanceFallingFlame,paintFallingFlameSprite,FLAME_SWORD_ITEM,FLAME_SWORD_TAIL,SWORD_VARIANTS,swordItemId,BLADE_FIRE,bladeFireTongues,paintBladeFire,SWORD_SIDE_HOOD_OVERHANG,swordSideHoodRuns,clearSwordSideHood,SWORD_SIZE_FACTORS,SIDE_HOOD_OVERHANG,swordSizeFactor,swordHelmetLayout,clearSideHoodOverhang,SWORD_ITEM,SWORD_TAIL,SWORD_FILES,SWORD_POSES,swordSpriteLayout,swordPoseAt,findSwordInventorySpace,ATTACK_HELMET_POSES,attackHelmetLayout,SEND_ROCKS,SEND_FORESTS,SEND_SIGN,SEND_SOLIDS,sendSignBehindFoot,hudScreenAreas,hudFootCovered,ATTACK_TIMING,ATTACK_SEQUENCES,ATTACK_BOUNDS,attackSpriteLayout,attackPoseAt,HUD_LAYOUT,hudValues,INVENTORY_LAYOUT,inventoryCellRect,HELMET_POSES,HELMET_FILES,HELMET_VARIANTS,HELMET_PADDING,helmetLayout,SEND_MILL_WHEEL,sendWheelWorldTransform,advanceSendWheel,ALLER_MONASTERY_GATE,ALLER_MONASTERY_GATE_ZONE,allerMonasteryHighlighted,ALLER_EDGE_SEALS,ALLER_BRIDGE_PATHS,ALLER_BRIDGE_GUARDS,ALLER_NEW_FORESTS,ALLER_CAVE,ALLER_CAVE_COLLIDERS,ALLER_CAVE_GATE,ALLER_CAVE_GATE_ZONE,allerCaveHighlighted,allerLandingOpen,engageAllerTrack,moveAllerTrack,allerTrackDirection,LIER_CAPTURE_FUNNEL,ALLER_MONASTERY,ALLER_PINK_Y,ALLER_BARRIERS,ALLER_FORESTS,ALLER_BUILDING_COLLIDERS,ALLER_STAIR_GATE,ALLER_STAIR_PATH,allerBehindFoot,allerTerrainBlocked,engageAllerStair,moveAllerStair,slideAgainstAller,lierTrailSpeedFactor,lierAreaSpeedFactor,TELEPORT_DESTINATIONS,TELEPORT_MAP_ORDER,getTeleportRoute,LIER_PERSPECTIVE_LINES,LIER_MIN_AREA_SCALE,lierRightBankX,lierAreaPerspective,lierRenderedScale,LIER_ROCKS,LIER_FORESTS,LIER_TRAIL_ENTRIES,LIER_TRAIL_COMMON,LIER_TRAIL_PATHS,LIER_TRAIL_GATE,makeLierTrail,engageLierTrail,moveLierTrail,lierTrailScale,OPP_BARRIERS,OPP_NORTH_PATH,OPP_CITY_GATE,LIER_RIVER,LIER_BRIDGE_PATH,LIER_BRIDGE_STRUCTURE,engageOppNorth,moveOppNorth,lierTerrainBlocked,engageLierBridge,SEND_PROPS,SEND_COLLIDERS,SEND_LOCAL_COLLIDERS,SEND_MAP_POND,SEND_DEPTH_LAYERS,sendLocal,sendTerrainBlocked,sendBehindFoot,slideAgainstSend,OPP_GATE_ANCHOR,OPP_GATE_ZONE,oppGateHighlighted,OPP_CASTLE,OPP_WATER,OPP_ROCKS,OPP_FORESTS,OPP_STRUCTURES,OPP_WOOD_PATH,OPP_STONE_PATH,oppCastleBlocked,oppTerrainBlocked,engageOppBridge,moveOppBridge,slideAgainstOpp,BADBERG_PATH,BADBERG_CAPTURE,SULZ_FORESTS,SULZ_GATE_ANCHORS,SULZ_GATE_ZONES,engageBadberg,moveBadberg,sulzHighlighted,WEST_CLIFFS,WEST_WATER,WEST_PROPS,HUB_WEST_APPROACH,westPropBlocked,westTerrainBlocked,slideAgainstWest,RAMS_FORTS,RAMS_FORT_PATHS,RAMS_FORT_GATE_ZONES,ramsFortBlocked,ramsFortBehindFoot,ramsFortRearY,ramsFortOpaque,ramsFortHighlighted,engageRamsFort,moveRamsFort,RAMS_RIVER,RAMS_LEFT_ROCK,RAMS_RIGHT_SURFACE,RAMS_BRIDGE_PATH,RAMS_BRIDGE_STRUCTURE,ramsTerrainBlocked,engageRamsBridge,slideAgainstRams,HUB_PROPS,HUB_PROP_COLLIDERS,HUB_TOWER_BACK_Y,HUB_PROP_GATE_ZONES,hubPropBlocked,hubTowerBehindFoot,hubPropHighlighted,slideAgainstHubProps,HUB_RIVER,HUB_PLATEAU_ROCK,HUB_BRIDGE_PATH,HUB_BRIDGE_STRUCTURE,hubTerrainBlocked,engageHubBridge,hubPlateauFirstHit,slideAgainstHubPlateau,LAUTEN_RIVER,LAUTEN_ICE,LAUTEN_VINE_PATH,LAUTEN_BRIDGE_PATH,LAUTEN_TREES,lautenTerrainBlocked,engageLautenTrack,moveLautenTrack,CASTLE_GATE_ZONE_LOCAL,CASTLE_GATE_ZONE,CASTLE_TRAVEL_ENVELOPE_LOCAL,castleSnowfallCoverageAt,winterSnowParticleCoverageAt,WINTER_CASTLE,CASTLE_COLLIDERS,CASTLE_COMPOUND_LOCAL,CASTLE_ROCKS_LOCAL,CASTLE_GATE,castleGroundOverridesMountain,castleLocal,castleBlockedFoot,castleBehindFoot,castleGateHighlighted,castleFirstHit,slideAgainstCastle,CASTLE_SNOW_GRID,CASTLE_ART_ALPHA_GRID,sampleWeatherGrid,winterSnowBaseAt,winterSnowCoverageAt,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
     return;
   }
 
@@ -1473,6 +1505,11 @@
   const fallingFireContext=fallingFireCanvas.getContext('2d'),fallingFire={particles:[],carry:0,lastTime:null,map:null,atlas:null};
   const rabbitImages=Object.fromEntries(Object.entries(RABBIT_SPRITES).map(([key,p])=>{const im=new Image();im.src=p.file;return [key,im];}));
   const rabbitSystem={rabbits:createRabbits(),numbers:[],clock:{generation:-1,phase:0,cycle:0,stamp:''}};
+  const animalHitBag={remaining:[],last:-1},animalHitVoices=new Set();
+  const animalHitPreloads=ANIMAL_HIT_SOUNDS.map(path=>{const audio=new Audio(path);audio.preload='auto';return audio;});
+  const moleImages=Object.fromEntries(Object.entries(MOLE_SPRITES).map(([key,p])=>{const im=new Image();im.src=p.file;return [key,im];}));
+  const mole=createMole(),moleDigAudio=new Audio(MOLE_RULES.digSound);moleDigAudio.preload='auto';moleDigAudio.loop=false;
+  let moleDigFallback=false,moleDigPending=false,moleDigToken=0;
   const helmetFrames=new Map();
   const inventoryState={open:false,page:0,slots:Array.from({length:72},(_,i)=>Object.keys(HELMET_VARIANTS)[i]||null)};
   for(const id of Object.keys(SWORD_VARIANTS)){const index=findSwordInventorySpace(inventoryState.slots);if(index>=0){inventoryState.slots[index]=id;inventoryState.slots[index+6]=SWORD_VARIANTS[id].tail;}}
@@ -1651,6 +1688,33 @@
       try{attackFallback.currentTime=0;const result=attackFallback.play();attack.audioStarted=true;if(result&&result.catch)result.catch(()=>{if(generation===attack.generation)stopAttack();});}catch{stopAttack();}
     }
   }
+  function playAnimalHitSound(){
+    const index=nextAnimalHitSound(animalHitBag),voice=new Audio(ANIMAL_HIT_SOUNDS[index]);voice.preload='auto';voice.volume=.9;animalHitVoices.add(voice);
+    const release=()=>animalHitVoices.delete(voice);voice.onended=release;voice.onerror=release;
+    try{const p=voice.play();if(p&&p.catch)p.catch(release);}catch{release();}
+  }
+  function pauseMoleDig(){if(!moleDigAudio.paused&&!moleDigAudio.ended)moleDigAudio.pause();}
+  function playMoleDig(restart){
+    if(moleDigPending&&!restart)return;
+    if(restart){moleDigToken++;moleDigFallback=false;mole.audioFinished=false;try{moleDigAudio.currentTime=0;}catch{}}
+    const token=moleDigToken,phase=mole.mode;moleDigPending=true;
+    moleDigAudio.onended=()=>{if(token===moleDigToken&&mole.mode===phase){mole.audioFinished=true;moleDigPending=false;}};
+    moleDigAudio.onerror=()=>{if(token===moleDigToken){moleDigFallback=true;moleDigPending=false;}};
+    try{const p=moleDigAudio.play();if(p&&p.then)p.then(()=>{if(token===moleDigToken)moleDigPending=false;},()=>{if(token===moleDigToken){moleDigFallback=true;moleDigPending=false;}});else moleDigPending=false;}catch{moleDigFallback=true;moleDigPending=false;}
+  }
+  function updateMoleSystem(dt){
+    if(!state.playing||state.transitioning||activeMapId!=='oberkirch'||inventoryState.open||teleportState.open||document.hidden){pauseMoleDig();return;}
+    const digging=mole.mode==='rising'||mole.mode==='sinking';
+    if(digging&&!moleDigFallback&&moleDigAudio.paused&&!moleDigAudio.ended)playMoleDig(false);
+    const duration=Number.isFinite(moleDigAudio.duration)&&moleDigAudio.duration>0?moleDigAudio.duration:MOLE_RULES.digDuration;
+    const event=stepMole(mole,dt,Math.random,duration,mole.audioFinished||(digging&&moleDigAudio.ended),digging&&!moleDigFallback);
+    if(event==='dig')playMoleDig(true);else if(event==='surface'||event==='hide'){mole.audioFinished=false;pauseMoleDig();}
+  }
+  function renderMole(back,front){
+    if(activeMapId!=='oberkirch'||!state.playing)return;const key=moleVisual(mole);if(!key)return;
+    const p=MOLE_SPRITES[key],im=moleImages[key],ctx=mole.y>state.player.y?front:back;
+    if(im.complete&&im.naturalWidth)ctx.drawImage(im,mole.x-p.width*p.scale/2,mole.y-p.height*p.scale,p.width*p.scale,p.height*p.scale);
+  }
   function applyRabbitFistFrame(pose,elapsed,duration){
     if(activeMapId!=='oberkirch'||swordEquipped||!attack.active)return;
     const clock=rabbitSystem.clock,phase=elapsed%duration;
@@ -1660,9 +1724,11 @@
     if(pose.index<0||phase<ATTACK_TIMING.peaks[0])return;
     const stamp=`${clock.generation}:${clock.cycle}:${pose.index}`;if(stamp===clock.stamp)return;clock.stamp=stamp;
     const damage=pose.index===3?RABBIT_RULES.lastHitDamage:RABBIT_RULES.damage;
-    for(const rabbit of rabbitSystem.rabbits)if(rabbitInFistBox(state.player,attack.facing,rabbit)&&damageRabbit(rabbit,damage,state.player))rabbitSystem.numbers.push({x:rabbit.x,y:rabbit.y-170,age:0,damage});
+    for(const rabbit of rabbitSystem.rabbits)if(rabbitInFistBox(state.player,attack.facing,rabbit)&&damageRabbit(rabbit,damage,state.player)){playAnimalHitSound();rabbitSystem.numbers.push({x:rabbit.x,y:rabbit.y-170*RABBIT_RULES.size,age:0,damage});}
+    if(mole.mode==='surface'&&rabbitInFistBox(state.player,attack.facing,mole)&&damageMole(mole,damage)){playAnimalHitSound();rabbitSystem.numbers.push({x:mole.x,y:mole.y-110,age:0,damage});}
   }
   function updateRabbitSystem(dt){
+    updateMoleSystem(dt);
     if(!state.playing||state.transitioning||inventoryState.open||teleportState.open||document.hidden)return;
     for(const r of rabbitSystem.rabbits)stepRabbit(r,dt,Math.random,activeMapId==='oberkirch');
     for(let i=rabbitSystem.numbers.length-1;i>=0;i--){const n=rabbitSystem.numbers[i];n.age+=dt;if(n.age>=1.1)rabbitSystem.numbers.splice(i,1);}
@@ -1670,11 +1736,12 @@
   function renderRabbits(back,front){
     if(activeMapId!=='oberkirch'||!state.playing)return;
     for(const r of [...rabbitSystem.rabbits].sort((a,b)=>a.y-b.y)){
-      const visual=rabbitVisual(r);if(!visual)continue;const p=RABBIT_SPRITES[visual.key],ctx=r.y>state.player.y?front:back,im=rabbitImages[visual.key];
+      const visual=rabbitVisual(r);if(!visual)continue;const p=RABBIT_SPRITES[visual.key],size=p.scale*RABBIT_RULES.size,ctx=r.y>state.player.y?front:back,im=rabbitImages[visual.key];
       if(!im.complete||!im.naturalWidth)continue;
-      ctx.fillStyle='rgba(24,25,12,.13)';ctx.beginPath();ctx.ellipse(r.x,r.y,30,8,0,0,Math.PI*2);ctx.fill();
-      ctx.save();ctx.translate(r.x,r.y-visual.lift);ctx.scale(visual.mirror?-1:1,1);ctx.drawImage(im,-p.width*p.scale/2,-p.height*p.scale,p.width*p.scale,p.height*p.scale);ctx.restore();
+      ctx.fillStyle='rgba(24,25,12,.13)';ctx.beginPath();ctx.ellipse(r.x,r.y,30*RABBIT_RULES.size,8*RABBIT_RULES.size,0,0,Math.PI*2);ctx.fill();
+      ctx.save();ctx.translate(r.x,r.y-visual.lift);ctx.scale(visual.mirror?-1:1,1);ctx.drawImage(im,-p.width*size/2,-p.height*size,p.width*size,p.height*size);ctx.restore();
     }
+    renderMole(back,front);
     front.font='bold 76px Georgia, serif';front.textAlign='center';front.textBaseline='bottom';front.lineWidth=5;front.strokeStyle='#4b100c';front.fillStyle='#ff382d';
     for(const n of rabbitSystem.numbers){const t=n.age/1.1,y=n.y-95*(1-(1-t)*(1-t));front.globalAlpha=Math.min(1,(1-t)*3);front.strokeText(`-${n.damage}`,n.x,y);front.fillText(`-${n.damage}`,n.x,y);}front.globalAlpha=1;
   }
@@ -1730,6 +1797,7 @@
   const teleportHint=document.createElement('p');teleportHint.id='teleport-hint';teleportHint.textContent='T · SCHLIESSEN';
   teleportPanel.appendChild(teleportTitle);teleportPanel.appendChild(teleportPlaces);teleportPanel.appendChild(teleportHint);teleportOverlay.appendChild(teleportPanel);game.appendChild(teleportOverlay);
   function setTeleportOpen(open){
+    if(open)pauseMoleDig();
     if(open)stopAttack();
     if(open&&inventoryState.open)setInventoryOpen(false);
     teleportState.open=Boolean(open);teleportOverlay.style.display=open?'flex':'none';teleportOverlay.setAttribute('aria-hidden',open?'false':'true');
@@ -1798,6 +1866,7 @@
     swordEquipment.style.display=swordEquipped?'block':'none';swordEquipment.setAttribute('aria-label',swordEquipped?`${SWORD_VARIANTS[equippedSwordId].label} – Rechtsklick zum Ablegen`:'Leerer Waffenplatz');renderInventoryItem(swordEquipment,swordEquipped?equippedSwordId:null);
   }
   function setInventoryOpen(open){
+    if(open)pauseMoleDig();
     if(open)stopAttack();
     if(open&&(!state.playing||state.transitioning))return;
     if(open&&teleportState.open)setTeleportOpen(false);
@@ -2233,7 +2302,7 @@
     if(state.starting || state.playing) return;
     state.starting=true;status.hidden=false;status.textContent='Oberkirch wird geöffnet …';
     try {
-      const jobs=[...Object.values(rabbitImages).map(waitForImage),prepareAttackAudio(),prepareBladeFireAtlas(),prepareFallingFlameAtlas(),waitForImage(flameSwordInventoryImage),waitForImage(swordBlade),waitForImage(swordInventoryImage),...hudImages.map(waitForImage),...inventoryGlows.map(waitForImage),...inventoryPages.map(waitForImage),...Object.values(helmetImages).flatMap(variant=>Object.values(variant).map(waitForImage)),waitForImage(map),waitForImage(sendSignImage),waitForImage(sendWheelImage),waitForImage(caveHeraldry.crest),waitForImage(allerCaveSource),waitForImage(allerMonasteryImage),waitForImage(oppGateImage),...sendImages.map(waitForImage),waitForImage(oppCastleImage),waitForImage(castleImage),...hubPropImages.map(waitForImage),...ramsFortImages.map(waitForImage),...westPropImages.map(waitForImage),...buildingPresentation.map(e=>waitForImage(e.crest))];
+      const jobs=[...Object.values(moleImages).map(waitForImage),...Object.values(rabbitImages).map(waitForImage),prepareAttackAudio(),prepareBladeFireAtlas(),prepareFallingFlameAtlas(),waitForImage(flameSwordInventoryImage),waitForImage(swordBlade),waitForImage(swordInventoryImage),...hudImages.map(waitForImage),...inventoryGlows.map(waitForImage),...inventoryPages.map(waitForImage),...Object.values(helmetImages).flatMap(variant=>Object.values(variant).map(waitForImage)),waitForImage(map),waitForImage(sendSignImage),waitForImage(sendWheelImage),waitForImage(caveHeraldry.crest),waitForImage(allerCaveSource),waitForImage(allerMonasteryImage),waitForImage(oppGateImage),...sendImages.map(waitForImage),waitForImage(oppCastleImage),waitForImage(castleImage),...hubPropImages.map(waitForImage),...ramsFortImages.map(waitForImage),...westPropImages.map(waitForImage),...buildingPresentation.map(e=>waitForImage(e.crest))];
       for(const direction of ['down','left','right','up']) {
         const image=new Image();image.src=`assets/player/stand-${direction}.png`;
         images[`stand-${direction}`]=image;jobs.push(waitForImage(image));
@@ -2275,7 +2344,7 @@
     keys.delete(event.code);
     if(!attack.active && state.playing && !['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].some(k=>keys.has(k))) {updateAnimation(false,0);stopTreeLeaves();}
   });
-  function resetInput(){stopAttack();keys.clear();clearIceMotion();lastTime=0;if(state.playing)updateAnimation(false,0);stopTreeLeaves();}
+  function resetInput(){pauseMoleDig();stopAttack();keys.clear();clearIceMotion();lastTime=0;if(state.playing)updateAnimation(false,0);stopTreeLeaves();}
   addEventListener('blur',resetInput);
   document.addEventListener('visibilitychange',resetInput);
 
