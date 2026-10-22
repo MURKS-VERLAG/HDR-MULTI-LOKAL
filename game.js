@@ -1230,6 +1230,10 @@
     'helmet-2':{label:'Topfhelm schwarz-weiß',files:{'front':'assets/player/helmet/variant-2/front.webp','back':'assets/player/helmet/variant-2/back.webp','side-stand':'assets/player/helmet/variant-2/side-stand.webp','side-walk':'assets/player/helmet/variant-2/side-walk.webp'}},
     'helmet-3':{label:'Topfhelm rot-blau',files:{'front':'assets/player/helmet/variant-3/front.webp','back':'assets/player/helmet/variant-3/back.webp','side-stand':'assets/player/helmet/variant-3/side-stand.webp','side-walk':'assets/player/helmet/variant-3/side-walk.webp'}},
     'helmet-4':{label:'Topfhelm rot-weiß',files:{'front':'assets/player/helmet/variant-4/front.webp','back':'assets/player/helmet/variant-4/back.webp','side-stand':'assets/player/helmet/variant-4/side-stand.webp','side-walk':'assets/player/helmet/variant-4/side-walk.webp'}},
+    'helmet-5':{label:'Topfhelm rot-weiß / rot-grün',files:{'front':'assets/player/helmet/variant-5/front.webp','back':'assets/player/helmet/variant-5/back.webp','side-stand':'assets/player/helmet/variant-5/side-stand.webp','side-walk':'assets/player/helmet/variant-5/side-walk.webp'}},
+    'helmet-6':{label:'Topfhelm rot-weiß / gold-silber',files:{'front':'assets/player/helmet/variant-6/front.webp','back':'assets/player/helmet/variant-6/back.webp','side-stand':'assets/player/helmet/variant-6/side-stand.webp','side-walk':'assets/player/helmet/variant-6/side-walk.webp'}},
+    'helmet-7':{label:'Topfhelm schwarz-weinrot',files:{'front':'assets/player/helmet/variant-7/front.webp','back':'assets/player/helmet/variant-7/back.webp','side-stand':'assets/player/helmet/variant-7/side-stand.webp','side-walk':'assets/player/helmet/variant-7/side-walk.webp'}},
+    'helmet-8':{label:'Topfhelm königsblau-gold',files:{'front':'assets/player/helmet/variant-8/front.webp','back':'assets/player/helmet/variant-8/back.webp','side-stand':'assets/player/helmet/variant-8/side-stand.webp','side-walk':'assets/player/helmet/variant-8/side-walk.webp'}},
   });
   const HELMET_PADDING=320;
   function helmetLayout(key){
