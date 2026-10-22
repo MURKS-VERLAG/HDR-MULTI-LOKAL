@@ -1240,6 +1240,12 @@
     const p=HELMET_POSES[key],scale=.42*(PLAYER.height/1536)/(spriteLayout(key).height/1536);
     return {...p,scale,width:1145*scale,height:1374*scale};
   }
+  // Registered to the eight original strike poses; these frames are never cut or masked.
+  const ATTACK_HELMET_POSES=Object.freeze({"attack-01":{"asset":"back","x":567.72153,"y":380.52674,"angle":-0.3256141,"anchor":[580,1140]},"attack-02":{"asset":"back","x":160.98574,"y":469.86296,"angle":-0.32666061,"anchor":[580,1140]},"attack-03":{"asset":"side-walk","x":538.94871,"y":546.14574,"angle":-0.00097636,"anchor":[800,1160]},"attack-04":{"asset":"side-walk","x":575.53031,"y":537.92558,"angle":0.00021892,"anchor":[800,1160]},"attack-05":{"asset":"side-walk","x":205.67648,"y":544.51289,"angle":0.00110348,"anchor":[800,1160]},"attack-06":{"asset":"front","x":487.13908,"y":338.81401,"angle":0.00028596,"anchor":[580,1320]},"attack-07":{"asset":"front","x":617.81051,"y":366.44896,"angle":0.00071046,"anchor":[580,1320]},"attack-08":{"asset":"front","x":397.86773,"y":455.3144,"angle":-0.28922186,"anchor":[580,1320]}});
+  function attackHelmetLayout(key){
+    const p=ATTACK_HELMET_POSES[key],scale=.42*(PLAYER.height/1536)/(spriteLayout(key).height/1536);
+    return {...p,scale,width:1145*scale,height:1374*scale};
+  }
   function directionForInput(dx,dy) {return dy<0?'up':dy>0?'down':dx<0?'left':'right';}
   function advanceWalkAnimation(animation,direction,moving,dt) {
     if(!moving){animation.moving=false;animation.index=0;animation.elapsed=0;animation.direction=direction;return `stand-${direction}`;}
@@ -1267,7 +1273,7 @@
   function oppGateHighlighted(player){return activeMapId==='oppenau'&&worldPointInPolygon(player.x,player.y,OPP_GATE_ZONE);}
 
   if(typeof module!=='undefined' && module.exports) {
-    module.exports={SEND_ROCKS,SEND_FORESTS,SEND_SIGN,SEND_SOLIDS,sendSignBehindFoot,hudScreenAreas,hudFootCovered,ATTACK_TIMING,ATTACK_SEQUENCES,ATTACK_BOUNDS,attackSpriteLayout,attackPoseAt,HUD_LAYOUT,hudValues,INVENTORY_LAYOUT,inventoryCellRect,HELMET_POSES,HELMET_FILES,HELMET_VARIANTS,HELMET_PADDING,helmetLayout,SEND_MILL_WHEEL,sendWheelWorldTransform,advanceSendWheel,ALLER_MONASTERY_GATE,ALLER_MONASTERY_GATE_ZONE,allerMonasteryHighlighted,ALLER_EDGE_SEALS,ALLER_BRIDGE_PATHS,ALLER_BRIDGE_GUARDS,ALLER_NEW_FORESTS,ALLER_CAVE,ALLER_CAVE_COLLIDERS,ALLER_CAVE_GATE,ALLER_CAVE_GATE_ZONE,allerCaveHighlighted,allerLandingOpen,engageAllerTrack,moveAllerTrack,allerTrackDirection,LIER_CAPTURE_FUNNEL,ALLER_MONASTERY,ALLER_PINK_Y,ALLER_BARRIERS,ALLER_FORESTS,ALLER_BUILDING_COLLIDERS,ALLER_STAIR_GATE,ALLER_STAIR_PATH,allerBehindFoot,allerTerrainBlocked,engageAllerStair,moveAllerStair,slideAgainstAller,lierTrailSpeedFactor,lierAreaSpeedFactor,TELEPORT_DESTINATIONS,TELEPORT_MAP_ORDER,getTeleportRoute,LIER_PERSPECTIVE_LINES,LIER_MIN_AREA_SCALE,lierRightBankX,lierAreaPerspective,lierRenderedScale,LIER_ROCKS,LIER_FORESTS,LIER_TRAIL_ENTRIES,LIER_TRAIL_COMMON,LIER_TRAIL_PATHS,LIER_TRAIL_GATE,makeLierTrail,engageLierTrail,moveLierTrail,lierTrailScale,OPP_BARRIERS,OPP_NORTH_PATH,OPP_CITY_GATE,LIER_RIVER,LIER_BRIDGE_PATH,LIER_BRIDGE_STRUCTURE,engageOppNorth,moveOppNorth,lierTerrainBlocked,engageLierBridge,SEND_PROPS,SEND_COLLIDERS,SEND_LOCAL_COLLIDERS,SEND_MAP_POND,SEND_DEPTH_LAYERS,sendLocal,sendTerrainBlocked,sendBehindFoot,slideAgainstSend,OPP_GATE_ANCHOR,OPP_GATE_ZONE,oppGateHighlighted,OPP_CASTLE,OPP_WATER,OPP_ROCKS,OPP_FORESTS,OPP_STRUCTURES,OPP_WOOD_PATH,OPP_STONE_PATH,oppCastleBlocked,oppTerrainBlocked,engageOppBridge,moveOppBridge,slideAgainstOpp,BADBERG_PATH,BADBERG_CAPTURE,SULZ_FORESTS,SULZ_GATE_ANCHORS,SULZ_GATE_ZONES,engageBadberg,moveBadberg,sulzHighlighted,WEST_CLIFFS,WEST_WATER,WEST_PROPS,HUB_WEST_APPROACH,westPropBlocked,westTerrainBlocked,slideAgainstWest,RAMS_FORTS,RAMS_FORT_PATHS,RAMS_FORT_GATE_ZONES,ramsFortBlocked,ramsFortBehindFoot,ramsFortRearY,ramsFortOpaque,ramsFortHighlighted,engageRamsFort,moveRamsFort,RAMS_RIVER,RAMS_LEFT_ROCK,RAMS_RIGHT_SURFACE,RAMS_BRIDGE_PATH,RAMS_BRIDGE_STRUCTURE,ramsTerrainBlocked,engageRamsBridge,slideAgainstRams,HUB_PROPS,HUB_PROP_COLLIDERS,HUB_TOWER_BACK_Y,HUB_PROP_GATE_ZONES,hubPropBlocked,hubTowerBehindFoot,hubPropHighlighted,slideAgainstHubProps,HUB_RIVER,HUB_PLATEAU_ROCK,HUB_BRIDGE_PATH,HUB_BRIDGE_STRUCTURE,hubTerrainBlocked,engageHubBridge,hubPlateauFirstHit,slideAgainstHubPlateau,LAUTEN_RIVER,LAUTEN_ICE,LAUTEN_VINE_PATH,LAUTEN_BRIDGE_PATH,LAUTEN_TREES,lautenTerrainBlocked,engageLautenTrack,moveLautenTrack,CASTLE_GATE_ZONE_LOCAL,CASTLE_GATE_ZONE,CASTLE_TRAVEL_ENVELOPE_LOCAL,castleSnowfallCoverageAt,winterSnowParticleCoverageAt,WINTER_CASTLE,CASTLE_COLLIDERS,CASTLE_COMPOUND_LOCAL,CASTLE_ROCKS_LOCAL,CASTLE_GATE,castleGroundOverridesMountain,castleLocal,castleBlockedFoot,castleBehindFoot,castleGateHighlighted,castleFirstHit,slideAgainstCastle,CASTLE_SNOW_GRID,CASTLE_ART_ALPHA_GRID,sampleWeatherGrid,winterSnowBaseAt,winterSnowCoverageAt,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
+    module.exports={ATTACK_HELMET_POSES,attackHelmetLayout,SEND_ROCKS,SEND_FORESTS,SEND_SIGN,SEND_SOLIDS,sendSignBehindFoot,hudScreenAreas,hudFootCovered,ATTACK_TIMING,ATTACK_SEQUENCES,ATTACK_BOUNDS,attackSpriteLayout,attackPoseAt,HUD_LAYOUT,hudValues,INVENTORY_LAYOUT,inventoryCellRect,HELMET_POSES,HELMET_FILES,HELMET_VARIANTS,HELMET_PADDING,helmetLayout,SEND_MILL_WHEEL,sendWheelWorldTransform,advanceSendWheel,ALLER_MONASTERY_GATE,ALLER_MONASTERY_GATE_ZONE,allerMonasteryHighlighted,ALLER_EDGE_SEALS,ALLER_BRIDGE_PATHS,ALLER_BRIDGE_GUARDS,ALLER_NEW_FORESTS,ALLER_CAVE,ALLER_CAVE_COLLIDERS,ALLER_CAVE_GATE,ALLER_CAVE_GATE_ZONE,allerCaveHighlighted,allerLandingOpen,engageAllerTrack,moveAllerTrack,allerTrackDirection,LIER_CAPTURE_FUNNEL,ALLER_MONASTERY,ALLER_PINK_Y,ALLER_BARRIERS,ALLER_FORESTS,ALLER_BUILDING_COLLIDERS,ALLER_STAIR_GATE,ALLER_STAIR_PATH,allerBehindFoot,allerTerrainBlocked,engageAllerStair,moveAllerStair,slideAgainstAller,lierTrailSpeedFactor,lierAreaSpeedFactor,TELEPORT_DESTINATIONS,TELEPORT_MAP_ORDER,getTeleportRoute,LIER_PERSPECTIVE_LINES,LIER_MIN_AREA_SCALE,lierRightBankX,lierAreaPerspective,lierRenderedScale,LIER_ROCKS,LIER_FORESTS,LIER_TRAIL_ENTRIES,LIER_TRAIL_COMMON,LIER_TRAIL_PATHS,LIER_TRAIL_GATE,makeLierTrail,engageLierTrail,moveLierTrail,lierTrailScale,OPP_BARRIERS,OPP_NORTH_PATH,OPP_CITY_GATE,LIER_RIVER,LIER_BRIDGE_PATH,LIER_BRIDGE_STRUCTURE,engageOppNorth,moveOppNorth,lierTerrainBlocked,engageLierBridge,SEND_PROPS,SEND_COLLIDERS,SEND_LOCAL_COLLIDERS,SEND_MAP_POND,SEND_DEPTH_LAYERS,sendLocal,sendTerrainBlocked,sendBehindFoot,slideAgainstSend,OPP_GATE_ANCHOR,OPP_GATE_ZONE,oppGateHighlighted,OPP_CASTLE,OPP_WATER,OPP_ROCKS,OPP_FORESTS,OPP_STRUCTURES,OPP_WOOD_PATH,OPP_STONE_PATH,oppCastleBlocked,oppTerrainBlocked,engageOppBridge,moveOppBridge,slideAgainstOpp,BADBERG_PATH,BADBERG_CAPTURE,SULZ_FORESTS,SULZ_GATE_ANCHORS,SULZ_GATE_ZONES,engageBadberg,moveBadberg,sulzHighlighted,WEST_CLIFFS,WEST_WATER,WEST_PROPS,HUB_WEST_APPROACH,westPropBlocked,westTerrainBlocked,slideAgainstWest,RAMS_FORTS,RAMS_FORT_PATHS,RAMS_FORT_GATE_ZONES,ramsFortBlocked,ramsFortBehindFoot,ramsFortRearY,ramsFortOpaque,ramsFortHighlighted,engageRamsFort,moveRamsFort,RAMS_RIVER,RAMS_LEFT_ROCK,RAMS_RIGHT_SURFACE,RAMS_BRIDGE_PATH,RAMS_BRIDGE_STRUCTURE,ramsTerrainBlocked,engageRamsBridge,slideAgainstRams,HUB_PROPS,HUB_PROP_COLLIDERS,HUB_TOWER_BACK_Y,HUB_PROP_GATE_ZONES,hubPropBlocked,hubTowerBehindFoot,hubPropHighlighted,slideAgainstHubProps,HUB_RIVER,HUB_PLATEAU_ROCK,HUB_BRIDGE_PATH,HUB_BRIDGE_STRUCTURE,hubTerrainBlocked,engageHubBridge,hubPlateauFirstHit,slideAgainstHubPlateau,LAUTEN_RIVER,LAUTEN_ICE,LAUTEN_VINE_PATH,LAUTEN_BRIDGE_PATH,LAUTEN_TREES,lautenTerrainBlocked,engageLautenTrack,moveLautenTrack,CASTLE_GATE_ZONE_LOCAL,CASTLE_GATE_ZONE,CASTLE_TRAVEL_ENVELOPE_LOCAL,castleSnowfallCoverageAt,winterSnowParticleCoverageAt,WINTER_CASTLE,CASTLE_COLLIDERS,CASTLE_COMPOUND_LOCAL,CASTLE_ROCKS_LOCAL,CASTLE_GATE,castleGroundOverridesMountain,castleLocal,castleBlockedFoot,castleBehindFoot,castleGateHighlighted,castleFirstHit,slideAgainstCastle,CASTLE_SNOW_GRID,CASTLE_ART_ALPHA_GRID,sampleWeatherGrid,winterSnowBaseAt,winterSnowCoverageAt,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
     return;
   }
 
@@ -1323,20 +1329,29 @@
   }
   function showPlayerSprite(key,mirror=false) {
     if(activeSpriteKey===key && activeMirror===mirror) return;
-    const layout=spriteLayout(key);
+    const layout=spriteLayout(key),helmetStrike=helmetEquipped&&Boolean(ATTACK_HELMET_POSES[key]),horizontalPadding=helmetStrike?320:0;
+    const canvasWidth=1024+horizontalPadding*2;if(sprite.width!==canvasWidth)sprite.width=canvasWidth;
     const offsetX=ATTACK_BOUNDS[key]&&mirror?-layout.offsetX:layout.offsetX;
     sprite.style.position='absolute';sprite.style.left=`calc(50% + ${offsetX}px)`;
-    sprite.style.width=`${layout.width}px`;sprite.style.height=`${layout.height*(1536+HELMET_PADDING)/1536}px`;
+    sprite.style.width=`${layout.width*canvasWidth/1024}px`;sprite.style.height=`${layout.height*(1536+HELMET_PADDING)/1536}px`;
     sprite.style.bottom=`${layout.bottom}px`;
     sprite.style.transform=`translateX(-50%) scaleX(${mirror?-1:1})`;
     sprite.style.transformOrigin='50% 100%';
     spriteContext.setTransform(1,0,0,1,0,0);
     spriteContext.clearRect(0,0,sprite.width,sprite.height);
     if(helmetEquipped){
-      spriteContext.drawImage(helmetFrames.get(key),0,0,sprite.width,sprite.height);
-      const h=helmetLayout(key),im=helmetImages[equippedHelmetId][h.asset];
-      if(h.flip)spriteContext.setTransform(-1,0,0,1,2*h.x,0);
-      spriteContext.drawImage(im,h.x-h.anchor[0]*h.scale,h.y+HELMET_PADDING-h.anchor[1]*h.scale,h.width,h.height);
+      const striking=Boolean(ATTACK_HELMET_POSES[key]);
+      if(striking)spriteContext.drawImage(images[key],horizontalPadding,HELMET_PADDING,1024,1536);
+      else spriteContext.drawImage(helmetFrames.get(key),0,0,sprite.width,sprite.height);
+      const h=striking?attackHelmetLayout(key):helmetLayout(key),im=helmetImages[equippedHelmetId][h.asset];
+      if(striking){
+        const c=Math.cos(h.angle)*h.scale,s=Math.sin(h.angle)*h.scale;
+        spriteContext.setTransform(c,s,-s,c,h.x+horizontalPadding,h.y+HELMET_PADDING);
+        spriteContext.drawImage(im,-h.anchor[0],-h.anchor[1],1145,1374);
+      }else{
+        if(h.flip)spriteContext.setTransform(-1,0,0,1,2*h.x,0);
+        spriteContext.drawImage(im,h.x-h.anchor[0]*h.scale,h.y+HELMET_PADDING-h.anchor[1]*h.scale,h.width,h.height);
+      }
       spriteContext.setTransform(1,0,0,1,0,0);
     }
     else spriteContext.drawImage(images[key],0,HELMET_PADDING,1024,1536);
@@ -1367,7 +1382,7 @@
     if(wasActive){animation.moving=false;animation.index=0;animation.elapsed=0;if(state.playing)showPlayerSprite(`stand-${state.player.facing}`,false);}
   }
   function startAttack(){
-    if(attack.active||helmetEquipped||!state.playing||state.transitioning||state.autoTravel||inventoryState.open||teleportState.open||document.hidden)return;
+    if(attack.active||!state.playing||state.transitioning||state.autoTravel||inventoryState.open||teleportState.open||document.hidden)return;
     clearIceMotion();stopTreeLeaves();attack.active=true;attack.facing=state.player.facing;attack.audioStarted=false;attack.fallbackLastTime=0;attack.fallbackLooped=false;
     const generation=++attack.generation;showPlayerSprite(`stand-${attack.facing}`,false);sprite.style.transform='translateX(-50%) scaleX(1)';
     if(attackAudioContext&&attackAudioBuffer){
@@ -1383,7 +1398,6 @@
   }
   function updateAttack(){
     if(!attack.active)return;
-    if(helmetEquipped){stopAttack();return;}
     let elapsed=attack.audioStarted?(attack.source?Math.max(0,attackAudioContext.currentTime-attack.startedAt):attackFallback.currentTime):0;
     const duration=attack.source?attackAudioBuffer.duration:(Number.isFinite(attackFallback.duration)&&attackFallback.duration>0?attackFallback.duration:ATTACK_TIMING.duration);
     // HTMLAudio.currentTime resets at a loop; preserve the initial-vs-repeat distinction.
