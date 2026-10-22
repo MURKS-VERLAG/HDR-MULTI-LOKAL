@@ -1349,6 +1349,70 @@
     for(let i=0;i<slots.length;i++)if(Math.floor((i%36)/6)<5&&slots[i]===null&&slots[i+6]===null)return i;
     return -1;
   }
+  const RABBIT_ZONES=Object.freeze([{"polygon":[[0,0],[1701.333,0],[888.023,991.263],[0,580.936]],"walls":[[[1701.333,0],[888.023,991.263]],[[888.023,991.263],[0,580.936]]],"exits":["north","west"]},{"polygon":[[10000,4230.354],[9007.689,4227.754],[8984.067,4263.216],[8960.445,4286.857],[8944.697,4349.9],[8905.327,4420.823],[8905.327,4436.584],[8873.831,4499.627],[8873.831,4515.388],[8818.712,4665.116],[8818.712,4688.757],[8802.964,4720.278],[8802.964,4751.8],[8795.09,4759.68],[8779.342,4870.006],[8739.972,4940.929],[8739.972,4964.571],[8775.405,5019.733],[8830.523,5074.896],[8830.523,5082.777],[9062.807,5311.308],[9637.612,5831.414],[9964.384,6115.108],[9980.132,6138.749],[10000,6146.63]],"walls":[[[10000,4230.354],[9007.689,4227.754]],[[9007.689,4227.754],[8984.067,4263.216]],[[8984.067,4263.216],[8960.445,4286.857]],[[8960.445,4286.857],[8944.697,4349.9]],[[8944.697,4349.9],[8905.327,4420.823]],[[8905.327,4420.823],[8905.327,4436.584]],[[8905.327,4436.584],[8873.831,4499.627]],[[8873.831,4499.627],[8873.831,4515.388]],[[8873.831,4515.388],[8818.712,4665.116]],[[8818.712,4665.116],[8818.712,4688.757]],[[8818.712,4688.757],[8802.964,4720.278]],[[8802.964,4720.278],[8802.964,4751.8]],[[8802.964,4751.8],[8795.09,4759.68]],[[8795.09,4759.68],[8779.342,4870.006]],[[8779.342,4870.006],[8739.972,4940.929]],[[8739.972,4940.929],[8739.972,4964.571]],[[8739.972,4964.571],[8775.405,5019.733]],[[8775.405,5019.733],[8830.523,5074.896]],[[8830.523,5074.896],[8830.523,5082.777]],[[8830.523,5082.777],[9062.807,5311.308]],[[9062.807,5311.308],[9637.612,5831.414]],[[9637.612,5831.414],[9964.384,6115.108]],[[9964.384,6115.108],[9980.132,6138.749]],[[9980.132,6138.749],[10000,6146.63]]],"exits":["east"]}]);
+  const RABBIT_SPRITES=Object.freeze({"up-1":{"key":"up-1","file":"assets/animals/rabbit/up-1.webp","width":200,"height":298,"scale":0.36},"up-2":{"key":"up-2","file":"assets/animals/rabbit/up-2.webp","width":143,"height":323,"scale":0.36},"up-3":{"key":"up-3","file":"assets/animals/rabbit/up-3.webp","width":155,"height":261,"scale":0.36},"down-1":{"key":"down-1","file":"assets/animals/rabbit/down-1.webp","width":163,"height":274,"scale":0.36},"down-2":{"key":"down-2","file":"assets/animals/rabbit/down-2.webp","width":138,"height":293,"scale":0.36},"down-3":{"key":"down-3","file":"assets/animals/rabbit/down-3.webp","width":174,"height":261,"scale":0.36},"right-1":{"key":"right-1","file":"assets/animals/rabbit/right-1.webp","width":340,"height":264,"scale":0.36},"right-2":{"key":"right-2","file":"assets/animals/rabbit/right-2.webp","width":445,"height":227,"scale":0.36},"right-3":{"key":"right-3","file":"assets/animals/rabbit/right-3.webp","width":356,"height":275,"scale":0.36},"rest-right-1":{"key":"rest-right-1","file":"assets/animals/rabbit/rest-right-1.webp","width":341,"height":634,"scale":0.24},"rest-right-2":{"key":"rest-right-2","file":"assets/animals/rabbit/rest-right-2.webp","width":401,"height":491,"scale":0.24},"rest-down-2":{"key":"rest-down-2","file":"assets/animals/rabbit/rest-down-2.webp","width":228,"height":591,"scale":0.24},"dead":{"key":"dead","file":"assets/animals/rabbit/dead.webp","width":581,"height":224,"scale":0.24}});
+  const RABBIT_RULES=Object.freeze({hp:100,damage:20,lastHitDamage:40,corpseSeconds:5,margin:12,hopSeconds:.56,hitRadius:32});
+  const RABBIT_FIST_BOXES=Object.freeze({up:{forward:330,halfWidth:175},down:{forward:330,halfWidth:175},left:{forward:355,halfWidth:180},right:{forward:355,halfWidth:180}});
+  function rabbitSegmentDistance(x,y,a,b){const dx=b[0]-a[0],dy=b[1]-a[1],t=Math.max(0,Math.min(1,((x-a[0])*dx+(y-a[1])*dy)/(dx*dx+dy*dy||1)));return Math.hypot(x-a[0]-t*dx,y-a[1]-t*dy);}
+  function rabbitAllowed(zone,x,y){
+    const z=RABBIT_ZONES[zone],w=10000,h=6667;
+    if(x< -440||x>w+440||y< -440||y>h+440)return false;
+    if(x<0&&!z.exits.includes('west')||x>w&&!z.exits.includes('east')||y<0&&!z.exits.includes('north')||y>h&&!z.exits.includes('south'))return false;
+    const px=Math.max(.001,Math.min(w-.001,x)),py=Math.max(.001,Math.min(h-.001,y));
+    return worldPointInPolygon(px,py,z.polygon)&&z.walls.every(([a,b])=>rabbitSegmentDistance(px,py,a,b)>=RABBIT_RULES.margin);
+  }
+  function rabbitHopAllowed(zone,a,b){const steps=Math.max(1,Math.ceil(Math.hypot(b.x-a.x,b.y-a.y)/8));for(let i=0;i<=steps;i++){const t=i/steps;if(!rabbitAllowed(zone,a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t))return false;}return true;}
+  function rabbitRandomPoint(zone,rng=Math.random){const poly=RABBIT_ZONES[zone].polygon,x0=Math.max(85,Math.min(...poly.map(p=>p[0]))+30),x1=Math.min(9915,Math.max(...poly.map(p=>p[0]))-30),y0=Math.max(175,Math.min(...poly.map(p=>p[1]))+30),y1=Math.max(...poly.map(p=>p[1]))-30;for(let n=0;n<2000;n++){const p={x:x0+rng()*(x1-x0),y:y0+rng()*(y1-y0)};if(rabbitAllowed(zone,p.x,p.y))return p;}return {x:(x0+x1)/2,y:(y0+y1)/2};}
+  function createRabbits(rng=Math.random){const result=[];for(let zone=0;zone<2;zone++)for(let i=0;i<2;i++){let p;for(let n=0;n<50;n++){p=rabbitRandomPoint(zone,rng);if(result.every(r=>r.zone!==zone||Math.hypot(r.x-p.x,r.y-p.y)>200))break;}result.push({id:`oberkirch-rabbit-${zone}-${i}`,zone,...p,hp:100,mode:'rest',direction:['up','down','right','left'][Math.floor(rng()*4)],restVariant:Math.floor(rng()*2),wait:.3+rng()*1.5,restChange:.6+rng(),hop:null,deadFor:0,awayFor:0,returning:false});}return result;}
+  function rabbitRestKey(r){if(r.direction==='up')return 'up-3';if(r.direction==='down')return r.restVariant?'rest-down-2':'down-3';return r.restVariant?'rest-right-2':'rest-right-1';}
+  function rabbitVisual(r){if(r.mode==='gone'||r.mode==='away')return null;if(r.mode==='dead')return {key:'dead',mirror:r.direction==='left',lift:0};if(r.mode==='hop'){const t=Math.min(1,r.hop.time/r.hop.duration),index=t<.30?1:t<.70?2:3;return {key:`${r.direction==='left'?'right':r.direction}-${index}`,mirror:r.direction==='left',lift:Math.sin(Math.PI*t)*24};}return {key:rabbitRestKey(r),mirror:r.direction==='left',lift:0};}
+  function planRabbitHop(r,rng=Math.random,heading=null,dodge=false){
+    const angles={right:0,down:Math.PI/2,left:Math.PI,up:-Math.PI/2},directions=['up','down','left','right'];
+    const preferred=heading===null?(rng()<.55?angles[r.direction]:angles[directions[Math.floor(rng()*4)]]):heading;
+    for(let i=0;i<28;i++){
+      const angle=i===0?preferred:i<8?preferred+(rng()-.5)*1.7:angles[directions[Math.floor(rng()*4)]]+(rng()-.5)*.3;
+      const distance=(dodge?180:115)+rng()*(dodge?130:115),target={x:r.x+Math.cos(angle)*distance,y:r.y+Math.sin(angle)*distance};
+      if(!rabbitHopAllowed(r.zone,r,target))continue;
+      r.direction=Math.abs(Math.cos(angle))>Math.abs(Math.sin(angle))?(Math.cos(angle)<0?'left':'right'):(Math.sin(angle)<0?'up':'down');
+      r.hop={from:{x:r.x,y:r.y},to:target,time:0,duration:dodge?.34+rng()*.12:.48+rng()*.16};r.mode='hop';return true;
+    }
+    r.hop=null;r.mode='rest';r.wait=.35;r.restChange=.4;return false;
+  }
+  function rabbitDepart(r,rng){r.exitSide=r.x<0?'west':r.x>10000?'east':r.y<0?'north':'south';r.exitPoint={x:r.x,y:r.y};r.mode='away';r.hop=null;r.awayFor=2.5+rng()*5.5;r.returning=false;}
+  function rabbitReturn(r,rng){
+    const side=r.exitSide;r.x=r.exitPoint.x;r.y=r.exitPoint.y;
+    const angles={west:0,east:Math.PI,north:Math.PI/2,south:-Math.PI/2};
+    if(side==='west'){r.x=-110;r.y=Math.max(45,Math.min(RABBIT_ZONES[r.zone].polygon[3][1]-45,r.y));}if(side==='east'){r.x=10110;const ys=RABBIT_ZONES[r.zone].polygon.filter(p=>p[0]===10000).map(p=>p[1]);r.y=Math.max(Math.min(...ys)+45,Math.min(Math.max(...ys)-45,r.y));}if(side==='north'){r.y=-110;r.x=Math.max(45,Math.min(RABBIT_ZONES[r.zone].polygon[1][0]-45,r.x));}if(side==='south')r.y=6777;
+    r.returning=true;planRabbitHop(r,rng,angles[side],true);
+  }
+  function stepRabbit(r,dt,rng=Math.random,active=true){
+    if(r.mode==='gone')return;
+    if(r.mode==='dead'){r.deadFor+=dt;if(r.deadFor>=RABBIT_RULES.corpseSeconds)r.mode='gone';return;}
+    if(!active)return;
+    if(r.mode==='away'){r.awayFor-=dt;if(r.awayFor<=0)rabbitReturn(r,rng);return;}
+    if(r.mode==='rest'){
+      r.wait-=dt;r.restChange-=dt;
+      if(r.restChange<=0){if(r.direction!=='up')r.restVariant=1-r.restVariant;r.restChange=.6+rng()*1.4;}
+      if(r.wait<=0)planRabbitHop(r,rng);return;
+    }
+    const hop=r.hop;hop.time+=dt;const t=Math.min(1,hop.time/hop.duration),ease=t*t*(3-2*t),x=hop.from.x+(hop.to.x-hop.from.x)*ease,y=hop.from.y+(hop.to.y-hop.from.y)*ease;
+    if(!rabbitAllowed(r.zone,x,y)){r.mode='rest';r.hop=null;r.wait=.2;return;}
+    r.x=x;r.y=y;
+    if(!r.returning&&(r.x< -180||r.x>10180||r.y< -180||r.y>6847)){rabbitDepart(r,rng);return;}
+    if(t>=1){r.returning=false;r.hop=null;r.mode='rest';r.restVariant=Math.floor(rng()*2);r.restChange=.5+rng();r.wait=rng()<.4?.9+rng()*2.3:.025+rng()*.10;}
+  }
+  function rabbitInFistBox(player,facing,r){
+    if(r.hp<=0||r.mode==='away'||r.mode==='gone'||r.mode==='dead')return false;
+    const dx=r.x-player.x,dy=r.y-player.y,p=RABBIT_FIST_BOXES[facing],forward=facing==='up'?-dy:facing==='down'?dy:facing==='left'?-dx:dx,lateral=facing==='up'||facing==='down'?dx:dy;
+    return forward>=0&&forward<=p.forward+RABBIT_RULES.hitRadius&&Math.abs(lateral)<=p.halfWidth+RABBIT_RULES.hitRadius;
+  }
+  function damageRabbit(r,damage,attacker,rng=Math.random){
+    if(r.hp<=0||r.mode==='away'||r.mode==='gone'||r.mode==='dead')return false;
+    r.hp=Math.max(0,r.hp-damage);
+    if(r.hp===0){r.mode='dead';r.deadFor=0;r.hop=null;r.returning=false;}
+    else{const away=Math.atan2(r.y-attacker.y,r.x-attacker.x),turn=(rng()<.5?-1:1)*(.65+rng()*.6);planRabbitHop(r,rng,away+turn,true);}
+    return true;
+  }
   function directionForInput(dx,dy) {return dy<0?'up':dy>0?'down':dx<0?'left':'right';}
   function advanceWalkAnimation(animation,direction,moving,dt) {
     if(!moving){animation.moving=false;animation.index=0;animation.elapsed=0;animation.direction=direction;return `stand-${direction}`;}
@@ -1376,7 +1440,7 @@
   function oppGateHighlighted(player){return activeMapId==='oppenau'&&worldPointInPolygon(player.x,player.y,OPP_GATE_ZONE);}
 
   if(typeof module!=='undefined' && module.exports) {
-    module.exports={FALLING_BLADE_FIRE,swordBladeWorldPoint,advanceFallingFlame,paintFallingFlameSprite,FLAME_SWORD_ITEM,FLAME_SWORD_TAIL,SWORD_VARIANTS,swordItemId,BLADE_FIRE,bladeFireTongues,paintBladeFire,SWORD_SIDE_HOOD_OVERHANG,swordSideHoodRuns,clearSwordSideHood,SWORD_SIZE_FACTORS,SIDE_HOOD_OVERHANG,swordSizeFactor,swordHelmetLayout,clearSideHoodOverhang,SWORD_ITEM,SWORD_TAIL,SWORD_FILES,SWORD_POSES,swordSpriteLayout,swordPoseAt,findSwordInventorySpace,ATTACK_HELMET_POSES,attackHelmetLayout,SEND_ROCKS,SEND_FORESTS,SEND_SIGN,SEND_SOLIDS,sendSignBehindFoot,hudScreenAreas,hudFootCovered,ATTACK_TIMING,ATTACK_SEQUENCES,ATTACK_BOUNDS,attackSpriteLayout,attackPoseAt,HUD_LAYOUT,hudValues,INVENTORY_LAYOUT,inventoryCellRect,HELMET_POSES,HELMET_FILES,HELMET_VARIANTS,HELMET_PADDING,helmetLayout,SEND_MILL_WHEEL,sendWheelWorldTransform,advanceSendWheel,ALLER_MONASTERY_GATE,ALLER_MONASTERY_GATE_ZONE,allerMonasteryHighlighted,ALLER_EDGE_SEALS,ALLER_BRIDGE_PATHS,ALLER_BRIDGE_GUARDS,ALLER_NEW_FORESTS,ALLER_CAVE,ALLER_CAVE_COLLIDERS,ALLER_CAVE_GATE,ALLER_CAVE_GATE_ZONE,allerCaveHighlighted,allerLandingOpen,engageAllerTrack,moveAllerTrack,allerTrackDirection,LIER_CAPTURE_FUNNEL,ALLER_MONASTERY,ALLER_PINK_Y,ALLER_BARRIERS,ALLER_FORESTS,ALLER_BUILDING_COLLIDERS,ALLER_STAIR_GATE,ALLER_STAIR_PATH,allerBehindFoot,allerTerrainBlocked,engageAllerStair,moveAllerStair,slideAgainstAller,lierTrailSpeedFactor,lierAreaSpeedFactor,TELEPORT_DESTINATIONS,TELEPORT_MAP_ORDER,getTeleportRoute,LIER_PERSPECTIVE_LINES,LIER_MIN_AREA_SCALE,lierRightBankX,lierAreaPerspective,lierRenderedScale,LIER_ROCKS,LIER_FORESTS,LIER_TRAIL_ENTRIES,LIER_TRAIL_COMMON,LIER_TRAIL_PATHS,LIER_TRAIL_GATE,makeLierTrail,engageLierTrail,moveLierTrail,lierTrailScale,OPP_BARRIERS,OPP_NORTH_PATH,OPP_CITY_GATE,LIER_RIVER,LIER_BRIDGE_PATH,LIER_BRIDGE_STRUCTURE,engageOppNorth,moveOppNorth,lierTerrainBlocked,engageLierBridge,SEND_PROPS,SEND_COLLIDERS,SEND_LOCAL_COLLIDERS,SEND_MAP_POND,SEND_DEPTH_LAYERS,sendLocal,sendTerrainBlocked,sendBehindFoot,slideAgainstSend,OPP_GATE_ANCHOR,OPP_GATE_ZONE,oppGateHighlighted,OPP_CASTLE,OPP_WATER,OPP_ROCKS,OPP_FORESTS,OPP_STRUCTURES,OPP_WOOD_PATH,OPP_STONE_PATH,oppCastleBlocked,oppTerrainBlocked,engageOppBridge,moveOppBridge,slideAgainstOpp,BADBERG_PATH,BADBERG_CAPTURE,SULZ_FORESTS,SULZ_GATE_ANCHORS,SULZ_GATE_ZONES,engageBadberg,moveBadberg,sulzHighlighted,WEST_CLIFFS,WEST_WATER,WEST_PROPS,HUB_WEST_APPROACH,westPropBlocked,westTerrainBlocked,slideAgainstWest,RAMS_FORTS,RAMS_FORT_PATHS,RAMS_FORT_GATE_ZONES,ramsFortBlocked,ramsFortBehindFoot,ramsFortRearY,ramsFortOpaque,ramsFortHighlighted,engageRamsFort,moveRamsFort,RAMS_RIVER,RAMS_LEFT_ROCK,RAMS_RIGHT_SURFACE,RAMS_BRIDGE_PATH,RAMS_BRIDGE_STRUCTURE,ramsTerrainBlocked,engageRamsBridge,slideAgainstRams,HUB_PROPS,HUB_PROP_COLLIDERS,HUB_TOWER_BACK_Y,HUB_PROP_GATE_ZONES,hubPropBlocked,hubTowerBehindFoot,hubPropHighlighted,slideAgainstHubProps,HUB_RIVER,HUB_PLATEAU_ROCK,HUB_BRIDGE_PATH,HUB_BRIDGE_STRUCTURE,hubTerrainBlocked,engageHubBridge,hubPlateauFirstHit,slideAgainstHubPlateau,LAUTEN_RIVER,LAUTEN_ICE,LAUTEN_VINE_PATH,LAUTEN_BRIDGE_PATH,LAUTEN_TREES,lautenTerrainBlocked,engageLautenTrack,moveLautenTrack,CASTLE_GATE_ZONE_LOCAL,CASTLE_GATE_ZONE,CASTLE_TRAVEL_ENVELOPE_LOCAL,castleSnowfallCoverageAt,winterSnowParticleCoverageAt,WINTER_CASTLE,CASTLE_COLLIDERS,CASTLE_COMPOUND_LOCAL,CASTLE_ROCKS_LOCAL,CASTLE_GATE,castleGroundOverridesMountain,castleLocal,castleBlockedFoot,castleBehindFoot,castleGateHighlighted,castleFirstHit,slideAgainstCastle,CASTLE_SNOW_GRID,CASTLE_ART_ALPHA_GRID,sampleWeatherGrid,winterSnowBaseAt,winterSnowCoverageAt,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
+    module.exports={RABBIT_ZONES,RABBIT_SPRITES,RABBIT_RULES,RABBIT_FIST_BOXES,rabbitAllowed,rabbitHopAllowed,rabbitRandomPoint,createRabbits,rabbitRestKey,rabbitVisual,planRabbitHop,rabbitDepart,rabbitReturn,stepRabbit,rabbitInFistBox,damageRabbit,FALLING_BLADE_FIRE,swordBladeWorldPoint,advanceFallingFlame,paintFallingFlameSprite,FLAME_SWORD_ITEM,FLAME_SWORD_TAIL,SWORD_VARIANTS,swordItemId,BLADE_FIRE,bladeFireTongues,paintBladeFire,SWORD_SIDE_HOOD_OVERHANG,swordSideHoodRuns,clearSwordSideHood,SWORD_SIZE_FACTORS,SIDE_HOOD_OVERHANG,swordSizeFactor,swordHelmetLayout,clearSideHoodOverhang,SWORD_ITEM,SWORD_TAIL,SWORD_FILES,SWORD_POSES,swordSpriteLayout,swordPoseAt,findSwordInventorySpace,ATTACK_HELMET_POSES,attackHelmetLayout,SEND_ROCKS,SEND_FORESTS,SEND_SIGN,SEND_SOLIDS,sendSignBehindFoot,hudScreenAreas,hudFootCovered,ATTACK_TIMING,ATTACK_SEQUENCES,ATTACK_BOUNDS,attackSpriteLayout,attackPoseAt,HUD_LAYOUT,hudValues,INVENTORY_LAYOUT,inventoryCellRect,HELMET_POSES,HELMET_FILES,HELMET_VARIANTS,HELMET_PADDING,helmetLayout,SEND_MILL_WHEEL,sendWheelWorldTransform,advanceSendWheel,ALLER_MONASTERY_GATE,ALLER_MONASTERY_GATE_ZONE,allerMonasteryHighlighted,ALLER_EDGE_SEALS,ALLER_BRIDGE_PATHS,ALLER_BRIDGE_GUARDS,ALLER_NEW_FORESTS,ALLER_CAVE,ALLER_CAVE_COLLIDERS,ALLER_CAVE_GATE,ALLER_CAVE_GATE_ZONE,allerCaveHighlighted,allerLandingOpen,engageAllerTrack,moveAllerTrack,allerTrackDirection,LIER_CAPTURE_FUNNEL,ALLER_MONASTERY,ALLER_PINK_Y,ALLER_BARRIERS,ALLER_FORESTS,ALLER_BUILDING_COLLIDERS,ALLER_STAIR_GATE,ALLER_STAIR_PATH,allerBehindFoot,allerTerrainBlocked,engageAllerStair,moveAllerStair,slideAgainstAller,lierTrailSpeedFactor,lierAreaSpeedFactor,TELEPORT_DESTINATIONS,TELEPORT_MAP_ORDER,getTeleportRoute,LIER_PERSPECTIVE_LINES,LIER_MIN_AREA_SCALE,lierRightBankX,lierAreaPerspective,lierRenderedScale,LIER_ROCKS,LIER_FORESTS,LIER_TRAIL_ENTRIES,LIER_TRAIL_COMMON,LIER_TRAIL_PATHS,LIER_TRAIL_GATE,makeLierTrail,engageLierTrail,moveLierTrail,lierTrailScale,OPP_BARRIERS,OPP_NORTH_PATH,OPP_CITY_GATE,LIER_RIVER,LIER_BRIDGE_PATH,LIER_BRIDGE_STRUCTURE,engageOppNorth,moveOppNorth,lierTerrainBlocked,engageLierBridge,SEND_PROPS,SEND_COLLIDERS,SEND_LOCAL_COLLIDERS,SEND_MAP_POND,SEND_DEPTH_LAYERS,sendLocal,sendTerrainBlocked,sendBehindFoot,slideAgainstSend,OPP_GATE_ANCHOR,OPP_GATE_ZONE,oppGateHighlighted,OPP_CASTLE,OPP_WATER,OPP_ROCKS,OPP_FORESTS,OPP_STRUCTURES,OPP_WOOD_PATH,OPP_STONE_PATH,oppCastleBlocked,oppTerrainBlocked,engageOppBridge,moveOppBridge,slideAgainstOpp,BADBERG_PATH,BADBERG_CAPTURE,SULZ_FORESTS,SULZ_GATE_ANCHORS,SULZ_GATE_ZONES,engageBadberg,moveBadberg,sulzHighlighted,WEST_CLIFFS,WEST_WATER,WEST_PROPS,HUB_WEST_APPROACH,westPropBlocked,westTerrainBlocked,slideAgainstWest,RAMS_FORTS,RAMS_FORT_PATHS,RAMS_FORT_GATE_ZONES,ramsFortBlocked,ramsFortBehindFoot,ramsFortRearY,ramsFortOpaque,ramsFortHighlighted,engageRamsFort,moveRamsFort,RAMS_RIVER,RAMS_LEFT_ROCK,RAMS_RIGHT_SURFACE,RAMS_BRIDGE_PATH,RAMS_BRIDGE_STRUCTURE,ramsTerrainBlocked,engageRamsBridge,slideAgainstRams,HUB_PROPS,HUB_PROP_COLLIDERS,HUB_TOWER_BACK_Y,HUB_PROP_GATE_ZONES,hubPropBlocked,hubTowerBehindFoot,hubPropHighlighted,slideAgainstHubProps,HUB_RIVER,HUB_PLATEAU_ROCK,HUB_BRIDGE_PATH,HUB_BRIDGE_STRUCTURE,hubTerrainBlocked,engageHubBridge,hubPlateauFirstHit,slideAgainstHubPlateau,LAUTEN_RIVER,LAUTEN_ICE,LAUTEN_VINE_PATH,LAUTEN_BRIDGE_PATH,LAUTEN_TREES,lautenTerrainBlocked,engageLautenTrack,moveLautenTrack,CASTLE_GATE_ZONE_LOCAL,CASTLE_GATE_ZONE,CASTLE_TRAVEL_ENVELOPE_LOCAL,castleSnowfallCoverageAt,winterSnowParticleCoverageAt,WINTER_CASTLE,CASTLE_COLLIDERS,CASTLE_COMPOUND_LOCAL,CASTLE_ROCKS_LOCAL,CASTLE_GATE,castleGroundOverridesMountain,castleLocal,castleBlockedFoot,castleBehindFoot,castleGateHighlighted,castleFirstHit,slideAgainstCastle,CASTLE_SNOW_GRID,CASTLE_ART_ALPHA_GRID,sampleWeatherGrid,winterSnowBaseAt,winterSnowCoverageAt,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
     return;
   }
 
@@ -1407,6 +1471,8 @@
   const fallingFireCanvas=document.createElement('canvas');fallingFireCanvas.setAttribute('aria-hidden','true');
   Object.assign(fallingFireCanvas.style,{position:'absolute',inset:'0',width:'100%',height:'100%',pointerEvents:'none',zIndex:'23',display:'none'});game.appendChild(fallingFireCanvas);
   const fallingFireContext=fallingFireCanvas.getContext('2d'),fallingFire={particles:[],carry:0,lastTime:null,map:null,atlas:null};
+  const rabbitImages=Object.fromEntries(Object.entries(RABBIT_SPRITES).map(([key,p])=>{const im=new Image();im.src=p.file;return [key,im];}));
+  const rabbitSystem={rabbits:createRabbits(),numbers:[],clock:{generation:-1,phase:0,cycle:0,stamp:''}};
   const helmetFrames=new Map();
   const inventoryState={open:false,page:0,slots:Array.from({length:72},(_,i)=>Object.keys(HELMET_VARIANTS)[i]||null)};
   for(const id of Object.keys(SWORD_VARIANTS)){const index=findSwordInventorySpace(inventoryState.slots);if(index>=0){inventoryState.slots[index]=id;inventoryState.slots[index+6]=SWORD_VARIANTS[id].tail;}}
@@ -1585,6 +1651,33 @@
       try{attackFallback.currentTime=0;const result=attackFallback.play();attack.audioStarted=true;if(result&&result.catch)result.catch(()=>{if(generation===attack.generation)stopAttack();});}catch{stopAttack();}
     }
   }
+  function applyRabbitFistFrame(pose,elapsed,duration){
+    if(activeMapId!=='oberkirch'||swordEquipped||!attack.active)return;
+    const clock=rabbitSystem.clock,phase=elapsed%duration;
+    if(clock.generation!==attack.generation)Object.assign(clock,{generation:attack.generation,phase:0,cycle:0,stamp:''});
+    if(phase+.01<clock.phase)clock.cycle++;
+    clock.cycle=Math.max(clock.cycle,Math.floor(elapsed/duration));clock.phase=phase;
+    if(pose.index<0||phase<ATTACK_TIMING.peaks[0])return;
+    const stamp=`${clock.generation}:${clock.cycle}:${pose.index}`;if(stamp===clock.stamp)return;clock.stamp=stamp;
+    const damage=pose.index===3?RABBIT_RULES.lastHitDamage:RABBIT_RULES.damage;
+    for(const rabbit of rabbitSystem.rabbits)if(rabbitInFistBox(state.player,attack.facing,rabbit)&&damageRabbit(rabbit,damage,state.player))rabbitSystem.numbers.push({x:rabbit.x,y:rabbit.y-170,age:0,damage});
+  }
+  function updateRabbitSystem(dt){
+    if(!state.playing||state.transitioning||inventoryState.open||teleportState.open||document.hidden)return;
+    for(const r of rabbitSystem.rabbits)stepRabbit(r,dt,Math.random,activeMapId==='oberkirch');
+    for(let i=rabbitSystem.numbers.length-1;i>=0;i--){const n=rabbitSystem.numbers[i];n.age+=dt;if(n.age>=1.1)rabbitSystem.numbers.splice(i,1);}
+  }
+  function renderRabbits(back,front){
+    if(activeMapId!=='oberkirch'||!state.playing)return;
+    for(const r of [...rabbitSystem.rabbits].sort((a,b)=>a.y-b.y)){
+      const visual=rabbitVisual(r);if(!visual)continue;const p=RABBIT_SPRITES[visual.key],ctx=r.y>state.player.y?front:back,im=rabbitImages[visual.key];
+      if(!im.complete||!im.naturalWidth)continue;
+      ctx.fillStyle='rgba(24,25,12,.13)';ctx.beginPath();ctx.ellipse(r.x,r.y,30,8,0,0,Math.PI*2);ctx.fill();
+      ctx.save();ctx.translate(r.x,r.y-visual.lift);ctx.scale(visual.mirror?-1:1,1);ctx.drawImage(im,-p.width*p.scale/2,-p.height*p.scale,p.width*p.scale,p.height*p.scale);ctx.restore();
+    }
+    front.font='bold 76px Georgia, serif';front.textAlign='center';front.textBaseline='bottom';front.lineWidth=5;front.strokeStyle='#4b100c';front.fillStyle='#ff382d';
+    for(const n of rabbitSystem.numbers){const t=n.age/1.1,y=n.y-95*(1-(1-t)*(1-t));front.globalAlpha=Math.min(1,(1-t)*3);front.strokeText(`-${n.damage}`,n.x,y);front.fillText(`-${n.damage}`,n.x,y);}front.globalAlpha=1;
+  }
   function updateAttack(){
     if(!attack.active)return;
     let elapsed=attack.audioStarted?(attack.source?Math.max(0,attackAudioContext.currentTime-attack.startedAt):attackFallback.currentTime):0;
@@ -1594,7 +1687,7 @@
       if(elapsed+.01<attack.fallbackLastTime)attack.fallbackLooped=true;
       attack.fallbackLastTime=elapsed;if(attack.fallbackLooped)elapsed+=duration;
     }
-    const pose=(swordEquipped?swordPoseAt:attackPoseAt)(attack.facing,elapsed,duration);showPlayerSprite(pose.key,pose.mirror);
+    const pose=(swordEquipped?swordPoseAt:attackPoseAt)(attack.facing,elapsed,duration);showPlayerSprite(pose.key,pose.mirror);applyRabbitFistFrame(pose,elapsed,duration);
   }
 
   const sendImages=SEND_PROPS.map(p=>{const image=new Image();image.src=p.image;image.alt='';image.style.visibility='hidden';return image;});
@@ -1888,7 +1981,7 @@
     else if(activeMapId==='oppenau')list=[{p:OPP_CASTLE,image:oppCastleImage,front:false},{p:OPP_CITY_GATE,image:oppGateImage,front:true}];
     else if(activeMapId==='allerheiligen')list=[{p:ALLER_MONASTERY,image:allerMonasteryImage,front:allerBehindFoot(state.player.x,state.player.y)},{p:ALLER_CAVE,image:allerCaveImage,front:false}];
     else if(activeMapId==='westmap')list=WEST_PROPS.map((p,i)=>({p,image:westPropImages[i],front:false}));
-    const now=performance.now(),dt=sceneLastTime?Math.min(.05,(now-sceneLastTime)/1000):1/60;sceneLastTime=now;
+    const now=performance.now(),dt=sceneLastTime?Math.min(.05,(now-sceneLastTime)/1000):1/60;sceneLastTime=now;updateRabbitSystem(dt);
     if(activeMapId==='sendelbach'&&state.playing&&!state.transitioning&&!teleportState.open&&!inventoryState.open&&!document.hidden)sendWheelAngle=advanceSendWheel(sendWheelAngle,dt);
     for(const {p,image,front} of list){
       if(!image.complete||!image.naturalWidth)continue;
@@ -1904,6 +1997,7 @@
       if(!sendBehindFoot(state.player.x,state.player.y,i))continue;
       const p=SEND_PROPS[SEND_DEPTH_LAYERS[i].prop];sceneFrontContext.drawImage(sendFrontLayers[i],p.x,p.y,p.width,p.height);
     }
+    renderRabbits(sceneBaseContext,sceneFrontContext);
   }
   const weatherCanvas=document.createElement('canvas');weatherCanvas.setAttribute('aria-hidden','true');
   Object.assign(weatherCanvas.style,{position:'absolute',inset:'0',width:'100%',height:'100%',pointerEvents:'none',zIndex:'30',display:'none'});game.appendChild(weatherCanvas);
@@ -2139,7 +2233,7 @@
     if(state.starting || state.playing) return;
     state.starting=true;status.hidden=false;status.textContent='Oberkirch wird geöffnet …';
     try {
-      const jobs=[prepareAttackAudio(),prepareBladeFireAtlas(),prepareFallingFlameAtlas(),waitForImage(flameSwordInventoryImage),waitForImage(swordBlade),waitForImage(swordInventoryImage),...hudImages.map(waitForImage),...inventoryGlows.map(waitForImage),...inventoryPages.map(waitForImage),...Object.values(helmetImages).flatMap(variant=>Object.values(variant).map(waitForImage)),waitForImage(map),waitForImage(sendSignImage),waitForImage(sendWheelImage),waitForImage(caveHeraldry.crest),waitForImage(allerCaveSource),waitForImage(allerMonasteryImage),waitForImage(oppGateImage),...sendImages.map(waitForImage),waitForImage(oppCastleImage),waitForImage(castleImage),...hubPropImages.map(waitForImage),...ramsFortImages.map(waitForImage),...westPropImages.map(waitForImage),...buildingPresentation.map(e=>waitForImage(e.crest))];
+      const jobs=[...Object.values(rabbitImages).map(waitForImage),prepareAttackAudio(),prepareBladeFireAtlas(),prepareFallingFlameAtlas(),waitForImage(flameSwordInventoryImage),waitForImage(swordBlade),waitForImage(swordInventoryImage),...hudImages.map(waitForImage),...inventoryGlows.map(waitForImage),...inventoryPages.map(waitForImage),...Object.values(helmetImages).flatMap(variant=>Object.values(variant).map(waitForImage)),waitForImage(map),waitForImage(sendSignImage),waitForImage(sendWheelImage),waitForImage(caveHeraldry.crest),waitForImage(allerCaveSource),waitForImage(allerMonasteryImage),waitForImage(oppGateImage),...sendImages.map(waitForImage),waitForImage(oppCastleImage),waitForImage(castleImage),...hubPropImages.map(waitForImage),...ramsFortImages.map(waitForImage),...westPropImages.map(waitForImage),...buildingPresentation.map(e=>waitForImage(e.crest))];
       for(const direction of ['down','left','right','up']) {
         const image=new Image();image.src=`assets/player/stand-${direction}.png`;
         images[`stand-${direction}`]=image;jobs.push(waitForImage(image));
