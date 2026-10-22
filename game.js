@@ -1298,6 +1298,33 @@
     const mirror=d==='right'?direction==='left':index%2===1;
     return {key:`sword-${d}-${winding?1:d==='right'?(index%2===0?2:4):index<2?2:4}`,mirror,index,winding};
   }
+  const FLAME_SWORD_ITEM='flame-sword',FLAME_SWORD_TAIL='flame-sword:tail';
+  const SWORD_VARIANTS=Object.freeze({
+    sword:{label:'Schwert',inventory:SWORD_FILES.inventory,tail:SWORD_TAIL},
+    'flame-sword':{label:'Flammenschwert',inventory:'assets/player/sword/flame-inventory.webp',tail:FLAME_SWORD_TAIL}
+  });
+  function swordItemId(id){if(Object.prototype.hasOwnProperty.call(SWORD_VARIANTS,id))return id;return Object.keys(SWORD_VARIANTS).find(key=>SWORD_VARIANTS[key].tail===id)||null;}
+  const BLADE_FIRE=Object.freeze({frames:36,columns:8,cellWidth:512,cellHeight:192,duration:1.8,bladeStart:350,bladeEnd:2015,centerY:333});
+  function bladeFireTongues(time){
+    const result=[],phase=time/BLADE_FIRE.duration*Math.PI*2;
+    for(let i=0;i<17;i++)for(const side of [-1,1]){
+      const seed=i*2.399+side*.91,u=(i+.5+.22*Math.sin(seed))/17,pulse=.5+.5*Math.sin(phase*2+seed),curl=Math.sin(phase+seed);
+      const rootX=365+u*1660+Math.sin(phase+seed)*13,edge=7+31*(1-u);
+      result.push({rootX,rootY:333+side*edge,tipX:Math.min(2034,rootX+curl*24+19),tipY:333+side*(edge+48+72*pulse+20*Math.sin(phase+seed*.7)),width:16+11*pulse,alpha:.58+.2*Math.sin(phase+seed),side});
+    }
+    return result;
+  }
+  function paintBladeFire(ctx,time){
+    ctx.globalCompositeOperation='source-over';
+    const glow=ctx.createLinearGradient(0,245,0,421);glow.addColorStop(0,'rgba(255,50,0,0)');glow.addColorStop(.38,'rgba(255,91,9,.10)');glow.addColorStop(.5,'rgba(255,194,42,.18)');glow.addColorStop(.62,'rgba(255,91,9,.10)');glow.addColorStop(1,'rgba(255,50,0,0)');ctx.fillStyle=glow;
+    ctx.beginPath();ctx.moveTo(350,310);ctx.bezierCurveTo(700,225,1750,250,2015,333);ctx.bezierCurveTo(1750,416,700,441,350,356);ctx.closePath();ctx.fill();
+    for(const f of bladeFireTongues(time)){
+      const {rootX:x,rootY:y,tipX:tx,tipY:ty,width:w,side}=f,dy=ty-y;
+      const g=ctx.createLinearGradient(x,y,tx,ty);g.addColorStop(0,`rgba(255,221,88,${f.alpha})`);g.addColorStop(.32,`rgba(255,136,15,${f.alpha*.95})`);g.addColorStop(.75,`rgba(242,54,5,${f.alpha*.65})`);g.addColorStop(1,'rgba(209,28,2,0)');
+      ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(x-w,y);ctx.bezierCurveTo(x-w*1.8,y+dy*.42,tx+w*.4,ty-dy*.13,tx,ty);ctx.bezierCurveTo(tx-w*.4,ty-dy*.34,x+w*1.7,y+dy*.44,x+w,y);ctx.closePath();ctx.fill();
+      const core=ctx.createLinearGradient(x,y,x,y+dy*.66);core.addColorStop(0,'rgba(255,250,178,.88)');core.addColorStop(.45,'rgba(255,207,46,.63)');core.addColorStop(1,'rgba(255,143,15,0)');ctx.fillStyle=core;ctx.beginPath();ctx.moveTo(x-w*.42,y);ctx.bezierCurveTo(x-w*.6,y+dy*.27,tx,ty-dy*.5,tx-5,ty-dy*.28);ctx.bezierCurveTo(tx-12,ty-dy*.48,x+w*.65,y+dy*.2,x+w*.42,y);ctx.closePath();ctx.fill();
+    }
+  }
   function findSwordInventorySpace(slots){
     for(let i=0;i<slots.length;i++)if(Math.floor((i%36)/6)<5&&slots[i]===null&&slots[i+6]===null)return i;
     return -1;
@@ -1329,7 +1356,7 @@
   function oppGateHighlighted(player){return activeMapId==='oppenau'&&worldPointInPolygon(player.x,player.y,OPP_GATE_ZONE);}
 
   if(typeof module!=='undefined' && module.exports) {
-    module.exports={SWORD_SIDE_HOOD_OVERHANG,swordSideHoodRuns,clearSwordSideHood,SWORD_SIZE_FACTORS,SIDE_HOOD_OVERHANG,swordSizeFactor,swordHelmetLayout,clearSideHoodOverhang,SWORD_ITEM,SWORD_TAIL,SWORD_FILES,SWORD_POSES,swordSpriteLayout,swordPoseAt,findSwordInventorySpace,ATTACK_HELMET_POSES,attackHelmetLayout,SEND_ROCKS,SEND_FORESTS,SEND_SIGN,SEND_SOLIDS,sendSignBehindFoot,hudScreenAreas,hudFootCovered,ATTACK_TIMING,ATTACK_SEQUENCES,ATTACK_BOUNDS,attackSpriteLayout,attackPoseAt,HUD_LAYOUT,hudValues,INVENTORY_LAYOUT,inventoryCellRect,HELMET_POSES,HELMET_FILES,HELMET_VARIANTS,HELMET_PADDING,helmetLayout,SEND_MILL_WHEEL,sendWheelWorldTransform,advanceSendWheel,ALLER_MONASTERY_GATE,ALLER_MONASTERY_GATE_ZONE,allerMonasteryHighlighted,ALLER_EDGE_SEALS,ALLER_BRIDGE_PATHS,ALLER_BRIDGE_GUARDS,ALLER_NEW_FORESTS,ALLER_CAVE,ALLER_CAVE_COLLIDERS,ALLER_CAVE_GATE,ALLER_CAVE_GATE_ZONE,allerCaveHighlighted,allerLandingOpen,engageAllerTrack,moveAllerTrack,allerTrackDirection,LIER_CAPTURE_FUNNEL,ALLER_MONASTERY,ALLER_PINK_Y,ALLER_BARRIERS,ALLER_FORESTS,ALLER_BUILDING_COLLIDERS,ALLER_STAIR_GATE,ALLER_STAIR_PATH,allerBehindFoot,allerTerrainBlocked,engageAllerStair,moveAllerStair,slideAgainstAller,lierTrailSpeedFactor,lierAreaSpeedFactor,TELEPORT_DESTINATIONS,TELEPORT_MAP_ORDER,getTeleportRoute,LIER_PERSPECTIVE_LINES,LIER_MIN_AREA_SCALE,lierRightBankX,lierAreaPerspective,lierRenderedScale,LIER_ROCKS,LIER_FORESTS,LIER_TRAIL_ENTRIES,LIER_TRAIL_COMMON,LIER_TRAIL_PATHS,LIER_TRAIL_GATE,makeLierTrail,engageLierTrail,moveLierTrail,lierTrailScale,OPP_BARRIERS,OPP_NORTH_PATH,OPP_CITY_GATE,LIER_RIVER,LIER_BRIDGE_PATH,LIER_BRIDGE_STRUCTURE,engageOppNorth,moveOppNorth,lierTerrainBlocked,engageLierBridge,SEND_PROPS,SEND_COLLIDERS,SEND_LOCAL_COLLIDERS,SEND_MAP_POND,SEND_DEPTH_LAYERS,sendLocal,sendTerrainBlocked,sendBehindFoot,slideAgainstSend,OPP_GATE_ANCHOR,OPP_GATE_ZONE,oppGateHighlighted,OPP_CASTLE,OPP_WATER,OPP_ROCKS,OPP_FORESTS,OPP_STRUCTURES,OPP_WOOD_PATH,OPP_STONE_PATH,oppCastleBlocked,oppTerrainBlocked,engageOppBridge,moveOppBridge,slideAgainstOpp,BADBERG_PATH,BADBERG_CAPTURE,SULZ_FORESTS,SULZ_GATE_ANCHORS,SULZ_GATE_ZONES,engageBadberg,moveBadberg,sulzHighlighted,WEST_CLIFFS,WEST_WATER,WEST_PROPS,HUB_WEST_APPROACH,westPropBlocked,westTerrainBlocked,slideAgainstWest,RAMS_FORTS,RAMS_FORT_PATHS,RAMS_FORT_GATE_ZONES,ramsFortBlocked,ramsFortBehindFoot,ramsFortRearY,ramsFortOpaque,ramsFortHighlighted,engageRamsFort,moveRamsFort,RAMS_RIVER,RAMS_LEFT_ROCK,RAMS_RIGHT_SURFACE,RAMS_BRIDGE_PATH,RAMS_BRIDGE_STRUCTURE,ramsTerrainBlocked,engageRamsBridge,slideAgainstRams,HUB_PROPS,HUB_PROP_COLLIDERS,HUB_TOWER_BACK_Y,HUB_PROP_GATE_ZONES,hubPropBlocked,hubTowerBehindFoot,hubPropHighlighted,slideAgainstHubProps,HUB_RIVER,HUB_PLATEAU_ROCK,HUB_BRIDGE_PATH,HUB_BRIDGE_STRUCTURE,hubTerrainBlocked,engageHubBridge,hubPlateauFirstHit,slideAgainstHubPlateau,LAUTEN_RIVER,LAUTEN_ICE,LAUTEN_VINE_PATH,LAUTEN_BRIDGE_PATH,LAUTEN_TREES,lautenTerrainBlocked,engageLautenTrack,moveLautenTrack,CASTLE_GATE_ZONE_LOCAL,CASTLE_GATE_ZONE,CASTLE_TRAVEL_ENVELOPE_LOCAL,castleSnowfallCoverageAt,winterSnowParticleCoverageAt,WINTER_CASTLE,CASTLE_COLLIDERS,CASTLE_COMPOUND_LOCAL,CASTLE_ROCKS_LOCAL,CASTLE_GATE,castleGroundOverridesMountain,castleLocal,castleBlockedFoot,castleBehindFoot,castleGateHighlighted,castleFirstHit,slideAgainstCastle,CASTLE_SNOW_GRID,CASTLE_ART_ALPHA_GRID,sampleWeatherGrid,winterSnowBaseAt,winterSnowCoverageAt,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
+    module.exports={FLAME_SWORD_ITEM,FLAME_SWORD_TAIL,SWORD_VARIANTS,swordItemId,BLADE_FIRE,bladeFireTongues,paintBladeFire,SWORD_SIDE_HOOD_OVERHANG,swordSideHoodRuns,clearSwordSideHood,SWORD_SIZE_FACTORS,SIDE_HOOD_OVERHANG,swordSizeFactor,swordHelmetLayout,clearSideHoodOverhang,SWORD_ITEM,SWORD_TAIL,SWORD_FILES,SWORD_POSES,swordSpriteLayout,swordPoseAt,findSwordInventorySpace,ATTACK_HELMET_POSES,attackHelmetLayout,SEND_ROCKS,SEND_FORESTS,SEND_SIGN,SEND_SOLIDS,sendSignBehindFoot,hudScreenAreas,hudFootCovered,ATTACK_TIMING,ATTACK_SEQUENCES,ATTACK_BOUNDS,attackSpriteLayout,attackPoseAt,HUD_LAYOUT,hudValues,INVENTORY_LAYOUT,inventoryCellRect,HELMET_POSES,HELMET_FILES,HELMET_VARIANTS,HELMET_PADDING,helmetLayout,SEND_MILL_WHEEL,sendWheelWorldTransform,advanceSendWheel,ALLER_MONASTERY_GATE,ALLER_MONASTERY_GATE_ZONE,allerMonasteryHighlighted,ALLER_EDGE_SEALS,ALLER_BRIDGE_PATHS,ALLER_BRIDGE_GUARDS,ALLER_NEW_FORESTS,ALLER_CAVE,ALLER_CAVE_COLLIDERS,ALLER_CAVE_GATE,ALLER_CAVE_GATE_ZONE,allerCaveHighlighted,allerLandingOpen,engageAllerTrack,moveAllerTrack,allerTrackDirection,LIER_CAPTURE_FUNNEL,ALLER_MONASTERY,ALLER_PINK_Y,ALLER_BARRIERS,ALLER_FORESTS,ALLER_BUILDING_COLLIDERS,ALLER_STAIR_GATE,ALLER_STAIR_PATH,allerBehindFoot,allerTerrainBlocked,engageAllerStair,moveAllerStair,slideAgainstAller,lierTrailSpeedFactor,lierAreaSpeedFactor,TELEPORT_DESTINATIONS,TELEPORT_MAP_ORDER,getTeleportRoute,LIER_PERSPECTIVE_LINES,LIER_MIN_AREA_SCALE,lierRightBankX,lierAreaPerspective,lierRenderedScale,LIER_ROCKS,LIER_FORESTS,LIER_TRAIL_ENTRIES,LIER_TRAIL_COMMON,LIER_TRAIL_PATHS,LIER_TRAIL_GATE,makeLierTrail,engageLierTrail,moveLierTrail,lierTrailScale,OPP_BARRIERS,OPP_NORTH_PATH,OPP_CITY_GATE,LIER_RIVER,LIER_BRIDGE_PATH,LIER_BRIDGE_STRUCTURE,engageOppNorth,moveOppNorth,lierTerrainBlocked,engageLierBridge,SEND_PROPS,SEND_COLLIDERS,SEND_LOCAL_COLLIDERS,SEND_MAP_POND,SEND_DEPTH_LAYERS,sendLocal,sendTerrainBlocked,sendBehindFoot,slideAgainstSend,OPP_GATE_ANCHOR,OPP_GATE_ZONE,oppGateHighlighted,OPP_CASTLE,OPP_WATER,OPP_ROCKS,OPP_FORESTS,OPP_STRUCTURES,OPP_WOOD_PATH,OPP_STONE_PATH,oppCastleBlocked,oppTerrainBlocked,engageOppBridge,moveOppBridge,slideAgainstOpp,BADBERG_PATH,BADBERG_CAPTURE,SULZ_FORESTS,SULZ_GATE_ANCHORS,SULZ_GATE_ZONES,engageBadberg,moveBadberg,sulzHighlighted,WEST_CLIFFS,WEST_WATER,WEST_PROPS,HUB_WEST_APPROACH,westPropBlocked,westTerrainBlocked,slideAgainstWest,RAMS_FORTS,RAMS_FORT_PATHS,RAMS_FORT_GATE_ZONES,ramsFortBlocked,ramsFortBehindFoot,ramsFortRearY,ramsFortOpaque,ramsFortHighlighted,engageRamsFort,moveRamsFort,RAMS_RIVER,RAMS_LEFT_ROCK,RAMS_RIGHT_SURFACE,RAMS_BRIDGE_PATH,RAMS_BRIDGE_STRUCTURE,ramsTerrainBlocked,engageRamsBridge,slideAgainstRams,HUB_PROPS,HUB_PROP_COLLIDERS,HUB_TOWER_BACK_Y,HUB_PROP_GATE_ZONES,hubPropBlocked,hubTowerBehindFoot,hubPropHighlighted,slideAgainstHubProps,HUB_RIVER,HUB_PLATEAU_ROCK,HUB_BRIDGE_PATH,HUB_BRIDGE_STRUCTURE,hubTerrainBlocked,engageHubBridge,hubPlateauFirstHit,slideAgainstHubPlateau,LAUTEN_RIVER,LAUTEN_ICE,LAUTEN_VINE_PATH,LAUTEN_BRIDGE_PATH,LAUTEN_TREES,lautenTerrainBlocked,engageLautenTrack,moveLautenTrack,CASTLE_GATE_ZONE_LOCAL,CASTLE_GATE_ZONE,CASTLE_TRAVEL_ENVELOPE_LOCAL,castleSnowfallCoverageAt,winterSnowParticleCoverageAt,WINTER_CASTLE,CASTLE_COLLIDERS,CASTLE_COMPOUND_LOCAL,CASTLE_ROCKS_LOCAL,CASTLE_GATE,castleGroundOverridesMountain,castleLocal,castleBlockedFoot,castleBehindFoot,castleGateHighlighted,castleFirstHit,slideAgainstCastle,CASTLE_SNOW_GRID,CASTLE_ART_ALPHA_GRID,sampleWeatherGrid,winterSnowBaseAt,winterSnowCoverageAt,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
     return;
   }
 
@@ -1350,13 +1377,16 @@
 
   const keys=new Set(),images={};
   const animation={moving:false,index:0,elapsed:0,direction:'down'};
-  let activeSpriteKey='',activeMirror=false,helmetEquipped=false,equippedHelmetId=null,swordEquipped=false;
+  let activeSpriteKey='',activeMirror=false,helmetEquipped=false,equippedHelmetId=null,swordEquipped=false,equippedSwordId=null;
   const helmetImages=Object.fromEntries(Object.entries(HELMET_VARIANTS).map(([id,variant])=>[id,Object.fromEntries(Object.entries(variant.files).map(([key,path])=>{const im=new Image();im.src=path;return [key,im];}))]));
   const swordBlade=new Image();swordBlade.src=SWORD_FILES.blade;
   const swordInventoryImage=new Image();swordInventoryImage.src=SWORD_FILES.inventory;
+  const flameSwordInventoryImage=new Image();flameSwordInventoryImage.src=SWORD_VARIANTS[FLAME_SWORD_ITEM].inventory;
+  const bladeFireCanvas=document.createElement('canvas');bladeFireCanvas.width=2048;bladeFireCanvas.height=2048;bladeFireCanvas.setAttribute('aria-hidden','true');bladeFireCanvas.style.pointerEvents='none';bladeFireCanvas.style.display='none';playerEl.appendChild(bladeFireCanvas);
+  const bladeFireContext=bladeFireCanvas.getContext('2d');let bladeFireAtlas=null;
   const helmetFrames=new Map();
   const inventoryState={open:false,page:0,slots:Array.from({length:72},(_,i)=>Object.keys(HELMET_VARIANTS)[i]||null)};
-  {const index=findSwordInventorySpace(inventoryState.slots);inventoryState.slots[index]=SWORD_ITEM;inventoryState.slots[index+6]=SWORD_TAIL;}
+  for(const id of Object.keys(SWORD_VARIANTS)){const index=findSwordInventorySpace(inventoryState.slots);if(index>=0){inventoryState.slots[index]=id;inventoryState.slots[index+6]=SWORD_VARIANTS[id].tail;}}
   function prepareHelmetFrames(){
     helmetFrames.clear();
     for(const key of Object.keys(HELMET_POSES)){
@@ -1386,13 +1416,37 @@
     const key=activeSpriteKey||`stand-${state.player.facing}`,mirror=activeMirror;
     activeSpriteKey='';showPlayerSprite(key,mirror);renderInventory();return true;
   }
-  function setSwordEquipped(equipped){
-    equipped=Boolean(equipped);if(equipped===swordEquipped)return true;
-    const slots=inventoryState.slots,index=equipped?slots.indexOf(SWORD_ITEM):findSwordInventorySpace(slots);
-    if(index<0)return false;
+  function setSwordEquipped(equipped,id=SWORD_ITEM){
+    equipped=Boolean(equipped);if(equipped&&(!Object.prototype.hasOwnProperty.call(SWORD_VARIANTS,id)))return false;
+    if(equipped?equippedSwordId===id:!equippedSwordId)return true;
+    const slots=inventoryState.slots,index=equipped?slots.indexOf(id):findSwordInventorySpace(slots);if(index<0)return false;
     if(attack.active)stopAttack();
-    if(equipped){slots[index]=null;slots[index+6]=null;}else{slots[index]=SWORD_ITEM;slots[index+6]=SWORD_TAIL;}
-    swordEquipped=equipped;activeSpriteKey='';showPlayerSprite(`stand-${state.player.facing}`,false);renderInventory();return true;
+    if(equipped){slots[index]=equippedSwordId;slots[index+6]=equippedSwordId?SWORD_VARIANTS[equippedSwordId].tail:null;equippedSwordId=id;}
+    else{slots[index]=equippedSwordId;slots[index+6]=SWORD_VARIANTS[equippedSwordId].tail;equippedSwordId=null;}
+    swordEquipped=Boolean(equippedSwordId);bladeFireCanvas.style.display='none';activeSpriteKey='';showPlayerSprite(`stand-${state.player.facing}`,false);renderInventory();return true;
+  }
+  async function prepareBladeFireAtlas(){
+    const atlas=document.createElement('canvas');atlas.width=BLADE_FIRE.columns*BLADE_FIRE.cellWidth;atlas.height=Math.ceil(BLADE_FIRE.frames/BLADE_FIRE.columns)*BLADE_FIRE.cellHeight;
+    const ctx=atlas.getContext('2d');
+    for(let i=0;i<BLADE_FIRE.frames;i++){
+      ctx.setTransform(.25,0,0,.25,(i%BLADE_FIRE.columns)*BLADE_FIRE.cellWidth,Math.floor(i/BLADE_FIRE.columns)*BLADE_FIRE.cellHeight);
+      paintBladeFire(ctx,i/BLADE_FIRE.frames*BLADE_FIRE.duration);
+      if(i%6===5)await new Promise(resolve=>setTimeout(resolve,0));
+    }
+    ctx.setTransform(1,0,0,1,0,0);bladeFireAtlas=atlas;
+  }
+  function renderSwordFire(time){
+    const pose=SWORD_POSES[activeSpriteKey];
+    if(!state.playing||!attack.active||equippedSwordId!==FLAME_SWORD_ITEM||!pose||!bladeFireAtlas){bladeFireCanvas.style.display='none';return;}
+    for(const name of ['position','left','width','height','bottom','transform','transformOrigin'])bladeFireCanvas.style[name]=sprite.style[name];
+    bladeFireCanvas.style.display='block';const ctx=bladeFireContext,h=pose.weapon;
+    ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.clearRect(0,0,2048,2048);
+    const c=Math.cos(h.angle)*h.scale,s=Math.sin(h.angle)*h.scale;ctx.setTransform(c,s,-s,c,h.x+512,h.y+512);
+    const phase=((time%BLADE_FIRE.duration+BLADE_FIRE.duration)%BLADE_FIRE.duration)/BLADE_FIRE.duration*BLADE_FIRE.frames,index=Math.floor(phase),blend=phase-index;
+    for(const [i,alpha] of [[index,1-blend],[(index+1)%BLADE_FIRE.frames,blend]]){
+      ctx.globalAlpha=alpha;ctx.drawImage(bladeFireAtlas,(i%BLADE_FIRE.columns)*BLADE_FIRE.cellWidth,Math.floor(i/BLADE_FIRE.columns)*BLADE_FIRE.cellHeight,BLADE_FIRE.cellWidth,BLADE_FIRE.cellHeight,-h.anchor[0],-h.anchor[1],2048,768);
+    }
+    ctx.globalAlpha=1;ctx.setTransform(1,0,0,1,0,0);
   }
   function drawSwordPose(key,mirror){
     const pose=SWORD_POSES[key],layout=swordSpriteLayout(key),padding=512;
@@ -1406,6 +1460,7 @@
     overlay(swordBlade,pose.weapon,2048,682);spriteContext.setTransform(1,0,0,1,0,0);
   }
   function showPlayerSprite(key,mirror=false) {
+    if(!SWORD_POSES[key]||equippedSwordId!==FLAME_SWORD_ITEM)bladeFireCanvas.style.display='none';
     if(activeSpriteKey===key && activeMirror===mirror) return;
     if(SWORD_POSES[key]){drawSwordPose(key,mirror);activeSpriteKey=key;activeMirror=mirror;return;}
     if(sprite.height!==1536+HELMET_PADDING)sprite.height=1536+HELMET_PADDING;
@@ -1569,7 +1624,7 @@
   const inventoryGlows=[...inventoryTabs,inventoryClose].map((b,i)=>{const im=new Image();im.src=`assets/ui/inventory-glow-${i<2?'tab-'+(i+1):'close'}.png`;im.className='inventory-glow';im.alt='';b.appendChild(im);return im;});
   const inventorySlots=Array.from({length:36},(_,i)=>{
     const b=inventoryButton(inventoryCellRect(i),`Inventarplatz ${i+1}`,'inventory-slot');b.setAttribute('data-slot',String(i));
-    b.addEventListener('contextmenu',e=>{e.preventDefault();const index=inventoryState.page*36+i;const id=inventoryState.slots[index];if(id===SWORD_ITEM||id===SWORD_TAIL)setSwordEquipped(true);else if(id&&Object.prototype.hasOwnProperty.call(HELMET_VARIANTS,id))setHelmetEquipped(true,id);});return b;
+    b.addEventListener('contextmenu',e=>{e.preventDefault();const index=inventoryState.page*36+i;const id=inventoryState.slots[index];if(swordItemId(id))setSwordEquipped(true,swordItemId(id));else if(id&&Object.prototype.hasOwnProperty.call(HELMET_VARIANTS,id))setHelmetEquipped(true,id);});return b;
   });
   const inventoryEquipment=INVENTORY_LAYOUT.equipment.map(({id,label,rect})=>{
     const b=inventoryButton(rect,label,'inventory-equipment');b.setAttribute('data-equipment',id);
@@ -1578,8 +1633,8 @@
   const swordEquipment=inventoryButton([44,299,82,205],'Schwert – Rechtsklick zum Ablegen','inventory-equipment');
   swordEquipment.addEventListener('contextmenu',e=>{e.preventDefault();setSwordEquipped(false);});
   function renderInventoryItem(button,itemId){
-    const variant=itemId===SWORD_ITEM?{label:'Schwert',files:{front:SWORD_FILES.inventory}}:itemId&&HELMET_VARIANTS[itemId];
-    button.setAttribute('data-item',variant?(itemId===SWORD_ITEM?'sword':'helmet'):'');button.setAttribute('data-helmet-id',variant&&itemId!==SWORD_ITEM?itemId:'');
+    const weapon=SWORD_VARIANTS[itemId],variant=weapon?{label:weapon.label,files:{front:weapon.inventory}}:itemId&&HELMET_VARIANTS[itemId];
+    button.setAttribute('data-item',variant?(weapon?'sword':'helmet'):'');button.setAttribute('data-helmet-id',variant&&!weapon?itemId:'');
     let holder=button._inventoryItem;
     if(variant&&!holder){holder=document.createElement('span');holder.className='inventory-item';const im=new Image();im.draggable=false;holder.appendChild(im);holder._image=im;button.appendChild(holder);button._inventoryItem=holder;}
     if(holder){holder.style.display=variant?'flex':'none';if(variant){holder._image.src=variant.files.front;holder._image.alt=variant.label;}}
@@ -1588,13 +1643,13 @@
     inventoryArt.src=inventoryPages[inventoryState.page].src;inventoryArt.alt=`Inventar – Seite ${inventoryState.page===0?'I':'II'}`;
     inventoryTabs.forEach((b,i)=>{b.disabled=i===inventoryState.page;b.setAttribute('aria-pressed',i===inventoryState.page?'true':'false');});
     inventorySlots.forEach((b,i)=>{
-      const itemId=inventoryState.slots[inventoryState.page*36+i],tail=itemId===SWORD_TAIL,rect=inventoryCellRect(i),tall=itemId===SWORD_ITEM;
+      const itemId=inventoryState.slots[inventoryState.page*36+i],tail=Boolean(itemId&&swordItemId(itemId)&&!SWORD_VARIANTS[itemId]),rect=inventoryCellRect(i),tall=Boolean(SWORD_VARIANTS[itemId]);
       b.style.height=`${(tall?rect[3]+inventoryCellRect(i+6)[3]:rect[3])/1241*100}%`;b.style.visibility=tail?'hidden':'visible';b.style.zIndex=tall?'2':'1';b.style.pointerEvents=tail?'none':'auto';
       b.setAttribute('aria-hidden',tail?'true':'false');renderInventoryItem(b,tail?null:itemId);
       b.setAttribute('aria-label',itemId?`${tall||tail?'Schwert':'Helm'} – Rechtsklick zum Ausrüsten`:`Leerer Inventarplatz ${inventoryState.page*36+i+1}`);
     });
     inventoryEquipment.forEach((b,i)=>{const occupied=INVENTORY_LAYOUT.equipment[i].id==='helmet'&&helmetEquipped;renderInventoryItem(b,occupied?equippedHelmetId:null);if(occupied)b.setAttribute('aria-label','Helm – Rechtsklick zum Ablegen');else b.setAttribute('aria-label',INVENTORY_LAYOUT.equipment[i].label);});
-    swordEquipment.style.display=swordEquipped?'block':'none';renderInventoryItem(swordEquipment,swordEquipped?SWORD_ITEM:null);
+    swordEquipment.style.display=swordEquipped?'block':'none';swordEquipment.setAttribute('aria-label',swordEquipped?`${SWORD_VARIANTS[equippedSwordId].label} – Rechtsklick zum Ablegen`:'Leerer Waffenplatz');renderInventoryItem(swordEquipment,swordEquipped?equippedSwordId:null);
   }
   function setInventoryOpen(open){
     if(open)stopAttack();
@@ -1957,6 +2012,7 @@
     }
   }
   function render() {
+    renderSwordFire(performance.now()/1000);
     const c=coverCamera(width,height,camera.x,camera.y);
     Object.assign(camera,c);
     // One camera transform is applied to map and props together in renderScene.
@@ -2030,7 +2086,7 @@
     if(state.starting || state.playing) return;
     state.starting=true;status.hidden=false;status.textContent='Oberkirch wird geöffnet …';
     try {
-      const jobs=[prepareAttackAudio(),waitForImage(swordBlade),waitForImage(swordInventoryImage),...hudImages.map(waitForImage),...inventoryGlows.map(waitForImage),...inventoryPages.map(waitForImage),...Object.values(helmetImages).flatMap(variant=>Object.values(variant).map(waitForImage)),waitForImage(map),waitForImage(sendSignImage),waitForImage(sendWheelImage),waitForImage(caveHeraldry.crest),waitForImage(allerCaveSource),waitForImage(allerMonasteryImage),waitForImage(oppGateImage),...sendImages.map(waitForImage),waitForImage(oppCastleImage),waitForImage(castleImage),...hubPropImages.map(waitForImage),...ramsFortImages.map(waitForImage),...westPropImages.map(waitForImage),...buildingPresentation.map(e=>waitForImage(e.crest))];
+      const jobs=[prepareAttackAudio(),prepareBladeFireAtlas(),waitForImage(flameSwordInventoryImage),waitForImage(swordBlade),waitForImage(swordInventoryImage),...hudImages.map(waitForImage),...inventoryGlows.map(waitForImage),...inventoryPages.map(waitForImage),...Object.values(helmetImages).flatMap(variant=>Object.values(variant).map(waitForImage)),waitForImage(map),waitForImage(sendSignImage),waitForImage(sendWheelImage),waitForImage(caveHeraldry.crest),waitForImage(allerCaveSource),waitForImage(allerMonasteryImage),waitForImage(oppGateImage),...sendImages.map(waitForImage),waitForImage(oppCastleImage),waitForImage(castleImage),...hubPropImages.map(waitForImage),...ramsFortImages.map(waitForImage),...westPropImages.map(waitForImage),...buildingPresentation.map(e=>waitForImage(e.crest))];
       for(const direction of ['down','left','right','up']) {
         const image=new Image();image.src=`assets/player/stand-${direction}.png`;
         images[`stand-${direction}`]=image;jobs.push(waitForImage(image));
