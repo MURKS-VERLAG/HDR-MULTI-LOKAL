@@ -1350,7 +1350,56 @@
     return -1;
   }
   const BEAR_REFERENCE_POINTS=Object.freeze([[1459, 640], [1427, 661], [1394, 676], [1364, 681], [1335, 678], [1307, 669], [1275, 655], [1252, 641], [1240, 623], [1236, 601], [1239, 576], [1247, 551], [1260, 530], [1277, 512], [1291, 501], [1295, 493], [1285, 484], [1265, 476], [1240, 470], [1211, 467], [1188, 470], [1164, 477], [1146, 484], [1134, 494], [1126, 512], [1117, 530], [1102, 546], [1082, 561], [1061, 571], [1043, 576], [1025, 576], [1003, 570], [984, 563], [963, 562], [940, 565], [916, 568], [893, 574], [877, 580], [867, 590], [863, 600], [869, 619], [880, 636], [891, 647], [906, 654], [925, 658], [937, 666], [946, 679], [959, 691], [979, 706], [1002, 720], [1025, 734], [1042, 739], [1070, 739], [1107, 735], [1144, 733], [1190, 731], [1234, 731], [1270, 732], [1306, 737], [1343, 742], [1378, 746], [1414, 744], [1459, 735]]);
-  const BEAR_SPRITES=Object.freeze({"up-1": {"file": "assets/animals/bear/up-1.webp", "width": 580, "height": 440, "anchorX": 290, "anchorY": 420, "scale": 1.3}, "up-2": {"file": "assets/animals/bear/up-2.webp", "width": 580, "height": 440, "anchorX": 290, "anchorY": 420, "scale": 1.3}, "side-1": {"file": "assets/animals/bear/side-1.webp?v=72", "width": 580, "height": 440, "anchorX": 290, "anchorY": 420, "scale": 1.3}, "side-2": {"file": "assets/animals/bear/side-2.webp?v=72", "width": 580, "height": 440, "anchorX": 290, "anchorY": 420, "scale": 1.3}, "down-1": {"file": "assets/animals/bear/down-1.webp", "width": 580, "height": 440, "anchorX": 290, "anchorY": 420, "scale": 1.3}, "down-2": {"file": "assets/animals/bear/down-2.webp", "width": 580, "height": 440, "anchorX": 290, "anchorY": 420, "scale": 1.3}, "rest-up": {"file": "assets/animals/bear/rest-up.webp", "width": 580, "height": 440, "anchorX": 290, "anchorY": 420, "scale": 1.3}, "rest-side": {"file": "assets/animals/bear/rest-side.webp", "width": 580, "height": 440, "anchorX": 290, "anchorY": 420, "scale": 1.3}, "rest-down": {"file": "assets/animals/bear/rest-down.webp", "width": 580, "height": 440, "anchorX": 290, "anchorY": 420, "scale": 1.3}, "side-3": {"file": "assets/animals/bear/side-3.webp?v=72", "width": 580, "height": 440, "anchorX": 290, "anchorY": 420, "scale": 1.3}, "side-4": {"file": "assets/animals/bear/side-4.webp?v=72", "width": 580, "height": 440, "anchorX": 290, "anchorY": 420, "scale": 1.3}});
+  const BEAR_SPRITES=Object.freeze({"up-1": {"file": "assets/animals/bear/up-1.webp", "width": 580, "height": 440, "anchorX": 290, "anchorY": 420, "scale": 1.3}, "up-2": {"file": "assets/animals/bear/up-2.webp", "width": 580, "height": 440, "anchorX": 290, "anchorY": 420, "scale": 1.3}, "side-1": {"file": "assets/animals/bear/side-1.webp?v=72", "width": 580, "height": 440, "anchorX": 290, "anchorY": 420, "scale": 1.3}, "side-2": {"file": "assets/animals/bear/side-2.webp?v=72", "width": 580, "height": 440, "anchorX": 290, "anchorY": 420, "scale": 1.3}, "down-1": {"file": "assets/animals/bear/down-1.webp", "width": 580, "height": 440, "anchorX": 290, "anchorY": 420, "scale": 1.3}, "down-2": {"file": "assets/animals/bear/down-2.webp", "width": 580, "height": 440, "anchorX": 290, "anchorY": 420, "scale": 1.3}, "rest-up": {"file": "assets/animals/bear/rest-up.webp", "width": 580, "height": 440, "anchorX": 290, "anchorY": 420, "scale": 1.3}, "rest-side": {"file": "assets/animals/bear/rest-side.webp", "width": 580, "height": 440, "anchorX": 290, "anchorY": 420, "scale": 1.3}, "rest-down": {"file": "assets/animals/bear/rest-down.webp", "width": 580, "height": 440, "anchorX": 290, "anchorY": 420, "scale": 1.3}, "side-3": {"file": "assets/animals/bear/side-3.webp?v=72", "width": 580, "height": 440, "anchorX": 290, "anchorY": 420, "scale": 1.3}, "side-4": {"file": "assets/animals/bear/side-4.webp?v=72", "width": 580, "height": 440, "anchorX": 290, "anchorY": 420, "scale": 1.3}, "attack-up": {"file": "assets/animals/bear/attack-up.webp", "width": 580, "height": 560, "anchorX": 290, "anchorY": 540, "scale": 1.3, "visibleWidth": 356, "visibleHeight": 450}, "attack-side-1": {"file": "assets/animals/bear/attack-side-1.webp", "width": 580, "height": 560, "anchorX": 290, "anchorY": 540, "scale": 1.3, "visibleWidth": 530, "visibleHeight": 351}, "attack-side-2": {"file": "assets/animals/bear/attack-side-2.webp", "width": 580, "height": 560, "anchorX": 290, "anchorY": 540, "scale": 1.3, "visibleWidth": 393, "visibleHeight": 450}, "attack-down": {"file": "assets/animals/bear/attack-down.webp", "width": 580, "height": 560, "anchorX": 290, "anchorY": 540, "scale": 1.3, "visibleWidth": 300, "visibleHeight": 450}, "dead-1": {"file": "assets/animals/bear/dead-1.webp", "width": 580, "height": 560, "anchorX": 290, "anchorY": 540, "scale": 1.3, "visibleWidth": 540, "visibleHeight": 231}, "dead-2": {"file": "assets/animals/bear/dead-2.webp", "width": 580, "height": 560, "anchorX": 290, "anchorY": 540, "scale": 1.3, "visibleWidth": 540, "visibleHeight": 205}});
+  const BEAR_COMBAT=Object.freeze({hp:800,damage:40,frameSeconds:.5,reachX:340,reachY:250,chaseSpeed:240,corpseSeconds:5});
+  function bearCombatFacing(b,p){const dx=p.x-b.x,dy=p.y-b.y;return Math.abs(dx)/BEAR_COMBAT.reachX>Math.abs(dy)/BEAR_COMBAT.reachY?(dx<0?'left':'right'):(dy<0?'up':'down');}
+  function bearInStrikeRange(b,p){return ((p.x-b.x)/BEAR_COMBAT.reachX)**2+((p.y-b.y)/BEAR_COMBAT.reachY)**2<=1;}
+  function bearPoseScale(b){return b.mode==='rest'?BEAR_RULES.restSize:BEAR_RULES.walkSize;}
+  function bearCombatBody(b){
+    const v=bearVisual(b);if(!v)return null;const p=BEAR_SPRITES[v.key],scale=p.scale*bearPoseScale(b);
+    const h=p.visibleHeight||(v.key.startsWith('up-')?392:v.key.startsWith('down-')?367:v.key==='rest-side'?300:v.key==='rest-down'?290:280),w=p.visibleWidth||(v.key.startsWith('side-')?530:260);
+    return {x:b.x,y:b.y-h*scale*.5,radius:Math.min(w,h)*scale*.3,height:h*scale};
+  }
+  function bearInPlayerHitBox(player,facing,b){
+    if(b.hp<=0||['away','dead','gone'].includes(b.mode))return false;const body=bearCombatBody(b);if(!body)return false;
+    return combatHitRects(player,facing).some(box=>{const x=Math.max(box.left,Math.min(box.right,body.x)),y=Math.max(box.top,Math.min(box.bottom,body.y));return (body.x-x)**2+(body.y-y)**2<=body.radius**2;});
+  }
+  function damageBear(b,damage,player,rng=Math.random){
+    if(['away','dead','gone'].includes(b.mode)||(b.hp??BEAR_COMBAT.hp)<=0)return false;
+    b.hp=Math.max(0,(b.hp??BEAR_COMBAT.hp)-damage);b.walk=null;b.exitIntent=false;b.exitPath=null;b.exitReserved=false;b.resumeSide=null;b.sideRestReady=false;
+    if(b.hp===0){b.mode='dead';b.deadFor=0;b.corpseVariant=rng()<.5?1:2;b.aggressive=false;return true;}
+    if(!b.aggressive){b.aggressive=true;b.chasePhase='side';b.chaseElapsed=0;b.attackElapsed=0;b.mode=bearInStrikeRange(b,player)?'attack':'combat-walk';}
+    b.direction=bearCombatFacing(b,player);return true;
+  }
+  function bearChasePointAllowed(b,next,herd,allowed){
+    const steps=Math.max(1,Math.ceil(Math.hypot(next.x-b.x,next.y-b.y)/8));
+    for(let i=1;i<=steps;i++){const t=i/steps,x=b.x+(next.x-b.x)*t,y=b.y+(next.y-b.y)*t;if(!allowed(x,y))return false;}
+    return !herd.some(other=>other!==b&&!['away','dead','gone'].includes(other.mode)&&!bearSeparated({...b,...next},other));
+  }
+  function stepBearCombat(b,dt,player,rng=Math.random,herd=[],allowed=bearAllowed){
+    if(!b.aggressive||!player||b.hp<=0)return 0;
+    if(bearInStrikeRange(b,player)){
+      if(b.mode!=='attack'){b.mode='attack';b.attackElapsed=0;}
+      b.direction=bearCombatFacing(b,player);const old=b.attackElapsed||0;b.attackElapsed=old+dt;
+      return (Math.floor((b.attackElapsed+1e-9+BEAR_COMBAT.frameSeconds)/(BEAR_COMBAT.frameSeconds*2))-Math.floor((old+1e-9+BEAR_COMBAT.frameSeconds)/(BEAR_COMBAT.frameSeconds*2)))*BEAR_COMBAT.damage;
+    }
+    if(b.mode==='attack'){b.chasePhase='side';b.chaseElapsed=0;}
+    b.mode='combat-walk';b.attackElapsed=0;const dx=player.x-b.x,dy=player.y-b.y;
+    if(!b.chasePhase)b.chasePhase='side';if(b.chasePhase==='side'&&Math.abs(dx)<20){b.chasePhase='diagonal';b.chaseElapsed=0;}
+    let vx=Math.sign(dx),vy=b.chasePhase==='side'?0:Math.sign(dy);
+    if(b.chasePhase==='diagonal'&&!vy){b.detourSign=-(b.detourSign||1);vy=b.detourSign;}
+    const length=Math.hypot(vx,vy)||1,step=BEAR_COMBAT.chaseSpeed*dt;let moved=false;
+    for(const turn of [0,Math.PI/4,-Math.PI/4,Math.PI/2,-Math.PI/2]){
+      const x=(vx*Math.cos(turn)-vy*Math.sin(turn))/length,y=(vx*Math.sin(turn)+vy*Math.cos(turn))/length,next={x:b.x+x*step,y:b.y+y*step};
+      if(!bearChasePointAllowed(b,next,herd,allowed))continue;b.x=next.x;b.y=next.y;
+      b.direction=Math.abs(y)>.01?(y<0?'up':'down'):(x<0?'left':'right');moved=true;break;
+    }
+    b.chaseAnimation=(b.chaseAnimation||0)+(moved?dt:0);b.chaseElapsed=(b.chaseElapsed||0)+dt;
+    const duration=BEAR_RULES.frameSeconds*(b.chasePhase==='side'?4:2);
+    if(b.chaseElapsed>=duration){b.chasePhase=b.chasePhase==='side'?'diagonal':'side';b.chaseElapsed=0;b.chaseAnimation=0;b.direction=b.chasePhase==='diagonal'?(dy<0?'up':'down'):(dx<0?'left':'right');}
+    if(bearInStrikeRange(b,player)){b.mode='attack';b.attackElapsed=0;b.direction=bearCombatFacing(b,player);}
+    return 0;
+  }
   const BEAR_RULES=Object.freeze({count:4,speed:95,frameSeconds:.28,restMin:1.2,restMax:36,edgeHideX:10430,walkSize:1.05,restSize:1.2});
   const BEAR_ZONE=Object.freeze(BEAR_REFERENCE_POINTS.map(([x,y])=>[x/1459*10000,y/973*(10000*1365/2048)]));
   const BEAR_WALK=Object.freeze({up:Object.freeze(['up-1','up-2']),down:Object.freeze(['down-1','down-2']),left:Object.freeze(['side-1','side-2','side-3','side-4']),right:Object.freeze(['side-1','side-2','side-3','side-4'])});
@@ -1381,7 +1430,7 @@
     function distance(p,a,z){const dx=z.x-a.x,dy=z.y-a.y,t=Math.max(0,Math.min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/(dx*dx+dy*dy||1)));return Math.hypot(p.x-a.x-t*dx,p.y-a.y-t*dy);}
     function cross(a,b,c){return (b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x);}
     for(const other of herd){
-      if(other===b||other.mode==='away')continue;
+      if(other===b||['away','dead','gone'].includes(other.mode))continue;
       const space=bearSpacing(b,other),norm=p=>({x:p.x/space.x,y:p.y/space.y}),a=norm(b),z=norm(end),c=norm(other),d=norm(other.mode==='walk'?other.walk.to:other);
       // Reserve the complete ground corridor, so one animal never waits inside another's route.
       const crossing=cross(a,z,c)*cross(a,z,d)<0&&cross(c,d,a)*cross(c,d,z)<0;
@@ -1395,7 +1444,7 @@
         b={...bearRandomPoint(rng),id:`ramsbach-bear-${id}`,personalSpace:.88+rng()*.28,sleepiness:.7+rng()*.65};
         if(bearWalkClear(b,b,.1,herd))break;
       }
-      Object.assign(b,{direction:['up','left','down','right'][id%4],mode:'rest',walk:null,lastInside:null,roamFor:0,departAt:40+rng()*120,exitIntent:false,exitPath:null});b.wait=bearRestTime(b,rng);herd.push(b);
+      Object.assign(b,{kind:'bear',hp:BEAR_COMBAT.hp,aggressive:false,direction:['up','left','down','right'][id%4],mode:'rest',walk:null,lastInside:null,roamFor:0,departAt:40+rng()*120,exitIntent:false,exitPath:null});b.wait=bearRestTime(b,rng);herd.push(b);
     }return herd;
   }
   function bearExitPath(b,herd=[]){
@@ -1411,7 +1460,7 @@
     if(!goal)return null;const path=[];for(let p=goal;p.parent;p=p.parent)path.unshift({x:p.x,y:p.y});
     const result=[];for(const p of path){const prev=result[result.length-1],before=result[result.length-2]||b;if(prev&&Math.abs((prev.x-before.x)*(p.y-prev.y)-(prev.y-before.y)*(p.x-prev.x))<1e-6)result[result.length-1]=p;else result.push(p);}return result;
   }
-  function bearDepartures(herd,b){return herd.filter(other=>other!==b&&(other.exitReserved||other.mode==='away'||other.x>=10000)).length;}
+  function bearDepartures(herd,b){return herd.filter(other=>other!==b&&!['dead','gone'].includes(other.mode)&&(other.exitReserved||other.mode==='away'||other.x>=10000)).length;}
   function planBearDiagonal(b,rng=Math.random,herd=[],horizontal=1){
     b.exitPath=null;const vertical=rng()<.5?-1:1;
     for(let attempt=0;attempt<16;attempt++){
@@ -1460,12 +1509,22 @@
     return Math.abs(dy)>1&&beginBearWalk(b,{x:b.x,y:b.y+dy},herd,true);
   }
   function bearVisual(b){
-    if(b.mode==='away')return null;
+    if(b.mode==='away'||b.mode==='gone')return null;
+    if(b.mode==='dead')return {key:`dead-${b.corpseVariant||1}`,mirror:false};
+    if(b.mode==='attack'){
+      const second=Math.floor(((b.attackElapsed||0)+1e-9)/BEAR_COMBAT.frameSeconds)%2===1;
+      if(b.direction==='up'||b.direction==='down')return {key:`attack-${b.direction}`,mirror:second};
+      return {key:`attack-side-${second?2:1}`,mirror:b.direction==='left'};
+    }
+    if(b.mode==='combat-walk')return {key:BEAR_WALK[b.direction][Math.floor((b.chaseAnimation||0)/BEAR_RULES.frameSeconds)%BEAR_WALK[b.direction].length],mirror:b.direction==='left'};
     const side=b.direction==='left'||b.direction==='right';
     const key=b.mode==='walk'?BEAR_WALK[b.direction][Math.min(BEAR_WALK[b.direction].length*b.walk.cycles-1,Math.floor((b.walk.elapsed+1e-8)/BEAR_RULES.frameSeconds))%BEAR_WALK[b.direction].length]:side?'rest-side':b.direction==='up'?'rest-up':'rest-down';
     return {key,mirror:side&&(b.mode==='walk'?b.direction==='left':b.direction==='right')};
   }
-  function stepBear(b,dt,rng=Math.random,herd=[]){
+  function stepBear(b,dt,rng=Math.random,herd=[],player=null,allowed=bearAllowed){
+    if(b.mode==='gone')return 0;
+    if(b.mode==='dead'){b.deadFor=(b.deadFor||0)+dt;if(b.deadFor>=BEAR_COMBAT.corpseSeconds)b.mode='gone';return 0;}
+    if(b.aggressive)return stepBearCombat(b,dt,player,rng,herd,allowed);
     if(b.mode==='away'){
       b.wait-=dt;if(b.wait>0)return;
       if(!planBearReturn(b,rng,herd))b.wait=1+rng()*2;return;
@@ -1481,7 +1540,7 @@
       planBearWalk(b,rng,herd);return;
     }
     const w=b.walk,nextElapsed=Math.min(w.duration,w.elapsed+dt),t=nextElapsed/w.duration,next={x:w.from.x+(w.to.x-w.from.x)*t,y:w.from.y+(w.to.y-w.from.y)*t};
-    if(herd.some(other=>other!==b&&other.mode!=='away'&&!bearSeparated({...b,...next},other)))return;
+    if(herd.some(other=>other!==b&&!['away','dead','gone'].includes(other.mode)&&!bearSeparated({...b,...next},other)))return;
     w.elapsed=nextElapsed;b.x=next.x;b.y=next.y;if(b.x<10000)b.lastInside={x:b.x,y:b.y};
     if(t<1)return;
     b.lastWalkFacing=b.direction;
@@ -1650,7 +1709,7 @@
   function oppGateHighlighted(player){return activeMapId==='oppenau'&&worldPointInPolygon(player.x,player.y,OPP_GATE_ZONE);}
 
   if(typeof module!=='undefined' && module.exports) {
-    module.exports={bearDepartures,planBearDiagonal,planBearReturn,bearRestTime,bearSpacing,bearSeparated,bearPredictedPosition,bearWalkClear,bearExitPath,beginBearWalk,BEAR_RULES,BEAR_ZONE,BEAR_SPRITES,BEAR_WALK,bearAllowed,bearSegmentAllowed,bearRandomPoint,createBears,planBearWalk,bearVisual,stepBear,COMBAT_BODY_BOX,combatHitRects,combatHitRect,animalCombatBody,combatDamage,COMBAT_REFERENCE_HEIGHT,ANIMAL_HIT_SOUNDS,MOLE_RULES,MOLE_SPRITES,nextAnimalHitSound,respawnRabbitFromEdge,createMole,moleVisual,stepMole,damageMole,RABBIT_ZONES,RABBIT_SPRITES,RABBIT_RULES,RABBIT_FIST_BOXES,rabbitAllowed,rabbitHopAllowed,rabbitRandomPoint,createRabbits,rabbitRestKey,rabbitVisual,planRabbitHop,rabbitDepart,rabbitReturn,stepRabbit,rabbitInFistBox,damageRabbit,FALLING_BLADE_FIRE,swordBladeWorldPoint,advanceFallingFlame,paintFallingFlameSprite,FLAME_SWORD_ITEM,FLAME_SWORD_TAIL,SWORD_VARIANTS,swordItemId,BLADE_FIRE,bladeFireTongues,paintBladeFire,SWORD_SIDE_HOOD_OVERHANG,swordSideHoodRuns,clearSwordSideHood,SWORD_SIZE_FACTORS,SIDE_HOOD_OVERHANG,swordSizeFactor,swordHelmetLayout,clearSideHoodOverhang,SWORD_ITEM,SWORD_TAIL,SWORD_FILES,SWORD_POSES,swordSpriteLayout,swordPoseAt,findSwordInventorySpace,ATTACK_HELMET_POSES,attackHelmetLayout,SEND_ROCKS,SEND_FORESTS,SEND_SIGN,SEND_SOLIDS,sendSignBehindFoot,hudScreenAreas,hudFootCovered,ATTACK_TIMING,ATTACK_SEQUENCES,ATTACK_BOUNDS,attackSpriteLayout,attackPoseAt,HUD_LAYOUT,hudValues,INVENTORY_LAYOUT,inventoryCellRect,HELMET_POSES,HELMET_FILES,HELMET_VARIANTS,HELMET_PADDING,helmetLayout,SEND_MILL_WHEEL,sendWheelWorldTransform,advanceSendWheel,ALLER_MONASTERY_GATE,ALLER_MONASTERY_GATE_ZONE,allerMonasteryHighlighted,ALLER_EDGE_SEALS,ALLER_BRIDGE_PATHS,ALLER_BRIDGE_GUARDS,ALLER_NEW_FORESTS,ALLER_CAVE,ALLER_CAVE_COLLIDERS,ALLER_CAVE_GATE,ALLER_CAVE_GATE_ZONE,allerCaveHighlighted,allerLandingOpen,engageAllerTrack,moveAllerTrack,allerTrackDirection,LIER_CAPTURE_FUNNEL,ALLER_MONASTERY,ALLER_PINK_Y,ALLER_BARRIERS,ALLER_FORESTS,ALLER_BUILDING_COLLIDERS,ALLER_STAIR_GATE,ALLER_STAIR_PATH,allerBehindFoot,allerTerrainBlocked,engageAllerStair,moveAllerStair,slideAgainstAller,lierTrailSpeedFactor,lierAreaSpeedFactor,TELEPORT_DESTINATIONS,TELEPORT_MAP_ORDER,getTeleportRoute,LIER_PERSPECTIVE_LINES,LIER_MIN_AREA_SCALE,lierRightBankX,lierAreaPerspective,lierRenderedScale,LIER_ROCKS,LIER_FORESTS,LIER_TRAIL_ENTRIES,LIER_TRAIL_COMMON,LIER_TRAIL_PATHS,LIER_TRAIL_GATE,makeLierTrail,engageLierTrail,moveLierTrail,lierTrailScale,OPP_BARRIERS,OPP_NORTH_PATH,OPP_CITY_GATE,LIER_RIVER,LIER_BRIDGE_PATH,LIER_BRIDGE_STRUCTURE,engageOppNorth,moveOppNorth,lierTerrainBlocked,engageLierBridge,SEND_PROPS,SEND_COLLIDERS,SEND_LOCAL_COLLIDERS,SEND_MAP_POND,SEND_DEPTH_LAYERS,sendLocal,sendTerrainBlocked,sendBehindFoot,slideAgainstSend,OPP_GATE_ANCHOR,OPP_GATE_ZONE,oppGateHighlighted,OPP_CASTLE,OPP_WATER,OPP_ROCKS,OPP_FORESTS,OPP_STRUCTURES,OPP_WOOD_PATH,OPP_STONE_PATH,oppCastleBlocked,oppTerrainBlocked,engageOppBridge,moveOppBridge,slideAgainstOpp,BADBERG_PATH,BADBERG_CAPTURE,SULZ_FORESTS,SULZ_GATE_ANCHORS,SULZ_GATE_ZONES,engageBadberg,moveBadberg,sulzHighlighted,WEST_CLIFFS,WEST_WATER,WEST_PROPS,HUB_WEST_APPROACH,westPropBlocked,westTerrainBlocked,slideAgainstWest,RAMS_FORTS,RAMS_FORT_PATHS,RAMS_FORT_GATE_ZONES,ramsFortBlocked,ramsFortBehindFoot,ramsFortRearY,ramsFortOpaque,ramsFortHighlighted,engageRamsFort,moveRamsFort,RAMS_RIVER,RAMS_LEFT_ROCK,RAMS_RIGHT_SURFACE,RAMS_BRIDGE_PATH,RAMS_BRIDGE_STRUCTURE,ramsTerrainBlocked,engageRamsBridge,slideAgainstRams,HUB_PROPS,HUB_PROP_COLLIDERS,HUB_TOWER_BACK_Y,HUB_PROP_GATE_ZONES,hubPropBlocked,hubTowerBehindFoot,hubPropHighlighted,slideAgainstHubProps,HUB_RIVER,HUB_PLATEAU_ROCK,HUB_BRIDGE_PATH,HUB_BRIDGE_STRUCTURE,hubTerrainBlocked,engageHubBridge,hubPlateauFirstHit,slideAgainstHubPlateau,LAUTEN_RIVER,LAUTEN_ICE,LAUTEN_VINE_PATH,LAUTEN_BRIDGE_PATH,LAUTEN_TREES,lautenTerrainBlocked,engageLautenTrack,moveLautenTrack,CASTLE_GATE_ZONE_LOCAL,CASTLE_GATE_ZONE,CASTLE_TRAVEL_ENVELOPE_LOCAL,castleSnowfallCoverageAt,winterSnowParticleCoverageAt,WINTER_CASTLE,CASTLE_COLLIDERS,CASTLE_COMPOUND_LOCAL,CASTLE_ROCKS_LOCAL,CASTLE_GATE,castleGroundOverridesMountain,castleLocal,castleBlockedFoot,castleBehindFoot,castleGateHighlighted,castleFirstHit,slideAgainstCastle,CASTLE_SNOW_GRID,CASTLE_ART_ALPHA_GRID,sampleWeatherGrid,winterSnowBaseAt,winterSnowCoverageAt,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
+    module.exports={BEAR_COMBAT,bearCombatFacing,bearInStrikeRange,bearPoseScale,bearCombatBody,bearInPlayerHitBox,damageBear,bearChasePointAllowed,stepBearCombat,bearDepartures,planBearDiagonal,planBearReturn,bearRestTime,bearSpacing,bearSeparated,bearPredictedPosition,bearWalkClear,bearExitPath,beginBearWalk,BEAR_RULES,BEAR_ZONE,BEAR_SPRITES,BEAR_WALK,bearAllowed,bearSegmentAllowed,bearRandomPoint,createBears,planBearWalk,bearVisual,stepBear,COMBAT_BODY_BOX,combatHitRects,combatHitRect,animalCombatBody,combatDamage,COMBAT_REFERENCE_HEIGHT,ANIMAL_HIT_SOUNDS,MOLE_RULES,MOLE_SPRITES,nextAnimalHitSound,respawnRabbitFromEdge,createMole,moleVisual,stepMole,damageMole,RABBIT_ZONES,RABBIT_SPRITES,RABBIT_RULES,RABBIT_FIST_BOXES,rabbitAllowed,rabbitHopAllowed,rabbitRandomPoint,createRabbits,rabbitRestKey,rabbitVisual,planRabbitHop,rabbitDepart,rabbitReturn,stepRabbit,rabbitInFistBox,damageRabbit,FALLING_BLADE_FIRE,swordBladeWorldPoint,advanceFallingFlame,paintFallingFlameSprite,FLAME_SWORD_ITEM,FLAME_SWORD_TAIL,SWORD_VARIANTS,swordItemId,BLADE_FIRE,bladeFireTongues,paintBladeFire,SWORD_SIDE_HOOD_OVERHANG,swordSideHoodRuns,clearSwordSideHood,SWORD_SIZE_FACTORS,SIDE_HOOD_OVERHANG,swordSizeFactor,swordHelmetLayout,clearSideHoodOverhang,SWORD_ITEM,SWORD_TAIL,SWORD_FILES,SWORD_POSES,swordSpriteLayout,swordPoseAt,findSwordInventorySpace,ATTACK_HELMET_POSES,attackHelmetLayout,SEND_ROCKS,SEND_FORESTS,SEND_SIGN,SEND_SOLIDS,sendSignBehindFoot,hudScreenAreas,hudFootCovered,ATTACK_TIMING,ATTACK_SEQUENCES,ATTACK_BOUNDS,attackSpriteLayout,attackPoseAt,HUD_LAYOUT,hudValues,INVENTORY_LAYOUT,inventoryCellRect,HELMET_POSES,HELMET_FILES,HELMET_VARIANTS,HELMET_PADDING,helmetLayout,SEND_MILL_WHEEL,sendWheelWorldTransform,advanceSendWheel,ALLER_MONASTERY_GATE,ALLER_MONASTERY_GATE_ZONE,allerMonasteryHighlighted,ALLER_EDGE_SEALS,ALLER_BRIDGE_PATHS,ALLER_BRIDGE_GUARDS,ALLER_NEW_FORESTS,ALLER_CAVE,ALLER_CAVE_COLLIDERS,ALLER_CAVE_GATE,ALLER_CAVE_GATE_ZONE,allerCaveHighlighted,allerLandingOpen,engageAllerTrack,moveAllerTrack,allerTrackDirection,LIER_CAPTURE_FUNNEL,ALLER_MONASTERY,ALLER_PINK_Y,ALLER_BARRIERS,ALLER_FORESTS,ALLER_BUILDING_COLLIDERS,ALLER_STAIR_GATE,ALLER_STAIR_PATH,allerBehindFoot,allerTerrainBlocked,engageAllerStair,moveAllerStair,slideAgainstAller,lierTrailSpeedFactor,lierAreaSpeedFactor,TELEPORT_DESTINATIONS,TELEPORT_MAP_ORDER,getTeleportRoute,LIER_PERSPECTIVE_LINES,LIER_MIN_AREA_SCALE,lierRightBankX,lierAreaPerspective,lierRenderedScale,LIER_ROCKS,LIER_FORESTS,LIER_TRAIL_ENTRIES,LIER_TRAIL_COMMON,LIER_TRAIL_PATHS,LIER_TRAIL_GATE,makeLierTrail,engageLierTrail,moveLierTrail,lierTrailScale,OPP_BARRIERS,OPP_NORTH_PATH,OPP_CITY_GATE,LIER_RIVER,LIER_BRIDGE_PATH,LIER_BRIDGE_STRUCTURE,engageOppNorth,moveOppNorth,lierTerrainBlocked,engageLierBridge,SEND_PROPS,SEND_COLLIDERS,SEND_LOCAL_COLLIDERS,SEND_MAP_POND,SEND_DEPTH_LAYERS,sendLocal,sendTerrainBlocked,sendBehindFoot,slideAgainstSend,OPP_GATE_ANCHOR,OPP_GATE_ZONE,oppGateHighlighted,OPP_CASTLE,OPP_WATER,OPP_ROCKS,OPP_FORESTS,OPP_STRUCTURES,OPP_WOOD_PATH,OPP_STONE_PATH,oppCastleBlocked,oppTerrainBlocked,engageOppBridge,moveOppBridge,slideAgainstOpp,BADBERG_PATH,BADBERG_CAPTURE,SULZ_FORESTS,SULZ_GATE_ANCHORS,SULZ_GATE_ZONES,engageBadberg,moveBadberg,sulzHighlighted,WEST_CLIFFS,WEST_WATER,WEST_PROPS,HUB_WEST_APPROACH,westPropBlocked,westTerrainBlocked,slideAgainstWest,RAMS_FORTS,RAMS_FORT_PATHS,RAMS_FORT_GATE_ZONES,ramsFortBlocked,ramsFortBehindFoot,ramsFortRearY,ramsFortOpaque,ramsFortHighlighted,engageRamsFort,moveRamsFort,RAMS_RIVER,RAMS_LEFT_ROCK,RAMS_RIGHT_SURFACE,RAMS_BRIDGE_PATH,RAMS_BRIDGE_STRUCTURE,ramsTerrainBlocked,engageRamsBridge,slideAgainstRams,HUB_PROPS,HUB_PROP_COLLIDERS,HUB_TOWER_BACK_Y,HUB_PROP_GATE_ZONES,hubPropBlocked,hubTowerBehindFoot,hubPropHighlighted,slideAgainstHubProps,HUB_RIVER,HUB_PLATEAU_ROCK,HUB_BRIDGE_PATH,HUB_BRIDGE_STRUCTURE,hubTerrainBlocked,engageHubBridge,hubPlateauFirstHit,slideAgainstHubPlateau,LAUTEN_RIVER,LAUTEN_ICE,LAUTEN_VINE_PATH,LAUTEN_BRIDGE_PATH,LAUTEN_TREES,lautenTerrainBlocked,engageLautenTrack,moveLautenTrack,CASTLE_GATE_ZONE_LOCAL,CASTLE_GATE_ZONE,CASTLE_TRAVEL_ENVELOPE_LOCAL,castleSnowfallCoverageAt,winterSnowParticleCoverageAt,WINTER_CASTLE,CASTLE_COLLIDERS,CASTLE_COMPOUND_LOCAL,CASTLE_ROCKS_LOCAL,CASTLE_GATE,castleGroundOverridesMountain,castleLocal,castleBlockedFoot,castleBehindFoot,castleGateHighlighted,castleFirstHit,slideAgainstCastle,CASTLE_SNOW_GRID,CASTLE_ART_ALPHA_GRID,sampleWeatherGrid,winterSnowBaseAt,winterSnowCoverageAt,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
     return;
   }
 
@@ -1681,6 +1740,7 @@
   const fallingFireCanvas=document.createElement('canvas');fallingFireCanvas.setAttribute('aria-hidden','true');
   Object.assign(fallingFireCanvas.style,{position:'absolute',inset:'0',width:'100%',height:'100%',pointerEvents:'none',zIndex:'23',display:'none'});game.appendChild(fallingFireCanvas);
   const fallingFireContext=fallingFireCanvas.getContext('2d'),fallingFire={particles:[],carry:0,lastTime:null,map:null,atlas:null};
+  const bearPlayerNumbers=[];
   const BEAR_BRIGHTNESS=1.3,bearLitImages={};
   const bears=createBears(),bearImages=Object.fromEntries(Object.entries(BEAR_SPRITES).map(([key,p])=>{const im=new Image();im.src=p.file;return [key,im];}));
   const rabbitImages=Object.fromEntries(Object.entries(RABBIT_SPRITES).map(([key,p])=>{const im=new Image();im.src=p.file;return [key,im];}));
@@ -1896,7 +1956,7 @@
     if(im.complete&&im.naturalWidth)ctx.drawImage(im,mole.x-p.width*size/2,mole.y-p.height*size,p.width*size,p.height*size);
   }
   function applyRabbitFistFrame(pose,elapsed,duration){
-    if(activeMapId!=='oberkirch'||!attack.active)return;
+    if(!['oberkirch','ramsbach'].includes(activeMapId)||!attack.active)return;
     const clock=rabbitSystem.clock,phase=elapsed%duration;
     if(clock.generation!==attack.generation)Object.assign(clock,{generation:attack.generation,phase:0,cycle:0,stamp:''});
     if(phase+.01<clock.phase)clock.cycle++;
@@ -1904,6 +1964,12 @@
     if(pose.index<0||pose.winding||phase<ATTACK_TIMING.peaks[pose.index])return;
     const stamp=`${clock.generation}:${clock.cycle}:${pose.index}`;if(stamp===clock.stamp)return;clock.stamp=stamp;
     const damage=combatDamage(swordEquipped?equippedSwordId:null,pose.index);
+    if(activeMapId==='ramsbach'){
+      for(const b of bears)if(bearInPlayerHitBox(state.player,attack.facing,b)&&damageBear(b,damage,state.player)){
+        const body=bearCombatBody(b);rabbitSystem.numbers.push({x:b.x,y:b.y-(body?.height||400),age:0,damage,map:'ramsbach'});
+      }
+      return;
+    }
     for(const rabbit of rabbitSystem.rabbits)if(rabbitInFistBox(state.player,attack.facing,rabbit)&&damageRabbit(rabbit,damage,state.player)){playAnimalHitSound();rabbitSystem.numbers.push({x:rabbit.x,y:rabbit.y-170*RABBIT_RULES.size,age:0,damage});}
     if(mole.mode==='surface'&&rabbitInFistBox(state.player,attack.facing,mole)&&damageMole(mole,damage)){playAnimalHitSound();rabbitSystem.numbers.push({x:mole.x,y:mole.y-110*MOLE_RULES.size,age:0,damage});}
   }
@@ -1914,14 +1980,25 @@
       ctx.filter=`brightness(${BEAR_BRIGHTNESS})`;ctx.drawImage(im,0,0);ctx.filter='none';bearLitImages[key]=canvas;
     }
   }
+  function bearChaseAllowed(x,y){if(x>WORLD.width)return bearAllowed(x,y);return x>=0&&x<=WORLD.width&&y>=0&&y<=WORLD.height&&!ramsTerrainBlocked(x,y)&&!ramsFortBlocked(x,y);}
+  function renderBearDamageNumbers(front){
+    front.save();front.font='bold 76px Georgia, serif';front.textAlign='center';front.textBaseline='bottom';front.lineWidth=5;front.strokeStyle='#4b100c';front.fillStyle='#ff382d';
+    for(const n of rabbitSystem.numbers)if(n.map==='ramsbach'){const t=n.age/1.1,y=n.y-95*(1-(1-t)*(1-t));front.globalAlpha=Math.min(1,(1-t)*3);front.strokeText(`-${n.damage}`,n.x,y);front.fillText(`-${n.damage}`,n.x,y);}
+    front.lineWidth=8;front.strokeStyle='#fff';front.fillStyle='#080808';front.shadowColor='#fff';
+    for(const n of bearPlayerNumbers){const t=n.age/1.1,y=n.y-95*(1-(1-t)*(1-t));front.globalAlpha=Math.min(1,(1-t)*3);front.shadowBlur=16;front.strokeText(`-${n.damage}`,n.x,y);front.shadowBlur=0;front.fillText(`-${n.damage}`,n.x,y);}
+    front.shadowBlur=0;front.globalAlpha=1;front.restore();
+  }
   function updateBearSystem(dt){
     if(activeMapId!=='ramsbach'||!state.playing||state.transitioning||inventoryState.open||teleportState.open||document.hidden)return;
-    for(const b of bears)stepBear(b,dt,Math.random,bears);
+    for(const b of bears){
+      const damage=stepBear(b,dt,Math.random,bears,state.player,bearChaseAllowed);
+      if(damage>0){updateHudStats({health:Math.max(0,state.stats.health-damage)});bearPlayerNumbers.push({x:state.player.x,y:state.player.y-TARGET_VISIBLE_HEIGHT-30,age:0,damage});}
+    }
   }
   function renderBears(back,front){
     if(activeMapId!=='ramsbach'||!state.playing)return;
     for(const b of [...bears].sort((a,b)=>a.y-b.y||a.id.localeCompare(b.id))){
-      const visual=bearVisual(b);if(!visual)continue;const p=BEAR_SPRITES[visual.key],im=bearLitImages[visual.key]||bearImages[visual.key],size=p.scale*(b.mode==='walk'?BEAR_RULES.walkSize:BEAR_RULES.restSize),ctx=b.y>state.player.y?front:back;
+      const visual=bearVisual(b);if(!visual)continue;const p=BEAR_SPRITES[visual.key],im=bearLitImages[visual.key]||bearImages[visual.key],size=p.scale*bearPoseScale(b),ctx=b.y>state.player.y?front:back;
       if(!im||!(im.naturalWidth||im.width))continue;
       ctx.fillStyle='rgba(24,25,12,.16)';ctx.beginPath();ctx.ellipse(b.x,b.y,112,25,0,0,Math.PI*2);ctx.fill();
       ctx.save();ctx.translate(b.x,b.y);ctx.scale(visual.mirror?-1:1,1);ctx.drawImage(im,-p.anchorX*size,-p.anchorY*size,p.width*size,p.height*size);ctx.restore();
@@ -1931,9 +2008,11 @@
     updateMoleSystem(dt);
     if(!state.playing||state.transitioning||inventoryState.open||teleportState.open||document.hidden)return;
     for(const r of rabbitSystem.rabbits)stepRabbit(r,dt,Math.random,activeMapId==='oberkirch');
+    for(let i=bearPlayerNumbers.length-1;i>=0;i--){const n=bearPlayerNumbers[i];n.age+=dt;if(n.age>=1.1)bearPlayerNumbers.splice(i,1);}
     for(let i=rabbitSystem.numbers.length-1;i>=0;i--){const n=rabbitSystem.numbers[i];n.age+=dt;if(n.age>=1.1)rabbitSystem.numbers.splice(i,1);}
   }
   function renderRabbits(back,front){
+    if(activeMapId==='ramsbach'&&state.playing){renderBearDamageNumbers(front);return;}
     if(activeMapId!=='oberkirch'||!state.playing)return;
     for(const r of [...rabbitSystem.rabbits].sort((a,b)=>a.y-b.y)){
       const visual=rabbitVisual(r);if(!visual)continue;const p=RABBIT_SPRITES[visual.key],size=p.scale*RABBIT_RULES.size,ctx=r.y>state.player.y?front:back,im=rabbitImages[visual.key];
@@ -1943,7 +2022,7 @@
     }
     renderMole(back,front);
     front.font='bold 76px Georgia, serif';front.textAlign='center';front.textBaseline='bottom';front.lineWidth=5;front.strokeStyle='#4b100c';front.fillStyle='#ff382d';
-    for(const n of rabbitSystem.numbers){const t=n.age/1.1,y=n.y-95*(1-(1-t)*(1-t));front.globalAlpha=Math.min(1,(1-t)*3);front.strokeText(`-${n.damage}`,n.x,y);front.fillText(`-${n.damage}`,n.x,y);}front.globalAlpha=1;
+    for(const n of rabbitSystem.numbers){if(n.map==='ramsbach')continue;const t=n.age/1.1,y=n.y-95*(1-(1-t)*(1-t));front.globalAlpha=Math.min(1,(1-t)*3);front.strokeText(`-${n.damage}`,n.x,y);front.fillText(`-${n.damage}`,n.x,y);}front.globalAlpha=1;
   }
   function updateAttack(){
     if(!attack.active)return;
