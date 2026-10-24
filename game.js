@@ -1721,6 +1721,7 @@
     r.returning=true;planRabbitHop(r,rng,angles[side],true);
   }
   function stepRabbit(r,dt,rng=Math.random,active=true){
+    if((r.spawnGlow||0)>0){if(active)r.spawnGlow=Math.max(0,r.spawnGlow-dt);return;}
     if(r.mode==='gone'){r.respawnIn=Math.max(0,(r.respawnIn??RABBIT_RULES.respawnSeconds)-dt);if(r.respawnIn<=0&&active)respawnRabbitFromEdge(r,rng);return;}
     if(r.mode==='dead'){r.deadFor+=dt;if(r.deadFor>=RABBIT_RULES.corpseSeconds){r.mode='gone';r.respawnIn=RABBIT_RULES.respawnSeconds;}return;}
     if(!active)return;
@@ -1737,7 +1738,7 @@
     if(t>=1){if(r.returning&&(r.x<30||r.x>9970||r.y<30||r.y>6637)){const angles={west:0,east:Math.PI,north:Math.PI/2,south:-Math.PI/2};planRabbitHop(r,rng,angles[r.exitSide],true);return;}r.returning=false;r.hop=null;r.mode='rest';r.restVariant=Math.floor(rng()*2);r.restChange=.5+rng();r.wait=rng()<.4?.9+rng()*2.3:.025+rng()*.10;}
   }
   function rabbitInFistBox(player,facing,r){
-    if(r.hp<=0||r.mode==='away'||r.mode==='gone'||r.mode==='dead')return false;
+    if((r.spawnGlow||0)>0||r.hp<=0||r.mode==='away'||r.mode==='gone'||r.mode==='dead')return false;
     if(r.kind==='mole'&&r.mode!=='surface')return false;
     const body=animalCombatBody(r);
     return combatHitRects(player,facing).some(box=>{
@@ -1746,7 +1747,7 @@
     });
   }
   function damageRabbit(r,damage,attacker,rng=Math.random){
-    if(r.hp<=0||r.mode==='away'||r.mode==='gone'||r.mode==='dead')return false;
+    if((r.spawnGlow||0)>0||r.hp<=0||r.mode==='away'||r.mode==='gone'||r.mode==='dead')return false;
     r.hp=Math.max(0,r.hp-damage);
     if(r.hp===0){r.mode='dead';r.deadFor=0;r.hop=null;r.returning=false;}
     else{const away=Math.atan2(r.y-attacker.y,r.x-attacker.x),turn=(rng()<.5?-1:1)*(.65+rng()*.6);planRabbitHop(r,rng,away+turn,true);}
@@ -1760,8 +1761,8 @@
     const index=bag.remaining.shift();bag.last=index;return index;
   }
   function respawnRabbitFromEdge(r,rng=Math.random){
-    const z=RABBIT_ZONES[r.zone],side=z.exits[Math.floor(rng()*z.exits.length)];r.hp=RABBIT_RULES.hp;r.deadFor=0;r.respawnIn=0;r.spawnGeneration=(r.spawnGeneration||0)+1;r.exitSide=side;
-    const p=rabbitRandomPoint(r.zone,rng);r.exitPoint=p;r.mode='away';r.awayFor=0;rabbitReturn(r,rng);
+    let p;for(let i=0;i<500;i++){p=rabbitRandomPoint(r.zone,rng);if(p.x>=0&&p.x<=10000&&p.y>=0&&p.y<=WORLD.height)break;}
+    Object.assign(r,p,{hp:RABBIT_RULES.hp,deadFor:0,respawnIn:0,spawnGlow:2,mode:'rest',hop:null,returning:false,awayFor:0,wait:.6+rng()*1.2,restChange:.6+rng(),restVariant:Math.floor(rng()*2),direction:['up','down','left','right'][Math.floor(rng()*4)]});r.spawnGeneration=(r.spawnGeneration||0)+1;
   }
   function createMole(rng=Math.random){return {id:'oberkirch-mole',kind:'mole',hp:100,mode:'waiting',wait:rng()*MOLE_RULES.spawnWindow,elapsed:0,x:0,y:0,audioFinished:false};}
   function moleVisual(m){if(m.mode==='waiting')return null;return m.mode==='surface'?'surface':m.mode==='dead'?'dead':'mound';}
@@ -1810,8 +1811,29 @@
   const OPP_GATE_ZONE=Object.freeze(SULZ_GATE_ZONES[0].map(([x,y])=>Object.freeze([x-SULZ_GATE_ANCHORS[0][0]+OPP_GATE_ANCHOR[0],y-SULZ_GATE_ANCHORS[0][1]+OPP_GATE_ANCHOR[1]])));
   function oppGateHighlighted(player){return activeMapId==='oppenau'&&worldPointInPolygon(player.x,player.y,OPP_GATE_ZONE);}
 
+  const PLAYER_EXP_CONFIG=Object.freeze({maxLevel:10,mobExp:Object.freeze({rabbit:.5,mole:5,boar:30,wolf:75,bear:500}),toNextLevel:Object.freeze({1:100,2:150,3:200,4:300,5:500,6:720,7:1000,8:1400,9:2000}),orb:Object.freeze({collectRadius:92,hoverMs:240,startSpeed:420,acceleration:880,maxSpeed:1850,wobbleSpeed:245})});
+  function createPlayerProgress(){return {level:1,exp:0};}
+  function playerRankTitle(level){return level>=10?'WAFFENKNECHT':level>=5?'GEFOLGSMANN':'KNECHT';}
+  function playerExpProgress(progress){return progress.level>=PLAYER_EXP_CONFIG.maxLevel?1:Math.max(0,Math.min(1,progress.exp/PLAYER_EXP_CONFIG.toNextLevel[progress.level]));}
+  function grantPlayerExp(progress,amount){
+    let remaining=Math.round((Number(amount)||0)*2)/2;const stages=[];if(remaining<=0||!Number.isFinite(remaining))return stages;
+    if(progress.level>=PLAYER_EXP_CONFIG.maxLevel){progress.level=10;progress.exp=0;return [1];}
+    while(remaining>0&&progress.level<10){const needed=PLAYER_EXP_CONFIG.toNextLevel[progress.level],room=Math.round((needed-progress.exp)*2)/2;
+      if(remaining>=room){stages.push(1);remaining=Math.round((remaining-room)*2)/2;progress.level++;progress.exp=0;if(progress.level>=10){stages.push(1);break;}stages.push(0);}
+      else{progress.exp=Math.round((progress.exp+remaining)*2)/2;remaining=0;stages.push(playerExpProgress(progress));}
+    }return stages;
+  }
+  function createPlayerExpOrb(mobType,x,y,mapId,rng=Math.random){const exp=PLAYER_EXP_CONFIG.mobExp[mobType];if(!exp)return null;return {mobType,mapId,exp,x,y:y-52,age:0,seed:rng()*Math.PI*2,collected:false,trail:[]};}
+  function advancePlayerExpOrb(orb,dt,player){
+    if(orb.collected)return false;orb.age+=dt;const config=PLAYER_EXP_CONFIG.orb,target={x:player.x,y:player.y-145},dx=target.x-orb.x,dy=target.y-orb.y,distance=Math.hypot(dx,dy);
+    if(orb.age<config.hoverMs/1000){orb.y-=46*dt;orb.x+=Math.sin(orb.age*20+orb.seed)*22*dt;return false;}
+    const speed=Math.min(config.maxSpeed,config.startSpeed+(orb.age-config.hoverMs/1000)*config.acceleration);
+    if(distance<=Math.max(config.collectRadius,speed*dt)){orb.collected=true;orb.x=target.x;orb.y=target.y;return true;}
+    const nx=dx/distance,ny=dy/distance,wobble=Math.sin(orb.age*10.5+orb.seed)*config.wobbleSpeed*Math.max(.08,Math.min(1,distance/780));
+    orb.trail.push({x:orb.x,y:orb.y});if(orb.trail.length>14)orb.trail.shift();orb.x+=(nx*speed-ny*wobble)*dt;orb.y+=(ny*speed+nx*wobble)*dt;return false;
+  }
   if(typeof module!=='undefined' && module.exports) {
-    module.exports={bearSpawnGlow,bearChaseAllowed,bearAttackRects,bearAttackHitsPlayer,bearTerrainLine,bearGroundRoute,bearNavigationTarget,bearMoveToward,beginBearHomeReturn,stepBearHome,respawnBearFromEdge,BEAR_COMBAT,bearCombatFacing,bearInStrikeRange,bearPoseScale,bearCombatBody,bearInPlayerHitBox,damageBear,bearChasePointAllowed,stepBearCombat,bearDepartures,planBearDiagonal,planBearReturn,bearRestTime,bearSpacing,bearSeparated,bearPredictedPosition,bearWalkClear,bearExitPath,beginBearWalk,BEAR_RULES,BEAR_ZONE,BEAR_SPRITES,BEAR_WALK,bearAllowed,bearSegmentAllowed,bearRandomPoint,createBears,planBearWalk,bearVisual,stepBear,COMBAT_BODY_BOX,combatHitRects,combatHitRect,animalCombatBody,combatDamage,COMBAT_REFERENCE_HEIGHT,ANIMAL_HIT_SOUNDS,MOLE_RULES,MOLE_SPRITES,nextAnimalHitSound,respawnRabbitFromEdge,createMole,moleVisual,stepMole,damageMole,RABBIT_ZONES,RABBIT_SPRITES,RABBIT_RULES,RABBIT_FIST_BOXES,rabbitAllowed,rabbitHopAllowed,rabbitRandomPoint,createRabbits,rabbitRestKey,rabbitVisual,planRabbitHop,rabbitDepart,rabbitReturn,stepRabbit,rabbitInFistBox,damageRabbit,FALLING_BLADE_FIRE,swordBladeWorldPoint,advanceFallingFlame,paintFallingFlameSprite,FLAME_SWORD_ITEM,FLAME_SWORD_TAIL,SWORD_VARIANTS,swordItemId,BLADE_FIRE,bladeFireTongues,paintBladeFire,SWORD_SIDE_HOOD_OVERHANG,swordSideHoodRuns,clearSwordSideHood,SWORD_SIZE_FACTORS,SIDE_HOOD_OVERHANG,swordSizeFactor,swordHelmetLayout,clearSideHoodOverhang,SWORD_ITEM,SWORD_TAIL,SWORD_FILES,SWORD_POSES,swordSpriteLayout,swordPoseAt,findSwordInventorySpace,ATTACK_HELMET_POSES,attackHelmetLayout,SEND_ROCKS,SEND_FORESTS,SEND_SIGN,SEND_SOLIDS,sendSignBehindFoot,hudScreenAreas,hudFootCovered,ATTACK_TIMING,ATTACK_SEQUENCES,ATTACK_BOUNDS,attackSpriteLayout,attackPoseAt,HUD_LAYOUT,hudValues,INVENTORY_LAYOUT,inventoryCellRect,HELMET_POSES,HELMET_FILES,HELMET_VARIANTS,HELMET_PADDING,helmetLayout,SEND_MILL_WHEEL,sendWheelWorldTransform,advanceSendWheel,ALLER_MONASTERY_GATE,ALLER_MONASTERY_GATE_ZONE,allerMonasteryHighlighted,ALLER_EDGE_SEALS,ALLER_BRIDGE_PATHS,ALLER_BRIDGE_GUARDS,ALLER_NEW_FORESTS,ALLER_CAVE,ALLER_CAVE_COLLIDERS,ALLER_CAVE_GATE,ALLER_CAVE_GATE_ZONE,allerCaveHighlighted,allerLandingOpen,engageAllerTrack,moveAllerTrack,allerTrackDirection,LIER_CAPTURE_FUNNEL,ALLER_MONASTERY,ALLER_PINK_Y,ALLER_BARRIERS,ALLER_FORESTS,ALLER_BUILDING_COLLIDERS,ALLER_STAIR_GATE,ALLER_STAIR_PATH,allerBehindFoot,allerTerrainBlocked,engageAllerStair,moveAllerStair,slideAgainstAller,lierTrailSpeedFactor,lierAreaSpeedFactor,TELEPORT_DESTINATIONS,TELEPORT_MAP_ORDER,getTeleportRoute,LIER_PERSPECTIVE_LINES,LIER_MIN_AREA_SCALE,lierRightBankX,lierAreaPerspective,lierRenderedScale,LIER_ROCKS,LIER_FORESTS,LIER_TRAIL_ENTRIES,LIER_TRAIL_COMMON,LIER_TRAIL_PATHS,LIER_TRAIL_GATE,makeLierTrail,engageLierTrail,moveLierTrail,lierTrailScale,OPP_BARRIERS,OPP_NORTH_PATH,OPP_CITY_GATE,LIER_RIVER,LIER_BRIDGE_PATH,LIER_BRIDGE_STRUCTURE,engageOppNorth,moveOppNorth,lierTerrainBlocked,engageLierBridge,SEND_PROPS,SEND_COLLIDERS,SEND_LOCAL_COLLIDERS,SEND_MAP_POND,SEND_DEPTH_LAYERS,sendLocal,sendTerrainBlocked,sendBehindFoot,slideAgainstSend,OPP_GATE_ANCHOR,OPP_GATE_ZONE,oppGateHighlighted,OPP_CASTLE,OPP_WATER,OPP_ROCKS,OPP_FORESTS,OPP_STRUCTURES,OPP_WOOD_PATH,OPP_STONE_PATH,oppCastleBlocked,oppTerrainBlocked,engageOppBridge,moveOppBridge,slideAgainstOpp,BADBERG_PATH,BADBERG_CAPTURE,SULZ_FORESTS,SULZ_GATE_ANCHORS,SULZ_GATE_ZONES,engageBadberg,moveBadberg,sulzHighlighted,WEST_CLIFFS,WEST_WATER,WEST_PROPS,HUB_WEST_APPROACH,westPropBlocked,westTerrainBlocked,slideAgainstWest,RAMS_FORTS,RAMS_FORT_PATHS,RAMS_FORT_GATE_ZONES,ramsFortBlocked,ramsFortBehindFoot,ramsFortRearY,ramsFortOpaque,ramsFortHighlighted,engageRamsFort,moveRamsFort,RAMS_RIVER,RAMS_LEFT_ROCK,RAMS_RIGHT_SURFACE,RAMS_BRIDGE_PATH,RAMS_BRIDGE_STRUCTURE,ramsTerrainBlocked,engageRamsBridge,slideAgainstRams,HUB_PROPS,HUB_PROP_COLLIDERS,HUB_TOWER_BACK_Y,HUB_PROP_GATE_ZONES,hubPropBlocked,hubTowerBehindFoot,hubPropHighlighted,slideAgainstHubProps,HUB_RIVER,HUB_PLATEAU_ROCK,HUB_BRIDGE_PATH,HUB_BRIDGE_STRUCTURE,hubTerrainBlocked,engageHubBridge,hubPlateauFirstHit,slideAgainstHubPlateau,LAUTEN_RIVER,LAUTEN_ICE,LAUTEN_VINE_PATH,LAUTEN_BRIDGE_PATH,LAUTEN_TREES,lautenTerrainBlocked,engageLautenTrack,moveLautenTrack,CASTLE_GATE_ZONE_LOCAL,CASTLE_GATE_ZONE,CASTLE_TRAVEL_ENVELOPE_LOCAL,castleSnowfallCoverageAt,winterSnowParticleCoverageAt,WINTER_CASTLE,CASTLE_COLLIDERS,CASTLE_COMPOUND_LOCAL,CASTLE_ROCKS_LOCAL,CASTLE_GATE,castleGroundOverridesMountain,castleLocal,castleBlockedFoot,castleBehindFoot,castleGateHighlighted,castleFirstHit,slideAgainstCastle,CASTLE_SNOW_GRID,CASTLE_ART_ALPHA_GRID,sampleWeatherGrid,winterSnowBaseAt,winterSnowCoverageAt,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
+    module.exports={PLAYER_EXP_CONFIG,createPlayerProgress,playerRankTitle,playerExpProgress,grantPlayerExp,createPlayerExpOrb,advancePlayerExpOrb,bearSpawnGlow,bearChaseAllowed,bearAttackRects,bearAttackHitsPlayer,bearTerrainLine,bearGroundRoute,bearNavigationTarget,bearMoveToward,beginBearHomeReturn,stepBearHome,respawnBearFromEdge,BEAR_COMBAT,bearCombatFacing,bearInStrikeRange,bearPoseScale,bearCombatBody,bearInPlayerHitBox,damageBear,bearChasePointAllowed,stepBearCombat,bearDepartures,planBearDiagonal,planBearReturn,bearRestTime,bearSpacing,bearSeparated,bearPredictedPosition,bearWalkClear,bearExitPath,beginBearWalk,BEAR_RULES,BEAR_ZONE,BEAR_SPRITES,BEAR_WALK,bearAllowed,bearSegmentAllowed,bearRandomPoint,createBears,planBearWalk,bearVisual,stepBear,COMBAT_BODY_BOX,combatHitRects,combatHitRect,animalCombatBody,combatDamage,COMBAT_REFERENCE_HEIGHT,ANIMAL_HIT_SOUNDS,MOLE_RULES,MOLE_SPRITES,nextAnimalHitSound,respawnRabbitFromEdge,createMole,moleVisual,stepMole,damageMole,RABBIT_ZONES,RABBIT_SPRITES,RABBIT_RULES,RABBIT_FIST_BOXES,rabbitAllowed,rabbitHopAllowed,rabbitRandomPoint,createRabbits,rabbitRestKey,rabbitVisual,planRabbitHop,rabbitDepart,rabbitReturn,stepRabbit,rabbitInFistBox,damageRabbit,FALLING_BLADE_FIRE,swordBladeWorldPoint,advanceFallingFlame,paintFallingFlameSprite,FLAME_SWORD_ITEM,FLAME_SWORD_TAIL,SWORD_VARIANTS,swordItemId,BLADE_FIRE,bladeFireTongues,paintBladeFire,SWORD_SIDE_HOOD_OVERHANG,swordSideHoodRuns,clearSwordSideHood,SWORD_SIZE_FACTORS,SIDE_HOOD_OVERHANG,swordSizeFactor,swordHelmetLayout,clearSideHoodOverhang,SWORD_ITEM,SWORD_TAIL,SWORD_FILES,SWORD_POSES,swordSpriteLayout,swordPoseAt,findSwordInventorySpace,ATTACK_HELMET_POSES,attackHelmetLayout,SEND_ROCKS,SEND_FORESTS,SEND_SIGN,SEND_SOLIDS,sendSignBehindFoot,hudScreenAreas,hudFootCovered,ATTACK_TIMING,ATTACK_SEQUENCES,ATTACK_BOUNDS,attackSpriteLayout,attackPoseAt,HUD_LAYOUT,hudValues,INVENTORY_LAYOUT,inventoryCellRect,HELMET_POSES,HELMET_FILES,HELMET_VARIANTS,HELMET_PADDING,helmetLayout,SEND_MILL_WHEEL,sendWheelWorldTransform,advanceSendWheel,ALLER_MONASTERY_GATE,ALLER_MONASTERY_GATE_ZONE,allerMonasteryHighlighted,ALLER_EDGE_SEALS,ALLER_BRIDGE_PATHS,ALLER_BRIDGE_GUARDS,ALLER_NEW_FORESTS,ALLER_CAVE,ALLER_CAVE_COLLIDERS,ALLER_CAVE_GATE,ALLER_CAVE_GATE_ZONE,allerCaveHighlighted,allerLandingOpen,engageAllerTrack,moveAllerTrack,allerTrackDirection,LIER_CAPTURE_FUNNEL,ALLER_MONASTERY,ALLER_PINK_Y,ALLER_BARRIERS,ALLER_FORESTS,ALLER_BUILDING_COLLIDERS,ALLER_STAIR_GATE,ALLER_STAIR_PATH,allerBehindFoot,allerTerrainBlocked,engageAllerStair,moveAllerStair,slideAgainstAller,lierTrailSpeedFactor,lierAreaSpeedFactor,TELEPORT_DESTINATIONS,TELEPORT_MAP_ORDER,getTeleportRoute,LIER_PERSPECTIVE_LINES,LIER_MIN_AREA_SCALE,lierRightBankX,lierAreaPerspective,lierRenderedScale,LIER_ROCKS,LIER_FORESTS,LIER_TRAIL_ENTRIES,LIER_TRAIL_COMMON,LIER_TRAIL_PATHS,LIER_TRAIL_GATE,makeLierTrail,engageLierTrail,moveLierTrail,lierTrailScale,OPP_BARRIERS,OPP_NORTH_PATH,OPP_CITY_GATE,LIER_RIVER,LIER_BRIDGE_PATH,LIER_BRIDGE_STRUCTURE,engageOppNorth,moveOppNorth,lierTerrainBlocked,engageLierBridge,SEND_PROPS,SEND_COLLIDERS,SEND_LOCAL_COLLIDERS,SEND_MAP_POND,SEND_DEPTH_LAYERS,sendLocal,sendTerrainBlocked,sendBehindFoot,slideAgainstSend,OPP_GATE_ANCHOR,OPP_GATE_ZONE,oppGateHighlighted,OPP_CASTLE,OPP_WATER,OPP_ROCKS,OPP_FORESTS,OPP_STRUCTURES,OPP_WOOD_PATH,OPP_STONE_PATH,oppCastleBlocked,oppTerrainBlocked,engageOppBridge,moveOppBridge,slideAgainstOpp,BADBERG_PATH,BADBERG_CAPTURE,SULZ_FORESTS,SULZ_GATE_ANCHORS,SULZ_GATE_ZONES,engageBadberg,moveBadberg,sulzHighlighted,WEST_CLIFFS,WEST_WATER,WEST_PROPS,HUB_WEST_APPROACH,westPropBlocked,westTerrainBlocked,slideAgainstWest,RAMS_FORTS,RAMS_FORT_PATHS,RAMS_FORT_GATE_ZONES,ramsFortBlocked,ramsFortBehindFoot,ramsFortRearY,ramsFortOpaque,ramsFortHighlighted,engageRamsFort,moveRamsFort,RAMS_RIVER,RAMS_LEFT_ROCK,RAMS_RIGHT_SURFACE,RAMS_BRIDGE_PATH,RAMS_BRIDGE_STRUCTURE,ramsTerrainBlocked,engageRamsBridge,slideAgainstRams,HUB_PROPS,HUB_PROP_COLLIDERS,HUB_TOWER_BACK_Y,HUB_PROP_GATE_ZONES,hubPropBlocked,hubTowerBehindFoot,hubPropHighlighted,slideAgainstHubProps,HUB_RIVER,HUB_PLATEAU_ROCK,HUB_BRIDGE_PATH,HUB_BRIDGE_STRUCTURE,hubTerrainBlocked,engageHubBridge,hubPlateauFirstHit,slideAgainstHubPlateau,LAUTEN_RIVER,LAUTEN_ICE,LAUTEN_VINE_PATH,LAUTEN_BRIDGE_PATH,LAUTEN_TREES,lautenTerrainBlocked,engageLautenTrack,moveLautenTrack,CASTLE_GATE_ZONE_LOCAL,CASTLE_GATE_ZONE,CASTLE_TRAVEL_ENVELOPE_LOCAL,castleSnowfallCoverageAt,winterSnowParticleCoverageAt,WINTER_CASTLE,CASTLE_COLLIDERS,CASTLE_COMPOUND_LOCAL,CASTLE_ROCKS_LOCAL,CASTLE_GATE,castleGroundOverridesMountain,castleLocal,castleBlockedFoot,castleBehindFoot,castleGateHighlighted,castleFirstHit,slideAgainstCastle,CASTLE_SNOW_GRID,CASTLE_ART_ALPHA_GRID,sampleWeatherGrid,winterSnowBaseAt,winterSnowCoverageAt,WINTER_SNOW_GRID,winterSnowCoverage,WINTER_RIVER,WINTER_ICE,WINTER_MOUNTAINS,ICE_PHYSICS,iceMotion,onWinterIce,winterTerrainBlocked,clearIceMotion,movePlayerOnIce,COVERED_STRUCTURE,isCoveredStructureBlocked,MAPS,MAP_ROUTES,setActiveMap,exitRoute,footWithinMap,taperedTreeContains,STONE_STRUCTURE,isStoneStructureBlocked,LOWER_BRIDGE_TREES,TREE_AREAS,treeAreaAt,shouldPlayTreeEffects,STONE_DECK,stonePointAtX,insideStoneDeck,engageStoneBridge,moveAlongStoneBridge,trackCamera,VERTICAL_WALK_FRAME_MS,UP_WALK_OFFSETS,walkFrameDuration,SPRITE_BOUNDS,WALK_SEQUENCES,WALK_FRAME_MS,TARGET_VISIBLE_HEIGHT,spriteLayout,directionForInput,advanceWalkAnimation,STONE_BRIDGE_REFERENCE,STONE_BRIDGE_LOWER_PATH,WORLD,PLAYER,BRIDGE_CONFIG,STONE_BRIDGE_PATH,COVERED_BRIDGE_PATH,RIVER_BLOCK_ZONES,getPathMetrics,closestPointOnBridgePath,pointAtBridgeDistance,isRiverBlockedFootPoint,tryEngageBridge,moveAlongActiveBridge,playerInsideCoveredBridgeInterior,canMoveFootTo,movePlayer,coverCamera};
     return;
   }
 
@@ -2049,7 +2071,9 @@
     const digging=mole.mode==='rising'||mole.mode==='sinking';
     if(digging&&!moleDigFallback&&moleDigAudio.paused&&!moleDigAudio.ended)playMoleDig(false);
     const duration=Number.isFinite(moleDigAudio.duration)&&moleDigAudio.duration>0?moleDigAudio.duration:MOLE_RULES.digDuration;
+    const previousMode=mole.mode;
     const event=stepMole(mole,dt,Math.random,duration,mole.audioFinished||(digging&&moleDigAudio.ended),digging&&!moleDigFallback);
+    if(previousMode==='dead'&&mole.mode!=='dead')spawnMobExp('mole',mole,'oberkirch');
     if(event==='dig')playMoleDig(true);else if(event==='surface'||event==='hide'){mole.audioFinished=false;pauseMoleDig();}
   }
   function renderMole(back,front){
@@ -2121,8 +2145,9 @@
   function updateBearSystem(dt){
     if(activeMapId!=='ramsbach'||!state.playing||state.transitioning||inventoryState.open||teleportState.open||document.hidden)return;
     for(const b of bears){
-      const oldSound=b.attackSoundSerial||0;
+      const previousMode=b.mode;const oldSound=b.attackSoundSerial||0;
       const damage=stepBear(b,dt,Math.random,bears,state.player,bearChaseAllowed);
+      if(previousMode==='dead'&&b.mode!=='dead')spawnMobExp('bear',b,'ramsbach');
       for(let i=oldSound;i<(b.attackSoundSerial||0);i++)playBearCombatSound('attack',b);
       if(damage>0){updateHudStats({health:Math.max(0,state.stats.health-damage)});bearPlayerNumbers.push({x:state.player.x,y:state.player.y-TARGET_VISIBLE_HEIGHT-30,age:0,damage});}
     }
@@ -2139,7 +2164,7 @@
   function updateRabbitSystem(dt){
     updateMoleSystem(dt);
     if(!state.playing||state.transitioning||inventoryState.open||teleportState.open||document.hidden)return;
-    for(const r of rabbitSystem.rabbits)stepRabbit(r,dt,Math.random,activeMapId==='oberkirch');
+    for(const r of rabbitSystem.rabbits){const previousMode=r.mode;stepRabbit(r,dt,Math.random,activeMapId==='oberkirch');if(previousMode==='dead'&&r.mode!=='dead')spawnMobExp('rabbit',r,'oberkirch');}
     for(let i=bearPlayerNumbers.length-1;i>=0;i--){const n=bearPlayerNumbers[i];n.age+=dt;if(n.age>=1.1)bearPlayerNumbers.splice(i,1);}
     for(let i=rabbitSystem.numbers.length-1;i>=0;i--){const n=rabbitSystem.numbers[i];n.age+=dt;if(n.age>=1.1)rabbitSystem.numbers.splice(i,1);}
   }
@@ -2150,7 +2175,7 @@
       const visual=rabbitVisual(r);if(!visual)continue;const p=RABBIT_SPRITES[visual.key],size=p.scale*RABBIT_RULES.size,ctx=r.y>state.player.y?front:back,im=rabbitImages[visual.key];
       if(!im.complete||!im.naturalWidth)continue;
       ctx.fillStyle='rgba(24,25,12,.13)';ctx.beginPath();ctx.ellipse(r.x,r.y,30*RABBIT_RULES.size,8*RABBIT_RULES.size,0,0,Math.PI*2);ctx.fill();
-      ctx.save();ctx.translate(r.x,r.y-visual.lift);ctx.scale(visual.mirror?-1:1,1);ctx.drawImage(im,-p.width*size/2,-p.height*size,p.width*size,p.height*size);ctx.restore();
+      ctx.save();ctx.translate(r.x,r.y-visual.lift);ctx.scale(visual.mirror?-1:1,1);const glow=bearSpawnGlow(r);if(glow>0){ctx.filter=`brightness(${1+glow*5})`;ctx.shadowColor='#fff';ctx.shadowBlur=24*glow;}ctx.drawImage(im,-p.width*size/2,-p.height*size,p.width*size,p.height*size);ctx.restore();
     }
     renderMole(back,front);
     front.font='bold 76px Georgia, serif';front.textAlign='center';front.textBaseline='bottom';front.lineWidth=5;front.strokeStyle='#4b100c';front.fillStyle='#ff382d';
@@ -2290,15 +2315,41 @@
 
   // Screen-space HUD; one shared visual height, unaffected by world/camera transforms.
   state.stats={health:100,maxHealth:100,blessing:100,maxBlessing:100,experience:0,experienceToNextLevel:100};state.hudMode=0;
+  const playerProgress=createPlayerProgress();
+  const playerExpSystem={orbs:[],puffs:[],queue:[],display:0,animation:null};
+  function spawnMobExp(type,mob,mapId){const orb=createPlayerExpOrb(type,mob.x,mob.y,mapId);if(orb)playerExpSystem.orbs.push(orb);}
+  function collectPlayerExpOrb(orb){
+    if(orb.awarded)return;orb.awarded=true;const stages=grantPlayerExp(playerProgress,orb.exp);playerExpSystem.queue.push(...stages);
+    state.stats.experience=playerProgress.exp;state.stats.experienceToNextLevel=PLAYER_EXP_CONFIG.toNextLevel[playerProgress.level]||1;
+    playerExpSystem.puffs.push({x:state.player.x,y:state.player.y-145,mapId:activeMapId,age:0});
+  }
+  function updatePlayerExperience(dt){
+    if(!state.playing||state.transitioning||inventoryState.open||teleportState.open||document.hidden)return;
+    for(const orb of playerExpSystem.orbs)if(orb.mapId===activeMapId&&!orb.collected&&advancePlayerExpOrb(orb,dt,state.player))collectPlayerExpOrb(orb);
+    playerExpSystem.orbs=playerExpSystem.orbs.filter(o=>!o.collected);
+    for(const p of playerExpSystem.puffs)p.age+=dt;playerExpSystem.puffs=playerExpSystem.puffs.filter(p=>p.age<.42);
+    if(!playerExpSystem.animation&&playerExpSystem.queue.length){playerExpSystem.animation={from:playerExpSystem.display,to:playerExpSystem.queue.shift(),time:0};}
+    const a=playerExpSystem.animation;if(a){a.time=Math.min(.5,a.time+dt);const t=a.time/.5;playerExpSystem.display=a.from+(a.to-a.from)*(t*t*(3-2*t));if(t>=1){playerExpSystem.display=a.to;playerExpSystem.animation=null;}}
+  }
+  function renderPlayerExperience(ctx){
+    if(!state.playing)return;ctx.save();
+    function light(x,y,r,alpha){const glow=ctx.createRadialGradient(x,y,0,x,y,r);glow.addColorStop(0,`rgba(255,255,237,${alpha})`);glow.addColorStop(.2,`rgba(255,245,155,${alpha})`);glow.addColorStop(.48,`rgba(255,206,35,${alpha*.85})`);glow.addColorStop(1,'rgba(255,150,0,0)');ctx.fillStyle=glow;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();}
+    ctx.globalCompositeOperation='lighter';
+    for(const orb of playerExpSystem.orbs){if(orb.mapId!==activeMapId)continue;for(let i=0;i<orb.trail.length;i++){const t=orb.trail[i];light(t.x,t.y,12+i*.7,.04+i*.014);}const pulse=1+Math.sin(orb.age*16+orb.seed)*.12;light(orb.x,orb.y,44*pulse,.85);light(orb.x,orb.y,17*pulse,1);}
+    for(const p of playerExpSystem.puffs){if(p.mapId!==activeMapId)continue;const t=p.age/.42;light(p.x,p.y,100*(.38+t*1.77),1-t);}
+    ctx.restore();
+  }
+
   const hudStyle=document.createElement('style');hudStyle.textContent=`
     #renchtal-hud{position:absolute;inset:0;z-index:25;pointer-events:none;--hud-height:min(11.05vh,7.65vw,127.5px)}
     #hud-status,#hud-experience{position:absolute;bottom:0;height:var(--hud-height);width:auto;display:block;pointer-events:none;transition:opacity 180ms ease-in-out}
     #hud-status{left:0}#hud-experience{right:0}
+    #hud-level-title{position:absolute;right:12px;bottom:calc(var(--hud-height) + 4px);font:bold clamp(12px,1.4vw,19px) Georgia,serif;color:#ffe9a0;text-shadow:0 1px 3px #000,0 0 7px #9c661c;transition:opacity 180ms ease-in-out}
   `;document.head.appendChild(hudStyle);
   const hudRoot=document.createElement('div');hudRoot.id='renchtal-hud';
   const hudStatus=document.createElement('canvas');hudStatus.id='hud-status';hudStatus.width=HUD_LAYOUT.status.width;hudStatus.height=HUD_LAYOUT.status.height;
   const hudExperience=document.createElement('canvas');hudExperience.id='hud-experience';hudExperience.width=HUD_LAYOUT.experience.width;hudExperience.height=HUD_LAYOUT.experience.height;
-  hudRoot.appendChild(hudStatus);hudRoot.appendChild(hudExperience);game.appendChild(hudRoot);
+  hudRoot.appendChild(hudStatus);hudRoot.appendChild(hudExperience);const hudLevelTitle=document.createElement('div');hudLevelTitle.id='hud-level-title';hudRoot.appendChild(hudLevelTitle);game.appendChild(hudRoot);
   const makeHudImage=src=>{const im=new Image();im.src=src;return im;};
   const hudArt={status:makeHudImage('assets/ui/hud-status.png'),experience:makeHudImage('assets/ui/hud-experience.png')};
   const hudMasks={status:HUD_LAYOUT.status.fills.map(f=>makeHudImage(f.image)),experience:HUD_LAYOUT.experience.fills.map(f=>makeHudImage(f.image))};
@@ -2308,7 +2359,7 @@
     if(fraction<=0)return;
     if(hudScratch.width!==w||hudScratch.height!==h){hudScratch.width=w;hudScratch.height=h;}
     const [x,y,rw,rh]=rect,s=hudScratchContext;s.clearRect(0,0,w,h);s.globalCompositeOperation='source-over';
-    const gradient=s.createLinearGradient(0,y,0,y+rh);gradient.addColorStop(0,color==='red'?'#ff7771':'#fff0a0');gradient.addColorStop(.35,color==='red'?'#dc302c':'#e3b83f');gradient.addColorStop(1,color==='red'?'#820d13':'#90621b');s.fillStyle=gradient;
+    const gradient=s.createLinearGradient(0,y,0,y+rh);gradient.addColorStop(0,color==='red'?'#ff7771':color==='exp-gold'?'#fff5b0':'#fff0a0');gradient.addColorStop(.35,color==='red'?'#dc302c':color==='exp-gold'?'#ffd438':'#e3b83f');gradient.addColorStop(1,color==='red'?'#820d13':color==='exp-gold'?'#d99a12':'#90621b');s.fillStyle=gradient;
     if(vertical)s.fillRect(x,y+rh*(1-fraction),rw,rh*fraction);else s.fillRect(x,y,rw*fraction,rh);
     s.globalCompositeOperation='destination-in';s.drawImage(mask,0,0,w,h);s.globalCompositeOperation='source-over';ctx.drawImage(hudScratch,0,0,w,h);
   }
@@ -2320,13 +2371,14 @@
       const covered=hudFootCovered(footX,footY,area);
       canvas.style.display=enabled?'block':'none';canvas.style.transition=instant?'none':'opacity 180ms ease-in-out';canvas.style.opacity=covered?'0':'1';canvas.setAttribute('aria-hidden',!enabled||covered?'true':'false');
     }
-    const values=hudValues(state.stats),key=JSON.stringify(values);if(key===hudRenderKey||!hudImages.every(im=>im.complete&&im.naturalWidth))return;hudRenderKey=key;
+    hudLevelTitle.textContent=`LV ${playerProgress.level} · ${playerRankTitle(playerProgress.level)}`;hudLevelTitle.style.display=hudExperience.style.display;hudLevelTitle.style.opacity=hudExperience.style.opacity;hudLevelTitle.style.transition=hudExperience.style.transition;
+    const values=hudValues({...state.stats,experience:playerExpSystem.display,experienceToNextLevel:1}),key=JSON.stringify(values);if(key===hudRenderKey||!hudImages.every(im=>im.complete&&im.naturalWidth))return;hudRenderKey=key;
     const statusCtx=hudStatus.getContext('2d'),expCtx=hudExperience.getContext('2d'),a=HUD_LAYOUT.status,b=HUD_LAYOUT.experience;
     statusCtx.clearRect(0,0,a.width,a.height);statusCtx.drawImage(hudArt.status,0,0,a.width,a.height);
     paintHudFill(statusCtx,hudMasks.status[0],a.fills[0].bounds,values.health,'red',false,a.width,a.height);
     paintHudFill(statusCtx,hudMasks.status[1],a.fills[1].bounds,values.blessing,'gold',false,a.width,a.height);
     expCtx.clearRect(0,0,b.width,b.height);
-    values.shields.forEach((fraction,i)=>paintHudFill(expCtx,hudMasks.experience[i],b.fills[i].bounds,fraction,'gold',true,b.width,b.height));
+    values.shields.forEach((fraction,i)=>paintHudFill(expCtx,hudMasks.experience[i],b.fills[i].bounds,fraction,'exp-gold',true,b.width,b.height));
     expCtx.drawImage(hudArt.experience,0,0,b.width,b.height);
     hudStatus.setAttribute('aria-label',`Leben ${Math.round(values.health*100)} Prozent, Segen ${Math.round(values.blessing*100)} Prozent`);hudExperience.setAttribute('aria-label',`Erfahrung ${Math.round(values.experience*100)} Prozent`);
   }
@@ -2461,7 +2513,7 @@
     else if(activeMapId==='oppenau')list=[{p:OPP_CASTLE,image:oppCastleImage,front:false},{p:OPP_CITY_GATE,image:oppGateImage,front:true}];
     else if(activeMapId==='allerheiligen')list=[{p:ALLER_MONASTERY,image:allerMonasteryImage,front:allerBehindFoot(state.player.x,state.player.y)},{p:ALLER_CAVE,image:allerCaveImage,front:false}];
     else if(activeMapId==='westmap')list=WEST_PROPS.map((p,i)=>({p,image:westPropImages[i],front:false}));
-    const now=performance.now(),dt=sceneLastTime?Math.min(.05,(now-sceneLastTime)/1000):1/60;sceneLastTime=now;updateRabbitSystem(dt);updateBearSystem(dt);
+    const now=performance.now(),dt=sceneLastTime?Math.min(.05,(now-sceneLastTime)/1000):1/60;sceneLastTime=now;updateRabbitSystem(dt);updateBearSystem(dt);updatePlayerExperience(dt);
     if(activeMapId==='sendelbach'&&state.playing&&!state.transitioning&&!teleportState.open&&!inventoryState.open&&!document.hidden)sendWheelAngle=advanceSendWheel(sendWheelAngle,dt);
     for(const {p,image,front} of list){
       if(!image.complete||!image.naturalWidth)continue;
@@ -2478,7 +2530,7 @@
       const p=SEND_PROPS[SEND_DEPTH_LAYERS[i].prop];sceneFrontContext.drawImage(sendFrontLayers[i],p.x,p.y,p.width,p.height);
     }
     renderBears(sceneBaseContext,sceneFrontContext);
-    renderRabbits(sceneBaseContext,sceneFrontContext);
+    renderRabbits(sceneBaseContext,sceneFrontContext);renderPlayerExperience(sceneFrontContext);
   }
   const weatherCanvas=document.createElement('canvas');weatherCanvas.setAttribute('aria-hidden','true');
   Object.assign(weatherCanvas.style,{position:'absolute',inset:'0',width:'100%',height:'100%',pointerEvents:'none',zIndex:'30',display:'none'});game.appendChild(weatherCanvas);
