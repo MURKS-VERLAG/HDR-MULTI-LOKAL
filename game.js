@@ -1379,7 +1379,7 @@
   function stepBearCombat(b,dt,player,rng=Math.random,herd=[],allowed=bearAllowed){
     if(!b.aggressive||!player||b.hp<=0)return 0;
     if(bearInStrikeRange(b,player)){
-      if(b.mode!=='attack'){b.mode='attack';b.attackElapsed=0;}
+      if(b.mode!=='attack'){b.mode='attack';b.attackElapsed=0;}b.locomotionBlocked=false;
       b.direction=bearCombatFacing(b,player);const old=b.attackElapsed||0;b.attackElapsed=old+dt;
       const hits=Math.floor((b.attackElapsed+1e-9+BEAR_COMBAT.frameSeconds*3)/(BEAR_COMBAT.frameSeconds*4))-Math.floor((old+1e-9+BEAR_COMBAT.frameSeconds*3)/(BEAR_COMBAT.frameSeconds*4));
       b.attackSoundSerial=(b.attackSoundSerial||0)+hits;return hits*BEAR_COMBAT.damage;
@@ -1388,16 +1388,23 @@
     b.mode='combat-walk';b.attackElapsed=0;const dx=player.x-b.x,dy=player.y-b.y;
     if(!b.chasePhase)b.chasePhase='side';if(b.chasePhase==='side'&&Math.abs(dx)<20){b.chasePhase='diagonal';b.chaseElapsed=0;}
     let vx=Math.sign(dx),vy=b.chasePhase==='side'?0:Math.sign(dy);
-    if(b.chasePhase==='diagonal'&&!vy){b.detourSign=-(b.detourSign||1);vy=b.detourSign;}
+    if(b.chasePhase==='diagonal'&&!vy){if(!b.detourSign)b.detourSign=rng()<.5?-1:1;vy=b.detourSign;}
     const length=Math.hypot(vx,vy)||1,step=BEAR_COMBAT.chaseSpeed*dt;let moved=false;
-    for(const turn of [0,Math.PI/4,-Math.PI/4,Math.PI/2,-Math.PI/2]){
+    b.steerHold=Math.max(0,(b.steerHold||0)-dt);
+    const turns=[0,Math.PI/4,-Math.PI/4,Math.PI/2,-Math.PI/2];
+    if(b.steerHold>0&&b.steerTurn!==undefined){turns.splice(turns.indexOf(b.steerTurn),1);turns.unshift(b.steerTurn);}
+    for(const turn of turns){
       const x=(vx*Math.cos(turn)-vy*Math.sin(turn))/length,y=(vx*Math.sin(turn)+vy*Math.cos(turn))/length,next={x:b.x+x*step,y:b.y+y*step};
       if(!bearChasePointAllowed(b,next,herd,allowed))continue;b.x=next.x;b.y=next.y;
-      b.direction=Math.abs(y)>.01?(y<0?'up':'down'):(x<0?'left':'right');moved=true;break;
+      if(b.steerTurn!==turn){b.steerTurn=turn;b.steerHold=BEAR_RULES.frameSeconds;}
+      const facing=Math.abs(y)>.01?(y<0?'up':'down'):(x<0?'left':'right');
+      if(facing!==b.direction){b.walkFacingTime=(b.walkFacingTime||0)+dt;if(b.walkFacingTime>=BEAR_RULES.frameSeconds||b.locomotionBlocked){b.direction=facing;b.walkFacingTime=0;b.chaseAnimation=0;}}else b.walkFacingTime=0;
+      moved=true;break;
     }
-    b.chaseAnimation=(b.chaseAnimation||0)+(moved?dt:0);b.chaseElapsed=(b.chaseElapsed||0)+dt;
+    b.locomotionBlocked=!moved;
+    b.chaseAnimation=(b.chaseAnimation||0)+(moved?dt:0);b.chaseElapsed=(b.chaseElapsed||0)+(moved?dt:0);
     const duration=BEAR_RULES.frameSeconds*(b.chasePhase==='side'?4:2);
-    if(b.chaseElapsed>=duration){b.chasePhase=b.chasePhase==='side'?'diagonal':'side';b.chaseElapsed=0;b.chaseAnimation=0;b.direction=b.chasePhase==='diagonal'?(dy<0?'up':'down'):(dx<0?'left':'right');}
+    if(b.chaseElapsed>=duration){b.chasePhase=b.chasePhase==='side'?'diagonal':'side';b.chaseElapsed=0;b.chaseAnimation=0;b.steerHold=0;b.detourSign=0;}
     if(bearInStrikeRange(b,player)){b.mode='attack';b.attackElapsed=0;b.direction=bearCombatFacing(b,player);}
     return 0;
   }
@@ -1480,7 +1487,7 @@
     if(end.x>=10000)b.exitReserved=true;
     else if(b.x<10000)b.exitReserved=false;
     b.sideRestReady=false;b.resumeSide=null;
-    b.direction=direction;b.mode='walk';b.walk={from:{x:b.x,y:b.y},to:end,elapsed:0,duration,frames,cycles,returning};return true;
+    b.locomotionBlocked=false;b.walkBlockedFor=0;b.direction=direction;b.mode='walk';b.walk={from:{x:b.x,y:b.y},to:end,elapsed:0,duration,frames,cycles,returning};return true;
   }
   function planBearWalk(b,rng=Math.random,herd=[]){
     if(b.exitIntent){
@@ -1517,6 +1524,7 @@
       if(b.direction==='up'||b.direction==='down')return frame===0?{key:`attack-ready-${b.direction}`,mirror:false}:{key:`attack-${b.direction}`,mirror:frame===2};
       return {key:frame===0?'attack-side-1':`attack-side-hit-${frame}`,mirror:b.direction==='left'};
     }
+    if(b.mode==='combat-walk'&&b.locomotionBlocked)return {key:b.direction==='up'?'rest-up':b.direction==='down'?'rest-down':'rest-side',mirror:b.direction==='right'};
     if(b.mode==='combat-walk')return {key:BEAR_WALK[b.direction][Math.floor((b.chaseAnimation||0)/BEAR_RULES.frameSeconds)%BEAR_WALK[b.direction].length],mirror:b.direction==='left'};
     const side=b.direction==='left'||b.direction==='right';
     const key=b.mode==='walk'?BEAR_WALK[b.direction][Math.min(BEAR_WALK[b.direction].length*b.walk.cycles-1,Math.floor((b.walk.elapsed+1e-8)/BEAR_RULES.frameSeconds))%BEAR_WALK[b.direction].length]:side?'rest-side':b.direction==='up'?'rest-up':'rest-down';
@@ -1527,7 +1535,7 @@
     if(herd.some(other=>other!==b&&!['gone','dead','away'].includes(other.mode)&&!bearSeparated({...b,x:10600,y},other)))return false;
     let target;for(let i=0;i<200;i++){target=bearRandomPoint(rng);if(target.x<8700&&target.x>7300&&target.y>4300&&target.y<4900)break;}
     if(!target||target.x>=9000)target={x:8000,y:4600};
-    Object.assign(b,{x:10600,y,hp:BEAR_COMBAT.hp,deadFor:0,respawnIn:0,aggressive:false,respawnEntering:true,respawnTarget:target,mode:'combat-walk',direction:'left',walk:null,chasePhase:'side',chaseElapsed:0,chaseAnimation:0,attackElapsed:0,exitReserved:false,exitIntent:false,exitPath:null,resumeSide:null});
+    Object.assign(b,{x:10600,y,hp:BEAR_COMBAT.hp,deadFor:0,respawnIn:0,aggressive:false,respawnEntering:true,respawnTarget:target,locomotionBlocked:false,steerHold:0,steerTurn:undefined,walkFacingTime:0,detourSign:0,mode:'combat-walk',direction:'left',walk:null,chasePhase:'side',chaseElapsed:0,chaseAnimation:0,attackElapsed:0,exitReserved:false,exitIntent:false,exitPath:null,resumeSide:null});
     b.spawnGeneration=(b.spawnGeneration||0)+1;return true;
   }
   function stepBear(b,dt,rng=Math.random,herd=[],player=null,allowed=bearAllowed){
@@ -1553,8 +1561,14 @@
       }
       planBearWalk(b,rng,herd);return;
     }
+    if(b.mode!=='walk'||!b.walk){b.mode='rest';b.walk=null;b.wait=.35;return 0;}
     const w=b.walk,nextElapsed=Math.min(w.duration,w.elapsed+dt),t=nextElapsed/w.duration,next={x:w.from.x+(w.to.x-w.from.x)*t,y:w.from.y+(w.to.y-w.from.y)*t};
-    if(herd.some(other=>other!==b&&!['away','dead','gone'].includes(other.mode)&&!bearSeparated({...b,...next},other)))return;
+    if(herd.some(other=>other!==b&&!['away','dead','gone'].includes(other.mode)&&!bearSeparated({...b,...next},other))){
+      b.walkBlockedFor=(b.walkBlockedFor||0)+dt;
+      if(b.walkBlockedFor>=.28){b.walk=null;b.exitPath=null;b.mode=w.returning&&b.x>=10000?'away':'rest';b.wait=.35+rng()*.6;b.walkBlockedFor=0;}
+      return;
+    }
+    b.walkBlockedFor=0;
     w.elapsed=nextElapsed;b.x=next.x;b.y=next.y;if(b.x<10000)b.lastInside={x:b.x,y:b.y};
     if(t<1)return;
     b.lastWalkFacing=b.direction;
