@@ -1374,7 +1374,7 @@
     b.direction=bearCombatFacing(b,player);return true;
   }
   function bearAttackRects(b,facing=b.direction){
-    const scale=TARGET_VISIBLE_HEIGHT/COMBAT_REFERENCE_HEIGHT*1.05;
+    const scale=TARGET_VISIBLE_HEIGHT/COMBAT_REFERENCE_HEIGHT;
     return [COMBAT_BODY_BOX,RABBIT_FIST_BOXES[facing]].map(p=>({left:b.x+p.left*scale,right:b.x+p.right*scale,top:b.y+p.top*scale,bottom:b.y+p.bottom*scale}));
   }
   function bearInStrikeRange(b,p){
@@ -1811,9 +1811,9 @@
   const OPP_GATE_ZONE=Object.freeze(SULZ_GATE_ZONES[0].map(([x,y])=>Object.freeze([x-SULZ_GATE_ANCHORS[0][0]+OPP_GATE_ANCHOR[0],y-SULZ_GATE_ANCHORS[0][1]+OPP_GATE_ANCHOR[1]])));
   function oppGateHighlighted(player){return activeMapId==='oppenau'&&worldPointInPolygon(player.x,player.y,OPP_GATE_ZONE);}
 
-  const PLAYER_EXP_CONFIG=Object.freeze({maxLevel:10,mobExp:Object.freeze({rabbit:.5,mole:5,boar:30,wolf:75,bear:500}),toNextLevel:Object.freeze({1:100,2:150,3:200,4:300,5:500,6:720,7:1000,8:1400,9:2000}),orb:Object.freeze({collectRadius:92,hoverMs:240,startSpeed:420,acceleration:880,maxSpeed:1850,wobbleSpeed:245})});
+  const PLAYER_EXP_CONFIG=Object.freeze({maxLevel:10,mobExp:Object.freeze({rabbit:2,mole:15,boar:30,wolf:75,bear:200}),toNextLevel:Object.freeze({1:100,2:150,3:200,4:300,5:500,6:720,7:1000,8:1400,9:2000}),orb:Object.freeze({collectRadius:92,hoverMs:240,startSpeed:420,acceleration:880,maxSpeed:1850,wobbleSpeed:245})});
   function createPlayerProgress(){return {level:1,exp:0};}
-  function playerRankTitle(level){return level>=10?'WAFFENKNECHT':level>=5?'GEFOLGSMANN':'KNECHT';}
+  function playerRankTitle(level){return ['Knecht','Waffenknecht','Serviens','Scutifer','Knappe','Sergent','Wappner','Armiger','Edelknecht','Ritter'][Math.max(0,Math.min(9,Math.floor(Number(level)||1)-1))];}
   function playerExpProgress(progress){return progress.level>=PLAYER_EXP_CONFIG.maxLevel?1:Math.max(0,Math.min(1,progress.exp/PLAYER_EXP_CONFIG.toNextLevel[progress.level]));}
   function grantPlayerExp(progress,amount){
     let remaining=Math.round((Number(amount)||0)*2)/2;const stages=[];if(remaining<=0||!Number.isFinite(remaining))return stages;
