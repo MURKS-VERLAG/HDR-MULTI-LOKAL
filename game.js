@@ -1980,7 +1980,7 @@
     const damage=combatDamage(swordEquipped?equippedSwordId:null,pose.index);
     if(activeMapId==='ramsbach'){
       for(const b of bears)if(bearInPlayerHitBox(state.player,attack.facing,b)&&damageBear(b,damage,state.player)){
-        if(b.hp===0)playBearCombatSound('death');
+        if(b.hp===0)playBearCombatSound('death',b);
         const body=bearCombatBody(b);rabbitSystem.numbers.push({x:b.x,y:b.y-(body?.height||400),age:0,damage,map:'ramsbach'});
       }
       return;
@@ -1989,9 +1989,28 @@
     if(mole.mode==='surface'&&rabbitInFistBox(state.player,attack.facing,mole)&&damageMole(mole,damage)){playAnimalHitSound();rabbitSystem.numbers.push({x:mole.x,y:mole.y-110*MOLE_RULES.size,age:0,damage});}
   }
   const bearCombatVoices=new Set();
-  function playBearCombatSound(type){
-    const voice=new Audio(`assets/audio/animals/bear/${type}-${Math.random()<.5?1:2}.mp3`);voice.preload='auto';voice.volume=.9;voice.loop=false;bearCombatVoices.add(voice);
-    const done=()=>bearCombatVoices.delete(voice);voice.addEventListener('ended',done,{once:true});voice.addEventListener('error',done,{once:true});const playing=voice.play();if(playing&&playing.catch)playing.catch(done);
+  const bearCombatSoundHistory={attack:{last:0,streak:0},death:{last:0,streak:0}};
+  function nextBearCombatSound(type,rng=Math.random){
+    const h=bearCombatSoundHistory[type];let index;
+    if(!h.last)index=rng()<.5?1:2;
+    else index=h.streak>=3?3-h.last:rng()<(h.streak===1?.22:.10)?h.last:3-h.last;
+    h.streak=index===h.last?h.streak+1:1;h.last=index;return index;
+  }
+  function fadeBearAttackVoice(voice){
+    if(voice.bearFading||voice.ended||voice.paused)return;
+    voice.bearFading=true;const start=performance.now(),volume=voice.volume;
+    function fade(now){
+      const t=Math.min(1,Math.max(0,(now-start)/140));voice.volume=volume*(1-t);
+      if(t<1&&!voice.ended&&!voice.paused)requestAnimationFrame(fade);
+      else{voice.pause();bearCombatVoices.delete(voice);if(voice.bearOwner?.attackVoices)voice.bearOwner.attackVoices.delete(voice);}
+    }
+    requestAnimationFrame(fade);
+  }
+  function playBearCombatSound(type,bear){
+    if(type==='death'&&bear?.attackVoices)for(const voice of [...bear.attackVoices])fadeBearAttackVoice(voice);
+    const voice=new Audio(`assets/audio/animals/bear/${type}-${nextBearCombatSound(type)}.mp3`);voice.preload='auto';voice.volume=.9;voice.loop=false;voice.bearOwner=bear;bearCombatVoices.add(voice);
+    if(type==='attack'&&bear){if(!bear.attackVoices)bear.attackVoices=new Set();bear.attackVoices.add(voice);}
+    const done=()=>{bearCombatVoices.delete(voice);if(bear?.attackVoices)bear.attackVoices.delete(voice);};voice.addEventListener('ended',done,{once:true});voice.addEventListener('error',done,{once:true});const playing=voice.play();if(playing&&playing.catch)playing.catch(done);
   }
   async function prepareBearLitSprites(){
     await Promise.all(Object.values(bearImages).map(waitForImage));
@@ -2013,7 +2032,7 @@
     for(const b of bears){
       const oldSound=b.attackSoundSerial||0;
       const damage=stepBear(b,dt,Math.random,bears,state.player,bearChaseAllowed);
-      for(let i=oldSound;i<(b.attackSoundSerial||0);i++)playBearCombatSound('attack');
+      for(let i=oldSound;i<(b.attackSoundSerial||0);i++)playBearCombatSound('attack',b);
       if(damage>0){updateHudStats({health:Math.max(0,state.stats.health-damage)});bearPlayerNumbers.push({x:state.player.x,y:state.player.y-TARGET_VISIBLE_HEIGHT-30,age:0,damage});}
     }
   }
