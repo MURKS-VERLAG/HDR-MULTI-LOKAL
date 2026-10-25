@@ -2829,4 +2829,5 @@
     world.append(svg);
   }
   render();requestAnimationFrame(frame);
+  window.dispatchEvent(new Event('renchtal:menu-ready'));
 })();
