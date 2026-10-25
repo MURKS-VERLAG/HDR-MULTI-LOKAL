@@ -25,10 +25,20 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d6b783}[hi
 #intro-enter{position:absolute;left:50%;top:calc(50% + 100px);transform:translateX(-50%);min-width:180px;height:66px;padding:8px 28px;text-align:center;border:2px solid #514938;border-bottom:7px solid #514938;border-radius:10px;background:linear-gradient(#fffaf0,#ddcfb6);color:#17130e;font:bold 19px Georgia,serif;letter-spacing:2px;box-shadow:0 0 23px #e9f9ffb0,0 5px 9px #36230e44;cursor:pointer}
 #intro-enter:hover,#intro-enter:focus-visible{background:#fff9ec;box-shadow:0 0 30px #fff0bd;outline:2px solid #d6b783;outline-offset:4px}
 @media(prefers-reduced-motion:reduce){#intro,#intro-tapestry,#intro-start-control,#intro-play,#intro-progress{transition:none}}
+
+#intro-sun-window{position:absolute;left:0;right:0;top:0;height:64%;overflow:hidden;pointer-events:none}
+#intro-sun{position:absolute;left:50%;top:100%;width:36vh;height:36vh;background-size:100% 100%;background-repeat:no-repeat;transform:translateX(-50%);will-change:top;pointer-events:none}
+#intro-river{position:absolute;left:50%;top:64%;transform:translateX(-50%);width:calc(100% - clamp(96px,22vmin,280px));height:14%;object-fit:fill;opacity:0;transition:opacity 750ms ease;pointer-events:none}
+.intro-river-visible #intro-river{opacity:1}
+#intro-tapestry{z-index:3}#intro-start-control,#intro-enter{z-index:4}
+#intro-enter{top:calc(78% + 16px);background:#000;color:#fff;border-color:#000;border-bottom-color:#161616;box-shadow:0 0 20px #fff3}
+#intro-enter:hover,#intro-enter:focus-visible{background:#111;color:#fff}
 </style>
 </head>
 <body>
 <section id="intro" aria-label="Renchtal Intro">
+<div id="intro-sun-window" aria-hidden="true"><div id="intro-sun"></div></div>
+<img id="intro-river" src="assets/intro/river.webp" alt="" aria-hidden="true">
 <div id="intro-tapestry" aria-hidden="true"></div>
 <div id="intro-start-control"><svg id="intro-ring" viewBox="0 0 112 112" aria-hidden="true"><circle id="intro-progress" cx="56" cy="56" r="50"/></svg><button id="intro-play" type="button" aria-disabled="true" aria-label="Seite wird geladen"></button></div>
 <button id="intro-enter" type="button" hidden>LEER</button>
@@ -62,13 +72,51 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d6b783}[hi
   if(document.fonts?.ready)document.fonts.ready.then(complete,complete);else complete();
   const frame=new Image();frame.src='assets/intro/tapestry-frame.webp';waitImage(frame);
   addEventListener('renchtal:menu-ready',event=>{gameReady=true;for(const im of new Set(event.detail?.images||document.images))waitImage(im);complete();},{once:true});
+  const river=document.getElementById('intro-river'),sun=document.getElementById('intro-sun'),sunWindow=document.getElementById('intro-sun-window');
+  const sunFrames=Array.from({length:6},(_,i)=>{const im=new Image();im.src=`assets/intro/sun-${i+1}.webp`;waitImage(im);return im;});
+  const riverPreload=new Image();riverPreload.src='assets/intro/river.webp';waitImage(riverPreload);
+  let sunBag=[],lastSun=-1,sunNext=0,sunClock=0,sunLastTime=0,sunFinished=false;
+  function nextSun(){
+    if(!sunBag.length){const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};sunBag=[...shuffle([0,1,2,3,4,5]),...shuffle([6,7,8,9,10,11])];if(sunBag[0]%6===lastSun%6)[sunBag[0],sunBag[1]]=[sunBag[1],sunBag[0]];}
+    lastSun=sunBag.shift();sun.style.backgroundImage=`url('${sunFrames[lastSun%6].src}')`;sun.style.transform=`translateX(-50%) scaleX(${lastSun>=6?-1:1})`;
+  }
+  function positionSun(t){
+    const h=root.clientHeight,w=root.clientWidth,riverTop=h*.64,size=Math.min(h*.36,w*.35),frameBorder=Math.min(140,Math.max(48,Math.min(w,h)*.11)),end=frameBorder+8;
+    // The common flute anchor is at 57% of the registered sprite canvas.
+    // Crossing is clocked by the actual music, not by a wall-clock timeout.
+    const atEleven=riverTop-size*.57;
+    const y=t<=11?riverTop+(atEleven-riverTop)*Math.max(0,t)/11:atEleven+(end-atEleven)*Math.min(1,(t-11)/9);
+    sun.style.width=`${size}px`;sun.style.height=`${size}px`;sun.style.top=`${y}px`;sunWindow.style.height=`${riverTop}px`;
+    // A strict pre-11 mask also covers the small differences between flute poses.
+    sun.style.clipPath=t<11?'inset(0 0 44% 0)':'none';
+  }
+  function animateSun(now){
+    if(finished||inGame)return;const dt=sunLastTime?Math.min(.1,(now-sunLastTime)/1000):0;sunLastTime=now;
+    const t=sunFinished?20:Math.min(20,introMusic.currentTime||0);positionSun(t);
+    if(!introMusic.paused){sunClock+=dt;if(sunClock>=sunNext){nextSun();sunNext=sunClock+.24+Math.random()*.22;}}
+    if(t>=20&&!sunFinished){sunFinished=true;passed=true;reveal();}
+    requestAnimationFrame(animateSun);
+  }
+  function startRiverSequence(){
+    nextSun();positionSun(0);
+    // Reserve the media gesture now; the song itself remains paused until the plop ends.
+    introMusic.volume=0;const warm=introMusic.play();if(warm?.then)warm.then(()=>{introMusic.pause();introMusic.currentTime=0;},()=>{});
+    const song=()=>{if(inGame||finished)return;introMusic.volume=1;introMusic.currentTime=0;introMusic.play().catch(()=>{});requestAnimationFrame(animateSun);};
+    setTimeout(()=>{
+      if(inGame||finished)return;root.classList.add('intro-river-visible');
+      // The requested plop attachment was not included. This slot accepts it unchanged.
+      const plop=new Audio('assets/intro/river-plop.mp3');plop.volume=1;let ended=false;
+      const proceed=()=>{if(ended)return;ended=true;song();};plop.addEventListener('ended',proceed,{once:true});plop.addEventListener('error',proceed,{once:true});
+      const p=plop.play();if(p?.catch)p.catch(proceed);
+    },650);
+  }
+
   function stopMusic(){inGame=true;fadeGeneration++;for(const m of [introMusic,menuMusic]){m.pause();m.currentTime=0;}}
   single.addEventListener('click',stopMusic,{capture:true});
   function start(){
     if(started||!ready)return;started=true;const token=++generation;root.classList.add('intro-started');play.setAttribute('aria-disabled','true');
     setTimeout(()=>{if(started&&generation===token)document.getElementById('intro-start-control').hidden=true;},650);
-    const pending=introMusic.play();if(pending?.catch)pending.catch(()=>{if(!finished&&!inGame){started=false;root.classList.remove('intro-started');document.getElementById('intro-start-control').hidden=false;paintProgress();}});
-    setTimeout(()=>{if(started&&!finished&&generation===token){passed=true;reveal();}},20000);
+    startRiverSequence();
   }
   play.addEventListener('click',start);
   function crossfade(){
@@ -82,7 +130,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d6b783}[hi
   function enterMenu(){if(!started||!ready||!passed||finished)return;finished=true;crossfade();root.classList.add('intro-leaving');menu.removeAttribute('inert');menu.setAttribute('aria-hidden','false');setTimeout(()=>{root.hidden=true;single.focus({preventScroll:true});},450);}
   enter.addEventListener('click',enterMenu);
   addEventListener('keydown',event=>{if(finished)return;if(event.code==='Space'){event.preventDefault();event.stopImmediatePropagation();if(!event.repeat){if(!started)play.click();else enterMenu();}}},{capture:true});
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{const script=document.createElement('script');script.src='game.js?v=88';document.head.appendChild(script);}));
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{const script=document.createElement('script');script.src='game.js?v=89';document.head.appendChild(script);}));
   function copyParchment(){const style=getComputedStyle(menu);root.style.backgroundColor=style.backgroundColor;root.style.backgroundImage=style.backgroundImage;}
   if(tabReady)copyParchment();else addEventListener('load',copyParchment,{once:true});paintProgress();
 })();
