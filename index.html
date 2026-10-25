@@ -18,7 +18,7 @@
     #intro-play::after{content:'';position:absolute;left:34px;top:25px;border-left:25px solid #eee;border-top:15px solid transparent;border-bottom:15px solid transparent}#intro-play:hover,#intro-play:focus-visible{background:#000;box-shadow:0 0 24px #fff8,0 4px 22px #0007;outline:2px solid #f8e8bc;outline-offset:4px}
     #intro-controls{position:absolute;left:50%;top:calc(50% + min(16.66667vh,24.1875vw) + 20px);transform:translateX(-50%);height:78px;display:grid;place-items:center}#intro-spinner{width:47px;height:47px;border:4px solid #85c9e84a;border-top-color:#d6f6ff;border-right-color:#66c7f2;border-radius:50%;box-shadow:0 0 17px #7fd7fb77,inset 0 0 12px #90e4ff77;animation:intro-water 1.15s linear infinite}
     @keyframes intro-water{to{transform:rotate(360deg)}}
-    #intro-enter{min-width:180px;height:66px;padding:8px 28px;border:2px solid #514938;border-bottom:7px solid #514938;border-radius:10px;background:linear-gradient(#fffaf0,#ddcfb6);color:#17130e;font:bold 19px Georgia,serif;letter-spacing:2px;box-shadow:0 0 23px #e9f9ffb0,0 5px 9px #36230e44;cursor:pointer}#intro-enter:hover,#intro-enter:focus-visible{background:#fff9ec;box-shadow:0 0 30px #c7f1ff;outline:2px solid #81ccea;outline-offset:4px}#intro-enter span{margin-left:18px;font:28px Arial,sans-serif}
+    #intro-enter{min-width:180px;text-align:center;height:66px;padding:8px 28px;border:2px solid #514938;border-bottom:7px solid #514938;border-radius:10px;background:linear-gradient(#fffaf0,#ddcfb6);color:#17130e;font:bold 19px Georgia,serif;letter-spacing:2px;box-shadow:0 0 23px #e9f9ffb0,0 5px 9px #36230e44;cursor:pointer}#intro-enter:hover,#intro-enter:focus-visible{background:#fff9ec;box-shadow:0 0 30px #c7f1ff;outline:2px solid #81ccea;outline-offset:4px}#intro-enter span{margin-left:18px;font:28px Arial,sans-serif}
     #intro-message{position:absolute;left:50%;top:calc(50% + min(16.66667vh,24.1875vw) + 102px);transform:translateX(-50%);min-height:20px;margin:0;max-width:85vw;text-align:center;color:#302515;font:15px Arial,sans-serif}
     @media(prefers-reduced-motion:reduce){#intro,#intro-stage{transition:none}}
 </style>
@@ -26,10 +26,10 @@
 <body>
   <section id="intro" aria-label="Renchtal Intro">
     <div id="intro-stage">
-      <video id="intro-video" muted playsinline preload="metadata" disablepictureinpicture aria-label="Renchtal Introfilm"><source src="assets/intro/tavern-intro.webm" type="video/webm"></video>
+      <video id="intro-video" muted playsinline preload="metadata" disablepictureinpicture aria-label="Renchtal Introfilm"><source src="assets/intro/tavern-intro.webm?v=86" type="video/webm"></video>
       <button id="intro-play" type="button" aria-label="Intro und Musik starten"></button>
     </div>
-    <div id="intro-controls"><div id="intro-spinner" role="status" aria-label="Hauptmenü wird geladen" hidden></div><button id="intro-enter" type="button" hidden>LEER<span aria-hidden="true">␣</span></button></div>
+    <div id="intro-controls"><div id="intro-spinner" role="status" aria-label="Hauptmenü wird geladen" hidden></div><button id="intro-enter" type="button" hidden>LEER</button></div>
     <p id="intro-message" role="status"></p>
   </section>
 
