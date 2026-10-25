@@ -2829,5 +2829,5 @@
     world.append(svg);
   }
   render();requestAnimationFrame(frame);
-  window.dispatchEvent(new Event('renchtal:menu-ready'));
+  window.dispatchEvent(new CustomEvent('renchtal:menu-ready',{detail:{images:[...document.images,...Object.values(bearImages),...Object.values(rabbitImages),...Object.values(moleImages),...hudImages,...inventoryPages,...Object.values(helmetImages).flatMap(variant=>Object.values(variant)),...sendImages,...hubPropImages,...ramsFortImages,...westPropImages]}}));
 })();
