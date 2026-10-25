@@ -7,32 +7,25 @@
   <title>Renchtal</title>
   <link rel="stylesheet" href="styles.css">
 
-  <style>
-    html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d6b783}[hidden]{display:none!important}
-    #intro{position:fixed;inset:0;z-index:2147483000;display:grid;place-content:center;justify-items:center;gap:24px;background-color:#d6b783;background-image:radial-gradient(ellipse at 45% 37%,#f5e2bc99,transparent 68%),radial-gradient(ellipse at center,transparent 35%,#79502638);transition:opacity 450ms ease;}
-    #intro.intro-leaving{opacity:0;pointer-events:none}
-    #intro-stage{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(59.25926vh,86vw);aspect-ratio:16/9;border:2px solid #4b351d;border-radius:5px;box-shadow:0 12px 44px #3e230c55,inset 0 0 0 1px #fce9bf88;overflow:hidden;transition:opacity 900ms ease,transform 900ms ease;background:#c8a67155}
-    #intro-video{display:block;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity 350ms ease}
-    .intro-started #intro-video{opacity:1}#intro-stage.intro-video-finished{opacity:0;transform:translate(-50%,-50%) scale(.985);pointer-events:none}
-    #intro-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:84px;height:84px;border:2px solid #080808;border-radius:50%;background:#111;color:white;cursor:pointer;box-shadow:0 4px 22px #0005;transition:box-shadow 180ms ease,background 180ms ease}
-    #intro-play::after{content:'';position:absolute;left:34px;top:25px;border-left:25px solid #eee;border-top:15px solid transparent;border-bottom:15px solid transparent}#intro-play:hover,#intro-play:focus-visible{background:#000;box-shadow:0 0 24px #fff8,0 4px 22px #0007;outline:2px solid #f8e8bc;outline-offset:4px}
-    #intro-controls{position:absolute;left:50%;top:calc(50% + min(16.66667vh,24.1875vw) + 20px);transform:translateX(-50%);height:78px;display:grid;place-items:center}#intro-spinner{width:47px;height:47px;border:4px solid #85c9e84a;border-top-color:#d6f6ff;border-right-color:#66c7f2;border-radius:50%;box-shadow:0 0 17px #7fd7fb77,inset 0 0 12px #90e4ff77;animation:intro-water 1.15s linear infinite}
-    @keyframes intro-water{to{transform:rotate(360deg)}}
-    #intro-enter{min-width:180px;text-align:center;height:66px;padding:8px 28px;border:2px solid #514938;border-bottom:7px solid #514938;border-radius:10px;background:linear-gradient(#fffaf0,#ddcfb6);color:#17130e;font:bold 19px Georgia,serif;letter-spacing:2px;box-shadow:0 0 23px #e9f9ffb0,0 5px 9px #36230e44;cursor:pointer}#intro-enter:hover,#intro-enter:focus-visible{background:#fff9ec;box-shadow:0 0 30px #c7f1ff;outline:2px solid #81ccea;outline-offset:4px}#intro-enter span{margin-left:18px;font:28px Arial,sans-serif}
-    #intro-message{position:absolute;left:50%;top:calc(50% + min(16.66667vh,24.1875vw) + 102px);transform:translateX(-50%);min-height:20px;margin:0;max-width:85vw;text-align:center;color:#302515;font:15px Arial,sans-serif}
-    @media(prefers-reduced-motion:reduce){#intro,#intro-stage{transition:none}}
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d6b783}[hidden]{display:none!important}
+#intro{position:fixed;inset:0;z-index:2147483000;background:#d6b783;transition:opacity 450ms ease}
+#intro{background-image: radial-gradient(ellipse at 45% 37%, #f5e2bc99, transparent 68%), radial-gradient(ellipse at center, transparent 35%, #79502638), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%23704420' opacity='.13' filter='url(%23n)' d='M0 0h180v180H0z'/%3E%3C/svg%3E");}
+#intro.intro-leaving{opacity:0;pointer-events:none}
+#intro-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:84px;height:84px;padding:0;border:0;border-radius:50%;background:#000;cursor:pointer;opacity:1;transition:opacity 400ms ease,box-shadow 180ms ease}
+#intro-play::after{content:'';position:absolute;left:34px;top:25px;border-left:25px solid #d6b783;border-top:15px solid transparent;border-bottom:15px solid transparent}
+#intro-play:hover,#intro-play:focus-visible{box-shadow:0 0 12px #fff4d5,0 0 30px #fff0bdbb;outline:none}
+#intro-play.intro-play-leaving{opacity:0;pointer-events:none}
+#intro-enter{position:absolute;left:50%;top:calc(50% + 100px);transform:translateX(-50%);min-width:180px;height:66px;padding:8px 28px;text-align:center;border:2px solid #514938;border-bottom:7px solid #514938;border-radius:10px;background:linear-gradient(#fffaf0,#ddcfb6);color:#17130e;font:bold 19px Georgia,serif;letter-spacing:2px;box-shadow:0 0 23px #e9f9ffb0,0 5px 9px #36230e44;cursor:pointer}
+#intro-enter:hover,#intro-enter:focus-visible{background:#fff9ec;box-shadow:0 0 30px #fff0bd;outline:2px solid #d6b783;outline-offset:4px}
+@media(prefers-reduced-motion:reduce){#intro,#intro-play{transition:none}}
 </style>
 </head>
 <body>
-  <section id="intro" aria-label="Renchtal Intro">
-    <div id="intro-stage">
-      <video id="intro-video" muted playsinline preload="metadata" disablepictureinpicture aria-label="Renchtal Introfilm"><source src="assets/intro/tavern-intro.webm?v=86" type="video/webm"></video>
-      <button id="intro-play" type="button" aria-label="Intro und Musik starten"></button>
-    </div>
-    <div id="intro-controls"><div id="intro-spinner" role="status" aria-label="Hauptmenü wird geladen" hidden></div><button id="intro-enter" type="button" hidden>LEER</button></div>
-    <p id="intro-message" role="status"></p>
-  </section>
-
+<section id="intro" aria-label="Renchtal Intro">
+<button id="intro-play" type="button" aria-label="Intro und Musik starten"></button>
+<button id="intro-enter" type="button" hidden>LEER</button>
+</section>
   <main id="menu" aria-label="Spielmodus wählen" inert aria-hidden="true">
     <div class="choices">
       <button id="singleplayer" type="button">EINZELSPIELER</button>
@@ -46,6 +39,31 @@
       <div id="player" aria-label="Spieler"><img id="playerSprite" src="assets/player/stand-down.png" alt="" draggable="false"></div>
     </div>
   </section>
-  <script src="intro.js?v=84"></script>
+<script>
+(()=>{
+  'use strict';
+  const root=document.getElementById('intro'),play=document.getElementById('intro-play'),enter=document.getElementById('intro-enter'),menu=document.getElementById('menu'),single=document.getElementById('singleplayer');
+  const music=new Audio('assets/intro/tavern-music.mp3');music.preload='auto';music.volume=1;music.loop=true;
+  let started=false,ready=false,passed=false,finished=false,playingGame=false,startGeneration=0;
+  function reveal(){if(started&&ready&&passed&&!finished)enter.hidden=false;}
+  addEventListener('renchtal:menu-ready',()=>{ready=true;reveal();},{once:true});
+  function stopMusic(){playingGame=true;music.pause();music.currentTime=0;}
+  single.addEventListener('click',stopMusic,{capture:true});
+  function start(){
+    if(started)return;started=true;const generation=++startGeneration;play.disabled=true;play.classList.add('intro-play-leaving');
+    setTimeout(()=>{if(started&&generation===startGeneration)play.hidden=true;},400);
+    const pending=music.play();if(pending?.catch)pending.catch(()=>{if(!finished&&!playingGame){started=false;play.disabled=false;play.hidden=false;play.classList.remove('intro-play-leaving');}});
+    setTimeout(()=>{if(started&&!finished&&generation===startGeneration){passed=true;reveal();}},20000);
+  }
+  play.addEventListener('click',start);
+  function enterMenu(){if(!started||!ready||!passed||finished)return;finished=true;root.classList.add('intro-leaving');menu.removeAttribute('inert');menu.setAttribute('aria-hidden','false');setTimeout(()=>{root.hidden=true;single.focus({preventScroll:true});},450);}
+  enter.addEventListener('click',enterMenu);
+  addEventListener('keydown',event=>{if(finished)return;if(event.code==='Space'){event.preventDefault();event.stopImmediatePropagation();if(!event.repeat){if(!started)play.click();else enterMenu();}}},{capture:true});
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{const script=document.createElement('script');script.src='game.js?v=87';document.head.appendChild(script);}));
+  function copyParchment(){const style=getComputedStyle(menu);root.style.backgroundColor=style.backgroundColor;root.style.backgroundImage=style.backgroundImage;}
+  if(document.readyState==='complete')copyParchment();else addEventListener('load',copyParchment,{once:true});
+})();
+
+</script>
 </body>
 </html>
