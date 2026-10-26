@@ -2711,9 +2711,9 @@
   const openingRiver=new Image();openingRiver.src='assets/intro/river.webp';
   const oberkirchMusic=new Audio('assets/audio/oberkirch-castle-jam.mp3');oberkirchMusic.preload='auto';oberkirchMusic.loop=true;oberkirchMusic.volume=.85;
   const ingameMusicFade={serial:0,target:null,between:false};
-  function desiredIngameMusic(){if(!state.playing||document.hidden)return null;if(towerView.active)return towerMusic;if(activeMapId==='winterbach')return winterbachMusic;if(activeMapId==='oberkirch'&&['thought','done'].includes(opening.stage))return oberkirchMusic;return null;}
+  function desiredIngameMusic(){if(!state.playing||document.hidden)return null;if(towerView.active)return towerView.kind==='sneite'?sneiteMusic:towerMusic;if(activeMapId==='winterbach')return winterbachMusic;if(activeMapId==='oberkirch'&&['thought','hud','done'].includes(opening.stage))return oberkirchMusic;return null;}
   function rampIngameMusic(target,duration){
-    const tracks=[oberkirchMusic,winterbachMusic,towerMusic],start=tracks.map(a=>a.paused?0:a.volume),serial=++ingameMusicFade.serial,began=performance.now();ingameMusicFade.target=target;
+    const tracks=[oberkirchMusic,winterbachMusic,towerMusic,sneiteMusic],start=tracks.map(a=>a.paused?0:a.volume),serial=++ingameMusicFade.serial,began=performance.now();ingameMusicFade.target=target;
     if(target&&target.paused){target.volume=0;const p=target.play();if(p?.catch)p.catch(()=>{});}
     function paint(now){if(serial!==ingameMusicFade.serial)return;const t=clamp((now-began)/Math.max(1,duration),0,1),e=t*t*(3-2*t);tracks.forEach((a,i)=>{const end=a===target?.85:0;a.volume=clamp(start[i]+(end-start[i])*e,0,1);if(t>=1&&a!==target)a.pause();});if(t<1)requestAnimationFrame(paint);}
     paint(began);
@@ -2721,7 +2721,7 @@
   function beginIngameMusicTransition(){ingameMusicFade.between=true;rampIngameMusic(null,950);}
   function revealIngameMusic(){ingameMusicFade.between=false;const target=desiredIngameMusic();if(target!==ingameMusicFade.target||target?.paused)rampIngameMusic(target,2200);}
   function syncOberkirchMusic(){
-    if(document.hidden){++ingameMusicFade.serial;for(const a of [oberkirchMusic,winterbachMusic,towerMusic])a.pause();ingameMusicFade.target=null;return;}
+    if(document.hidden){++ingameMusicFade.serial;for(const a of [oberkirchMusic,winterbachMusic,towerMusic,sneiteMusic])a.pause();ingameMusicFade.target=null;return;}
     if(ingameMusicFade.between)return;const target=desiredIngameMusic();if(target!==ingameMusicFade.target||target?.paused)rampIngameMusic(target,800);
   }
   document.addEventListener('visibilitychange',syncOberkirchMusic);
@@ -2741,9 +2741,9 @@
     ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);
     for(const [x,angle,visible] of [[left,Math.PI/2,left>-thickness],[right,-Math.PI/2,right<width+thickness]])if(visible){ctx.save();ctx.translate(x,top+length/2);ctx.rotate(angle);ctx.drawImage(openingRiver,-length/2,-thickness/2,length,thickness);ctx.restore();}ctx.restore();
   }
-  const towerView={active:false,busy:false};
-  const winterbachMusic=new Audio('assets/audio/winterbach-minstrelosity.mp3'),towerMusic=new Audio('assets/audio/winterbach-tower-polka.mp3');
-  for(const a of [winterbachMusic,towerMusic]){a.preload='auto';a.loop=true;a.volume=.85;}
+  const towerView={active:false,busy:false,kind:'winterbach'};
+  const winterbachMusic=new Audio('assets/audio/winterbach-minstrelosity.mp3'),towerMusic=new Audio('assets/audio/winterbach-tower-polka.mp3'),sneiteMusic=new Audio('assets/audio/sneite-house.mp3');
+  for(const a of [winterbachMusic,towerMusic,sneiteMusic]){a.preload='auto';a.loop=true;a.volume=.85;}
   const towerPane=document.createElement('section');towerPane.hidden=true;towerPane.setAttribute('aria-label','Turris Lapidea');towerPane.setAttribute('role','dialog');towerPane.setAttribute('aria-modal','true');
   Object.assign(towerPane.style,{position:'absolute',inset:'0',zIndex:'4000',overflow:'hidden',backgroundColor:'#d6b783',pointerEvents:'auto'});
   const towerFrame=document.createElement('div');Object.assign(towerFrame.style,{position:'absolute',inset:'-3px',border:'clamp(48px,11vmin,140px) solid transparent',borderImage:"url('assets/intro/tapestry-frame.webp') 140 stretch",pointerEvents:'none',zIndex:'2'});
@@ -2755,7 +2755,8 @@
   Object.assign(towerArt.style,{position:'static',width:'min(430px,43vw)',maxWidth:'100%',maxHeight:'min(35vh, calc(100% - 210px))',height:'auto',objectFit:'contain',pointerEvents:'none',flexShrink:'1',minHeight:'0'});
   towerContent.appendChild(towerTitle);towerContent.appendChild(towerSubtitle);towerContent.appendChild(towerArt);
   const towerUnits=document.createElement('div');Object.assign(towerUnits.style,{display:'flex',justifyContent:'center',alignItems:'end',gap:'clamp(12px,2vw,28px)',width:'100%',minHeight:'0'});
-  for(const [i,number] of [[3,1],[1,2],[2,2]]){const slot=document.createElement('div'),unit=new Image(),count=document.createElement('div');unit.src=`assets/interiors/winterbach-unit-${i}.webp`;unit.alt=`Winterbacher Einheit ${i}`;Object.assign(slot.style,{textAlign:'center',width:'clamp(55px,6vw,100px)'});Object.assign(unit.style,{width:'100%',height:'clamp(60px,12vh,125px)',objectFit:'contain',display:'block'});count.textContent=String(number);Object.assign(count.style,{font:'bold clamp(20px,2vw,30px) Georgia,serif',color:'#000',webkitTextStroke:'2px #fff',paintOrder:'stroke fill'});slot.appendChild(unit);slot.appendChild(count);towerUnits.appendChild(slot);}
+  const towerUnitElements=[];
+  for(const [i,number] of [[3,1],[1,2],[2,2]]){const slot=document.createElement('div'),unit=new Image(),count=document.createElement('div');unit.src=`assets/interiors/winterbach-unit-${i}.webp`;unit.alt=`Winterbacher Einheit ${i}`;Object.assign(slot.style,{textAlign:'center',width:'clamp(55px,6vw,100px)'});Object.assign(unit.style,{width:'100%',height:'clamp(60px,12vh,125px)',objectFit:'contain',display:'block'});count.textContent=String(number);Object.assign(count.style,{font:'bold clamp(20px,2vw,30px) Georgia,serif',color:'#000',webkitTextStroke:'2px #fff',paintOrder:'stroke fill'});slot.appendChild(unit);slot.appendChild(count);towerUnits.appendChild(slot);towerUnitElements.push({unit,count});}
   towerContent.appendChild(towerUnits);towerPane.appendChild(towerContent);towerPane.appendChild(towerFrame);game.appendChild(towerPane);
   const towerSnow=document.createElement('canvas');towerSnow.setAttribute('aria-hidden','true');Object.assign(towerSnow.style,{position:'absolute',inset:'0',width:'100%',height:'100%',zIndex:'1',pointerEvents:'none'});towerPane.appendChild(towerSnow);
   const towerSnowContext=towerSnow.getContext('2d');let towerSnowSurface=[],towerSnowFlakes=[],towerSnowSerial=0;
@@ -2779,15 +2780,19 @@
   }
   function stopTowerSnow(){++towerSnowSerial;towerSnowFlakes=[];towerSnowContext.clearRect(0,0,towerSnow.width,towerSnow.height);}
 
-  const towerPrompt=document.createElement('div');towerPrompt.textContent='EINTRETEN?';Object.assign(towerPrompt.style,{position:'absolute',left:'0',top:'100%',width:'100%',paddingTop:'25px',font:'bold 78px/1.2 Georgia,serif',color:'#000',webkitTextStroke:'4px #fff',paintOrder:'stroke fill',textShadow:'0 0 15px #fff',whiteSpace:'nowrap'});buildingPresentation[0].label.appendChild(towerPrompt);
-  function towerGateAvailable(){return state.playing&&!opening.active&&!state.transitioning&&!towerView.active&&!towerView.busy&&activeMapId==='winterbach'&&castleGateHighlighted(state.player);}
+  const towerPrompts=[0,2].map(index=>{const prompt=document.createElement('div');prompt.textContent='LEER';Object.assign(prompt.style,{position:'absolute',left:'50%',top:'calc(100% + 25px)',transform:'translateX(-50%)',boxSizing:'border-box',width:'480px',height:'170px',display:'grid',placeItems:'center',border:'6px solid #000',borderBottom:'18px solid #161616',borderRadius:'24px',background:'#000',color:'#fff',font:'bold 65px Georgia,serif',letterSpacing:'7px',boxShadow:'0 0 35px #fff8',whiteSpace:'nowrap'});buildingPresentation[index].label.appendChild(prompt);return prompt;});
+  const sneiteArt=new Image();sneiteArt.src='assets/interiors/sneite-huwenest.webp';
+  const sneiteUnits=[1,2,3].map(i=>{const im=new Image();im.src=`assets/interiors/sneite-unit-${i}.webp`;return im;});
+  function configureHouse(kind){const sneite=kind==='sneite';towerView.kind=kind;towerTitle.textContent=sneite?'HAUS SNEITE':'HAUS WINTERBACH';towerSubtitle.textContent=sneite?'HUWENEST':'TURRIS LAPIDEA';towerTitle.style.color=towerSubtitle.style.color=sneite?'#157a32':'#000';towerArt.src=sneite?sneiteArt.src:'assets/interiors/winterbach-tapestry.webp';towerArt.alt=sneite?'Huwenest':'Winterbacher Turm';towerPane.setAttribute('aria-label',sneite?'Haus Sneite':'Haus Winterbach');towerUnitElements.forEach(({unit,count},index)=>{const n=sneite?index+1:[3,1,2][index];unit.src=`assets/interiors/${sneite?'sneite':'winterbach'}-unit-${n}.webp`;unit.alt=`${sneite?'Sneite':'Winterbacher'} Einheit ${n}`;count.textContent=String([1,2,2][index]);count.style.color=sneite?'#157a32':'#000';});}
+
+  function towerGateAvailable(){return state.playing&&!opening.active&&!state.transitioning&&!towerView.active&&!towerView.busy&&((activeMapId==='winterbach'&&castleGateHighlighted(state.player))||(activeMapId==='hubacker'&&hubPropHighlighted(state.player,1)));}
   function castleGlowInteraction(){return buildingPresentation.some(e=>e.active);}
   function closeGameIris(){beginIngameMusicTransition();return new Promise(resolve=>{mapCurtain.style.display='block';mapCurtain.style.transition='none';mapCurtain.style.opacity='1';const began=performance.now();const paint=now=>{const p=clamp((now-began)/950,0,1),r=Math.hypot(width,height)*.6*(1-p*p*(3-2*p));const mask=p>=1?'none':`radial-gradient(circle at 50% 50%, transparent 0 ${r}px, #000 ${r+2}px)`;mapCurtain.style.maskImage=mask;mapCurtain.style.webkitMaskImage=mask;if(p<1)requestAnimationFrame(paint);else resolve();};paint(began);});}
   function clearGameIris(){mapCurtain.style.display='none';mapCurtain.style.opacity='0';mapCurtain.style.maskImage='none';mapCurtain.style.webkitMaskImage='none';}
   async function enterTowerView(){
-    if(!towerGateAvailable())return;towerView.busy=true;state.transitioning=true;stopAttack();keys.clear();stopTreeLeaves();
-    try{await closeGameIris();await waitForImage(towerArt);const source=document.getElementById('intro');if(source){const style=getComputedStyle(source);towerPane.style.backgroundColor=style.backgroundColor;towerPane.style.backgroundImage=style.backgroundImage;}
-      towerView.active=true;towerPane.hidden=false;playerEl.style.visibility='hidden';hudRoot.style.visibility='hidden';startTowerSnow();await openMapIris();
+    if(!towerGateAvailable())return;const kind=activeMapId==='hubacker'?'sneite':'winterbach';towerView.busy=true;state.transitioning=true;stopAttack();keys.clear();stopTreeLeaves();
+    try{await closeGameIris();configureHouse(kind);await Promise.all([waitForImage(towerArt),...towerUnitElements.map(({unit})=>waitForImage(unit))]);const source=document.getElementById('intro');if(source){const style=getComputedStyle(source);towerPane.style.backgroundColor=style.backgroundColor;towerPane.style.backgroundImage=style.backgroundImage;}
+      towerView.active=true;towerPane.hidden=false;playerEl.style.visibility='hidden';hudRoot.style.visibility='hidden';if(kind==='winterbach')startTowerSnow();await openMapIris();
     }catch(error){console.error('Tower view failed',error);ingameMusicFade.between=false;stopTowerSnow();towerView.active=false;towerPane.hidden=true;playerEl.style.visibility='visible';hudRoot.style.visibility='visible';state.transitioning=false;syncOberkirchMusic();}
     finally{clearGameIris();towerView.busy=false;keys.clear();lastTime=0;}
   }
@@ -2798,9 +2803,9 @@
   }
   game.addEventListener('click',event=>{
     if(event.button!==0||!towerGateAvailable()||inventoryState.open||teleportState.open)return;
-    const m=sceneCamera(width,height,camera.x,camera.y,camera.scale,1),bounds=game.getBoundingClientRect(),sx=event.clientX-bounds.left,sy=event.clientY-bounds.top,wx=(sx-m.tx)/m.scale,wy=(sy-m.ty)/m.scale,p=WINTER_CASTLE;
+    const m=sceneCamera(width,height,camera.x,camera.y,camera.scale,1),bounds=game.getBoundingClientRect(),sx=event.clientX-bounds.left,sy=event.clientY-bounds.top,wx=(sx-m.tx)/m.scale,wy=(sy-m.ty)/m.scale,index=activeMapId==='hubacker'?2:0,p=activeMapId==='hubacker'?HUB_PROPS[1]:WINTER_CASTLE;
     const within=el=>{const r=el.getBoundingClientRect();return event.clientX>=r.left&&event.clientX<=r.right&&event.clientY>=r.top&&event.clientY<=r.bottom;};
-    if((wx>=p.x-80&&wx<=p.x+p.width+80&&wy>=p.y-80&&wy<=p.y+p.height+80)||within(buildingPresentation[0].label)||within(towerPrompt)){event.preventDefault();enterTowerView();}
+    if((wx>=p.x-80&&wx<=p.x+p.width+80&&wy>=p.y-80&&wy<=p.y+p.height+80)||within(buildingPresentation[index].label)||within(towerPrompts[index===2?1:0])){event.preventDefault();enterTowerView();}
   });
 
   const openingPausedAudio=new Set();
@@ -2818,10 +2823,10 @@
     openingStop('whistle');openingStop('trot');openingPlay('slash');
   }
   function openingBeginEntry(){
-    opening.stage='camera';opening.cameraTime=0;opening.entryTime=0;opening.rider=null;opening.farmer=null;hudRoot.style.opacity='0';hudRoot.style.visibility='visible';
+    opening.stage='entry';opening.cameraTime=0;opening.entryTime=0;opening.rider=null;opening.farmer=null;hudRoot.style.opacity='0';hudRoot.style.visibility='hidden';
     for(const key of Object.keys(openingAudio))openingStop(key);
     opening.entryStart=openingLength-370;opening.entryEnd=openingLength-2350;opening.entryDuration=(opening.entryStart-opening.entryEnd)/PLAYER.speed;
-    opening.cameraDuration=opening.entryDuration;const p=openingPoint(opening.entryStart);Object.assign(state.player,p,{facing:'up'});playerEl.style.visibility='hidden';updateAnimation(false,0);
+    opening.cameraDuration=opening.entryDuration;const p=openingPoint(opening.entryStart);Object.assign(state.player,p,{facing:'up'});playerEl.style.visibility='visible';updateAnimation(true,0);
   }
   function advanceOpening(dt){
     if(!opening.active)return;
@@ -2847,18 +2852,20 @@
         if(opening.kneelTime!==null){const age=t-opening.kneelTime;if(age>=1.5&&opening.farmer)opening.farmer.key='farmer-dead';if(age>=6.5)openingBeginEntry();}
       }
     }else if(opening.stage==='camera'){
-      opening.cameraTime+=dt;const hudProgress=clamp(opening.cameraTime/(opening.cameraDuration*.55),0,1);hudRoot.style.opacity=String(hudProgress*hudProgress*(3-2*hudProgress));if(opening.cameraTime>=opening.cameraDuration){opening.cameraTime=opening.cameraDuration;Object.assign(camera,openingCamera());opening.stage='entry';playerEl.style.visibility='visible';updateAnimation(true,0);}
+      opening.cameraTime+=dt;if(opening.cameraTime>=opening.cameraDuration){opening.cameraTime=opening.cameraDuration;Object.assign(camera,openingCamera());startOpeningThought();}
     }else if(opening.stage==='entry'){
       opening.entryTime+=dt;const t=clamp(opening.entryTime/opening.entryDuration,0,1),p=openingPoint(opening.entryStart+(opening.entryEnd-opening.entryStart)*t);
       Object.assign(state.player,p,{facing:'up'});updateAnimation(t<1,dt);
-      if(t>=1){const c=openingCamera();Object.assign(camera,c);startOpeningThought();}
+      if(t>=1){opening.stage='camera';opening.cameraTime=0;updateAnimation(false,0);}
     }else if(opening.stage==='thought'){
-      opening.thoughtTime+=dt;if(opening.thoughtTime>=5.8)finishOpeningThought();
+      opening.thoughtTime+=dt;if(opening.thoughtTime>=5.8){openingThought.style.display='none';openingThought.style.opacity='0';opening.stage='hud';opening.hudTime=0;hudRoot.style.opacity='0';hudRoot.style.visibility='visible';}
+    }else if(opening.stage==='hud'){
+      opening.hudTime+=dt;const p=clamp(opening.hudTime/.8,0,1);hudRoot.style.opacity=String(p*p*(3-2*p));if(p>=1)finishOpeningThought();
     }
   }
   function openingCamera(){
     const full={x:WORLD.width/2,y:WORLD.height/2,scale:Math.min(width/WORLD.width,height/WORLD.height)};
-    if(['entry','thought'].includes(opening.stage)){const target=openingPoint(opening.entryEnd);return coverCamera(width,height,target.x,target.y-PLAYER.height*.5);}
+    if(['thought','hud'].includes(opening.stage)){const target=openingPoint(opening.entryEnd);return coverCamera(width,height,target.x,target.y-PLAYER.height*.5);}
     if(opening.stage!=='camera')return full;
     const p=clamp(opening.cameraTime/opening.cameraDuration,0,1),z=clamp(p/.55,0,1),pan=clamp((p-.55)/.45,0,1),zoomEase=z*z*(3-2*z),panEase=pan*pan*(3-2*pan),target=openingPoint(opening.entryEnd),normal=coverCamera(width,height,target.x,target.y-PLAYER.height*.5);
     return {x:full.x+(normal.x-full.x)*panEase,y:full.y+(normal.y-full.y)*panEase,scale:full.scale+(normal.scale-full.scale)*zoomEase};
