@@ -128,7 +128,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d6b783}[hi
  introMusic.volume=0;const warm=introMusic.play();if(warm?.then)warm.then(()=>{introMusic.pause();introMusic.currentTime=0;},()=>{});dropSequence();}
  play.addEventListener('click',start);
  const musician=$('intro-musician'),musicianA=$('intro-musician-a'),musicianB=$('intro-musician-b'),notesCanvas=$('intro-music-notes');
- const musicianArt={};for(const kind of ['walk','bob'])for(let i=1;i<=(kind==='walk'?6:4);i++){const key=`${kind}-${i}`,im=new Image();im.src=`assets/intro/musician-${key}.webp`;musicianArt[key]=im;waitImage(im);}
+ const musicianArt={};for(const [kind,indices] of [['walk',[6,3,4]],['bob',[1,2,3,4]]])for(const i of indices){const key=`${kind}-${i}`,im=new Image();im.src=`assets/intro/musician-${key}.webp`;musicianArt[key]=im;waitImage(im);}
  let musicianStarted=false,musicianElapsed=0,musicianLastAudio=0,noteLast=0,noteClock=0,notes=[],musicianLastRAF=0;
  function musicianPose(t){if(t<4)return {key:`walk-${[6,3,4,3][Math.floor(t/.18)%4]}`,next:null,blend:0};const phase=(t-4)/.3,index=Math.floor(phase)%4,blend=Math.min(1,(phase-Math.floor(phase))/.24);return {key:`bob-${index+1}`,next:`bob-${(index+1)%4+1}`,blend:blend*blend*(3-2*blend)};}
  function renderMusician(now){
@@ -151,7 +151,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d6b783}[hi
  enter.addEventListener('click',enterSequence);
  addEventListener('keydown',e=>{if(inGame||entered)return;if(e.code==='Space'){e.preventDefault();e.stopImmediatePropagation();if(!e.repeat){if(!started)play.click();else enterSequence();}}},{capture:true});
  single.addEventListener('click',()=>{menu.classList.add('intro-game-loading');inGame=true;fadeToken++;for(const a of [introMusic,menuMusic,...Object.values(sounds)]){a.pause();a.currentTime=0;}root.hidden=true;musician.hidden=true;notesCanvas.hidden=true;},{capture:true});
- requestAnimationFrame(()=>requestAnimationFrame(()=>{const s=document.createElement('script');s.src='game.js?v=94';document.head.appendChild(s);}));
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{const s=document.createElement('script');s.src='game.js?v=95';document.head.appendChild(s);}));
  function parchment(){const style=getComputedStyle(menu);root.style.backgroundColor=style.backgroundColor;root.style.backgroundImage=style.backgroundImage;} // Critical inline parchment remains authoritative; menu itself is transparent.
  paintProgress();
 })();
