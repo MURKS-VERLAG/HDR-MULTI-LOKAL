@@ -20,10 +20,19 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d6b783}[hi
 #menu{z-index:2147483001;background:none!important;pointer-events:none;display:block!important}#menu .choices{position:absolute;inset:0;width:auto;display:block;opacity:0;transition:opacity 900ms ease;pointer-events:none}#menu.intro-menu-visible .choices{opacity:1}#menu.intro-menu-visible button{pointer-events:auto}
 #menu .choices button{position:absolute;top:71%;transform:translate(-50%,-50%);width:min(310px,30vw);min-height:64px;padding:14px 12px;background:#73c8ec;color:#fff;border:2px solid #000;font:bold clamp(12px,1.5vw,22px) Georgia,serif;text-shadow:0 1px 2px #35708b;box-shadow:0 3px 8px #0004;transition:box-shadow 180ms ease,background 180ms ease}#singleplayer{left:30%}#multiplayer{left:70%}#menu .choices button:hover,#menu .choices button:focus-visible{background:#9cdef7;box-shadow:0 0 25px #d0f7ff,0 0 40px #8adfff88;outline:none}#menu[hidden]{display:none!important}#menu #status{position:absolute;left:50%;top:85%;transform:translateX(-50%)}
 @media(prefers-reduced-motion:reduce){#intro-tapestry,#intro-start-control,#intro-progress,#intro-river,#intro-enter,#menu .choices{transition:none}}
-#intro{background-image: radial-gradient(ellipse at 45% 37%, #f5e2bc99, transparent 68%), radial-gradient(ellipse at center, transparent 35%, #79502638), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%23704420' opacity='.13' filter='url(%23n)' d='M0 0h180v180H0z'/%3E%3C/svg%3E");}</style>
+#intro{background-image: radial-gradient(ellipse at 45% 37%, #f5e2bc99, transparent 68%), radial-gradient(ellipse at center, transparent 35%, #79502638), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%23704420' opacity='.13' filter='url(%23n)' d='M0 0h180v180H0z'/%3E%3C/svg%3E");}
+#menu .choices button{height:80px;min-height:80px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;line-height:1.2}
+#intro-drop{position:absolute;left:50%;top:0;width:min(24vh,24vw);height:auto;transform:translate(-50%,-93.3333%);z-index:2;opacity:1;pointer-events:none;transition:opacity 300ms ease}
+#intro-stone{position:absolute;left:50%;z-index:6;height:auto;transform:translate(-50%,-50%);pointer-events:none;opacity:1;transition:opacity 800ms ease}
+#intro-title{position:absolute;left:50%;top:30%;width:calc(100% - clamp(112px,25vmin,310px));height:auto;transform:translate(-50%,-50%);opacity:0;pointer-events:none;z-index:0;transition:opacity 900ms ease}#intro-title.intro-title-visible{opacity:1}
+#intro-sun-reaction{position:absolute;left:50%;transform:translateX(-50%);opacity:1;z-index:1;pointer-events:none;transition:opacity 650ms ease}
+#intro-dust{position:absolute;inset:0;width:100%;height:100%;z-index:7;pointer-events:none}
+#intro-tapestry{z-index:9}
+</style>
 </head>
 <body><section id="intro" aria-label="Renchtal Intro">
-<div id="intro-sun-window" aria-hidden="true"><div id="intro-sun"></div></div><img id="intro-river" src="assets/intro/river.webp" alt="" aria-hidden="true"><div id="intro-tapestry" aria-hidden="true"></div>
+<div id="intro-sun-window" aria-hidden="true"><div id="intro-sun"></div></div><img id="intro-river" src="assets/intro/river.webp" alt="" aria-hidden="true"><img id="intro-title" src="assets/intro/title.webp" alt="Die Herren der Rench"><img id="intro-sun-reaction" alt="" hidden><img id="intro-stone" src="assets/intro/stone.webp" alt="" hidden><canvas id="intro-dust" hidden aria-hidden="true"></canvas><img id="intro-drop" src="assets/intro/drop-1.webp" alt="" hidden>
+<div id="intro-tapestry" aria-hidden="true"></div>
 <div id="intro-start-control"><svg id="intro-ring" viewBox="0 0 112 112" aria-hidden="true"><circle id="intro-progress" cx="56" cy="56" r="50"/></svg><button id="intro-play" type="button" aria-disabled="true" aria-label="Intro starten"></button></div><button id="intro-enter" type="button" hidden>LEER</button></section>
   <main id="menu" aria-label="Spielmodus wählen" inert aria-hidden="true">
     <div class="choices">
@@ -70,18 +79,49 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d6b783}[hi
  function positionSun(t){const w=root.clientWidth,h=root.clientHeight,size=Math.min(h*.36,w*.35),end=Math.min(140,Math.max(48,Math.min(w,h)*.11))+8,eleven=horizon-size*.57;const y=t<=11?horizon+(eleven-horizon)*Math.max(0,t)/11:eleven+(end-eleven)*Math.min(1,(t-11)/9);sun.style.width=`${size}px`;sun.style.height=`${size}px`;sun.style.top=`${y}px`;}
  async function arrival(){await effect('catapult-load');if(inGame)return;await effect('engineer-catapult');if(inGame||entered)return;entryReady=true;enter.hidden=false;}
  function animate(now){if(inGame)return;const dt=lastNow?Math.min(.1,(now-lastNow)/1000):0;lastNow=now;const t=arrived?20:Math.min(20,introMusic.currentTime||0);positionSun(t);if(!introMusic.paused||arrived){clock+=dt;if(clock>=nextFrame){nextSun();nextFrame=clock+.24+Math.random()*.22;}}if(t>=20&&!arrived){arrived=true;arrival();}requestAnimationFrame(animate);}
- function start(){if(started||!ready)return;started=true;root.classList.add('intro-started');play.setAttribute('aria-disabled','true');buildRiverMask();nextSun();positionSun(0);
-   // Unlock the song in this gesture; audible playback starts only after the plop.
-   introMusic.volume=0;const warm=introMusic.play();if(warm?.then)warm.then(()=>{introMusic.pause();introMusic.currentTime=0;},()=>{});
-   setTimeout(async()=>{if(inGame)return;root.classList.add('intro-river-visible');await effect('river-plop');if(inGame)return;introMusic.volume=1;introMusic.currentTime=0;introMusic.play().catch(()=>{});requestAnimationFrame(animate);},650);
+ const drop=$('intro-drop'),stone=$('intro-stone'),title=$('intro-title'),reaction=$('intro-sun-reaction'),dust=$('intro-dust');
+ for(const name of [...Array.from({length:5},(_,i)=>`drop-${i+1}`),...Array.from({length:3},(_,i)=>`sun-reaction-${i+1}`),'stone','title']){const im=new Image();im.src=`assets/intro/${name}.webp`;waitImage(im);}
+ for(const [name,file] of [['sun-splat','sun-splat'],['stone-impact','stone-impact']]){const a=new Audio(`assets/intro/${file}.mp3`);a.preload='auto';sounds[name]=a;}
+ function delay(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
+ function tween(ms,paint){return new Promise(resolve=>{let born;function step(now){if(inGame){resolve();return;}if(born===undefined)born=now;const t=Math.min(1,(now-born)/ms);paint(t);if(t<1)requestAnimationFrame(step);else resolve();}requestAnimationFrame(step);});}
+ async function dropSequence(){
+   await delay(650);if(inGame)return;
+   const h=root.clientHeight,w=root.clientWidth,border=Math.min(140,Math.max(48,Math.min(w,h)*.11)),target=h*.71;
+   drop.hidden=false;drop.src='assets/intro/drop-1.webp';
+   await tween(1500,t=>{drop.style.top=`${border+(target-border)*t*t}px`;});if(inGame)return;
+   for(const [frame,ms] of [[2,160],[3,170],[4,180]]){drop.src=`assets/intro/drop-${frame}.webp`;await delay(ms);if(inGame)return;}
+   drop.src='assets/intro/drop-5.webp';root.classList.add('intro-river-visible');
+   const plop=effect('river-plop');await delay(420);drop.style.opacity=0;setTimeout(()=>{drop.hidden=true;},300);await plop;if(inGame)return;
+   introMusic.volume=1;introMusic.currentTime=0;introMusic.play().catch(()=>{});requestAnimationFrame(animate);
  }
+ function spawnDust(){
+   const rect=sun.getBoundingClientRect(),w=root.clientWidth,h=root.clientHeight,canvas=dust;canvas.width=w;canvas.height=h;const ctx=canvas.getContext('2d');
+   const cx=w*.5,cy=rect.top+rect.height*.5,particles=Array.from({length:105},()=>({x:cx+(Math.random()-.5)*rect.width*.5,y:cy+(Math.random()-.5)*rect.height*.3,vx:(Math.random()-.5)*w*.9,vy:(Math.random()-.55)*h*.5,size:15+Math.random()*45,shade:105+Math.floor(Math.random()*90),life:1.4+Math.random()*1.1}));
+   canvas.hidden=false;let born,last;
+   function paint(now){if(inGame){canvas.hidden=true;return;}if(born===undefined)born=last=now;const age=(now-born)/1000,dt=Math.min(.05,(now-last)/1000);last=now;ctx.clearRect(0,0,w,h);
+     for(const p of particles){if(age>=p.life)continue;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=Math.exp(-dt*.7);p.vy+=22*dt;const opacity=Math.pow(1-age/p.life,1.3)*.65,r=p.size*(1+age*.7),g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r);g.addColorStop(0,`rgba(${p.shade},${p.shade},${p.shade},${opacity})`);g.addColorStop(1,`rgba(${p.shade},${p.shade},${p.shade},0)`);ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fill();}
+     if(age<2.6)requestAnimationFrame(paint);else{ctx.clearRect(0,0,w,h);canvas.hidden=true;}
+   }requestAnimationFrame(paint);
+ }
+ function reactionPose(n){const rect=sun.getBoundingClientRect();sun.style.visibility='hidden';reaction.hidden=false;reaction.src=`assets/intro/sun-reaction-${n}.webp`;reaction.style.width=`${rect.width*700/512}px`;reaction.style.height=`${rect.height}px`;reaction.style.top=`${rect.top}px`;}
+ async function launchStone(){
+   if(inGame)return;const rect=sun.getBoundingClientRect(),h=root.clientHeight,targetY=rect.top+rect.height*.5,targetSize=rect.width*.54,startSize=Math.max(targetSize*2,h*.55);stone.hidden=false;
+   await tween(1650,t=>{const ease=1-(1-t)*(1-t);stone.style.top=`${h+startSize*.55+(targetY-h-startSize*.55)*ease}px`;stone.style.width=`${startSize+(targetSize-startSize)*ease}px`;stone.style.transform=`translate(-50%,-50%) rotate(${t*70}deg)`;});if(inGame)return;
+   reactionPose(1);effect('sun-splat');effect('stone-impact');spawnDust();
+   await delay(500);if(inGame)return;
+   // Replace the underlying face before fading the rock, preventing a one-frame flash.
+   reactionPose(2);title.style.top=`${targetY}px`;title.classList.add('intro-title-visible');stone.style.opacity=0;crossfade();
+   await delay(600);if(inGame)return;reactionPose(3);await delay(650);reaction.style.opacity=0;setTimeout(()=>{reaction.hidden=true;stone.hidden=true;},650);
+ }
+ function start(){if(started||!ready)return;started=true;root.classList.add('intro-started');play.setAttribute('aria-disabled','true');buildRiverMask();nextSun();positionSun(0);
+ introMusic.volume=0;const warm=introMusic.play();if(warm?.then)warm.then(()=>{introMusic.pause();introMusic.currentTime=0;},()=>{});dropSequence();}
  play.addEventListener('click',start);
  function crossfade(){const token=++fadeToken;menuMusic.volume=0;const p=menuMusic.play();const begin=()=>{const born=performance.now(),initial=introMusic.volume;function step(now){if(inGame||token!==fadeToken)return;const t=Math.min(1,Math.max(0,(now-born)/1600));introMusic.volume=initial*Math.cos(t*Math.PI/2);menuMusic.volume=Math.sin(t*Math.PI/2);if(t<1)requestAnimationFrame(step);else{introMusic.pause();introMusic.currentTime=0;menuMusic.volume=1;}}requestAnimationFrame(step);};if(p?.then)p.then(begin,()=>{});else begin();}
- function enterSequence(){if(!started||!entryReady||entered||inGame)return;entered=true;enter.classList.add('intro-key-leaving');effect('catapult-fire');crossfade();setTimeout(()=>{enter.hidden=true;},450);setTimeout(()=>{if(inGame)return;menu.removeAttribute('inert');menu.setAttribute('aria-hidden','false');menu.classList.add('intro-menu-visible');single.focus({preventScroll:true});},15000);}
+ function enterSequence(){if(!started||!entryReady||entered||inGame)return;entered=true;enter.classList.add('intro-key-leaving');effect('catapult-fire').then(()=>launchStone());setTimeout(()=>{enter.hidden=true;},450);setTimeout(()=>{if(inGame)return;menu.removeAttribute('inert');menu.setAttribute('aria-hidden','false');menu.classList.add('intro-menu-visible');single.focus({preventScroll:true});},15000);}
  enter.addEventListener('click',enterSequence);
  addEventListener('keydown',e=>{if(inGame||entered)return;if(e.code==='Space'){e.preventDefault();e.stopImmediatePropagation();if(!e.repeat){if(!started)play.click();else enterSequence();}}},{capture:true});
  single.addEventListener('click',()=>{inGame=true;fadeToken++;for(const a of [introMusic,menuMusic,...Object.values(sounds)]){a.pause();a.currentTime=0;}root.hidden=true;},{capture:true});
- requestAnimationFrame(()=>requestAnimationFrame(()=>{const s=document.createElement('script');s.src='game.js?v=91';document.head.appendChild(s);}));
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{const s=document.createElement('script');s.src='game.js?v=92';document.head.appendChild(s);}));
  function parchment(){const style=getComputedStyle(menu);root.style.backgroundColor=style.backgroundColor;root.style.backgroundImage=style.backgroundImage;} // Critical inline parchment remains authoritative; menu itself is transparent.
  paintProgress();
 })();
