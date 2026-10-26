@@ -2649,6 +2649,7 @@
   Object.assign(mapCurtain.style,{position:'fixed',inset:'0',background:'#000',zIndex:'5000',display:'none',opacity:'0',pointerEvents:'none'});
   game.appendChild(mapCurtain);
   function openMapIris(){
+    revealIngameMusic();
     return new Promise(resolve=>{
       const began=performance.now();
       function reveal(now){
@@ -2663,14 +2664,11 @@
   }
   async function switchMap(route){
     stopAttack();
-    if(state.transitioning)return;oberkirchMusic.pause();winterbachMusic.pause();towerMusic.pause();
+    if(state.transitioning)return;
     state.transitioning=true;keys.clear();clearIceMotion();updateAnimation(false,0);stopTreeLeaves();
     const previous={map:activeMapId,x:state.player.x,y:state.player.y};
-    mapCurtain.style.display='block';mapCurtain.style.maskImage='none';mapCurtain.style.webkitMaskImage='none';
-    mapCurtain.style.transition='opacity 200ms ease';mapCurtain.style.opacity='0';
-    void mapCurtain.offsetWidth;mapCurtain.style.opacity='1';
     try{
-      await new Promise(resolve=>setTimeout(resolve,210));
+      await closeGameIris();
       const next=MAPS[route.target],image=new Image();image.src=next.image;
       await waitForImage(image);
       map.src=image.src;await waitForImage(map);
@@ -2690,7 +2688,7 @@
       map.src=MAPS[previous.map].image;world.style.height=`${WORLD.height}px`;render();
     }finally{
       mapCurtain.style.display='none';mapCurtain.style.opacity='0';mapCurtain.style.maskImage='none';mapCurtain.style.webkitMaskImage='none';
-      keys.clear();lastTime=0;state.transitioning=false;syncOberkirchMusic();
+      keys.clear();lastTime=0;state.transitioning=false;if(ingameMusicFade.between)revealIngameMusic();syncOberkirchMusic();
     }
   }
   // Opening scene: Event 3 from the former game, isolated from normal gameplay.
@@ -2710,7 +2708,20 @@
   openingAudio.slash.addEventListener('ended',()=>{if(opening.active&&opening.stage==='event')opening.trotRestartAt=opening.time+.5;});
   const openingRiver=new Image();openingRiver.src='assets/intro/river.webp';
   const oberkirchMusic=new Audio('assets/audio/oberkirch-castle-jam.mp3');oberkirchMusic.preload='auto';oberkirchMusic.loop=true;oberkirchMusic.volume=.85;
-  function syncOberkirchMusic(){let selected=null;if(state.playing&&!document.hidden){if(towerView.active)selected=towerMusic;else if(!state.transitioning&&activeMapId==='winterbach')selected=winterbachMusic;else if(activeMapId==='oberkirch'&&['thought','done'].includes(opening.stage))selected=oberkirchMusic;}for(const audio of [oberkirchMusic,winterbachMusic,towerMusic]){if(audio===selected){if(audio.paused){const p=audio.play();if(p?.catch)p.catch(()=>{});}}else audio.pause();}}
+  const ingameMusicFade={serial:0,target:null,between:false};
+  function desiredIngameMusic(){if(!state.playing||document.hidden)return null;if(towerView.active)return towerMusic;if(activeMapId==='winterbach')return winterbachMusic;if(activeMapId==='oberkirch'&&['thought','done'].includes(opening.stage))return oberkirchMusic;return null;}
+  function rampIngameMusic(target,duration){
+    const tracks=[oberkirchMusic,winterbachMusic,towerMusic],start=tracks.map(a=>a.paused?0:a.volume),serial=++ingameMusicFade.serial,began=performance.now();ingameMusicFade.target=target;
+    if(target&&target.paused){target.volume=0;const p=target.play();if(p?.catch)p.catch(()=>{});}
+    function paint(now){if(serial!==ingameMusicFade.serial)return;const t=clamp((now-began)/Math.max(1,duration),0,1),e=t*t*(3-2*t);tracks.forEach((a,i)=>{const end=a===target?.85:0;a.volume=clamp(start[i]+(end-start[i])*e,0,1);if(t>=1&&a!==target)a.pause();});if(t<1)requestAnimationFrame(paint);}
+    paint(began);
+  }
+  function beginIngameMusicTransition(){ingameMusicFade.between=true;rampIngameMusic(null,950);}
+  function revealIngameMusic(){ingameMusicFade.between=false;const target=desiredIngameMusic();if(target!==ingameMusicFade.target||target?.paused)rampIngameMusic(target,2200);}
+  function syncOberkirchMusic(){
+    if(document.hidden){++ingameMusicFade.serial;for(const a of [oberkirchMusic,winterbachMusic,towerMusic])a.pause();ingameMusicFade.target=null;return;}
+    if(ingameMusicFade.between)return;const target=desiredIngameMusic();if(target!==ingameMusicFade.target||target?.paused)rampIngameMusic(target,800);
+  }
   document.addEventListener('visibilitychange',syncOberkirchMusic);
   const openingThought=document.createElement('div');openingThought.id='opening-thought';openingThought.textContent="Oberkirch! Ein gar stilles Flecklein. Hier wird mir gewiss kein Leid widerfahren.";
   Object.assign(openingThought.style,{position:'absolute',zIndex:'100',maxWidth:'min(340px,75vw)',boxSizing:'border-box',padding:'15px 20px',background:'#fff',color:'#000',border:'3px solid #000',borderRadius:'30px',font:'18px/1.4 Georgia,serif',textAlign:'center',pointerEvents:'none',transform:'translate(-50%,-100%)',display:'none',opacity:'0'});game.appendChild(openingThought);
@@ -2721,9 +2732,12 @@
     openingThought.style.left=`${clamp(x,Math.min(180,width/2),width-Math.min(180,width/2))}px`;openingThought.style.top=`${y}px`;
     const t=opening.thoughtTime;openingThought.style.opacity=String(Math.min(1,t/.35,Math.max(0,(5.8-t)/.45)));
   }
-  function drawOpeningBorders(ctx,m,dpr){if(!opening.active||!openingRiver.complete||!openingRiver.naturalWidth)return;const left=m.tx,right=m.tx+WORLD.width*m.scale;
-    ctx.save();const progress=opening.stage==='entry'?clamp(opening.entryTime/(opening.entryDuration*.55),0,1):0;ctx.globalAlpha=1-progress*progress*(3-2*progress);ctx.setTransform(dpr,0,0,dpr,0,0);const length=WORLD.height*m.scale,thickness=Math.min(95,Math.max(36,length*.1));
-    for(const [x,angle,visible] of [[left,Math.PI/2,left>1],[right,-Math.PI/2,right<width-1]])if(visible){ctx.save();ctx.translate(x,m.ty+length/2);ctx.rotate(angle);ctx.drawImage(openingRiver,-length/2,-thickness/2,length,thickness);ctx.restore();}ctx.restore();
+  function drawOpeningBorders(ctx,m,dpr){
+    if(!opening.active||!openingRiver.complete||!openingRiver.naturalWidth)return;
+    const contain=Math.min(width/WORLD.width,height/WORLD.height),left=(width-WORLD.width*contain)/2,right=width-left,length=WORLD.height*contain,top=(height-length)/2;
+    const elapsed=opening.stage==='event'?0:(opening.cameraTime||0),duration=(opening.cameraDuration||3.8)*.55,progress=clamp((elapsed-1)/duration,0,1),opacity=1-progress*progress*(3-2*progress);if(opacity<=0)return;
+    ctx.save();ctx.globalAlpha=opacity;ctx.setTransform(dpr,0,0,dpr,0,0);const thickness=Math.min(95,Math.max(36,length*.1));
+    for(const [x,angle,visible] of [[left,Math.PI/2,left>1],[right,-Math.PI/2,right<width-1]])if(visible){ctx.save();ctx.translate(x,top+length/2);ctx.rotate(angle);ctx.drawImage(openingRiver,-length/2,-thickness/2,length,thickness);ctx.restore();}ctx.restore();
   }
   const towerView={active:false,busy:false};
   const winterbachMusic=new Audio('assets/audio/winterbach-minstrelosity.mp3'),towerMusic=new Audio('assets/audio/winterbach-tower-polka.mp3');
@@ -2732,23 +2746,49 @@
   Object.assign(towerPane.style,{position:'absolute',inset:'0',zIndex:'4000',overflow:'hidden',backgroundColor:'#d6b783',pointerEvents:'auto'});
   const towerFrame=document.createElement('div');Object.assign(towerFrame.style,{position:'absolute',inset:'-3px',border:'clamp(48px,11vmin,140px) solid transparent',borderImage:"url('assets/intro/tapestry-frame.webp') 140 stretch",pointerEvents:'none',zIndex:'2'});
   const towerArt=new Image();towerArt.src='assets/interiors/winterbach-tapestry.webp';towerArt.alt='Winterbacher Turm';towerArt.draggable=false;
-  Object.assign(towerArt.style,{position:'absolute',left:'50%',top:'50%',transform:'translate(-50%,-50%)',width:'min(430px,43vw)',maxHeight:'46vh',height:'auto',objectFit:'contain',pointerEvents:'none'});
-  towerPane.appendChild(towerArt);towerPane.appendChild(towerFrame);game.appendChild(towerPane);
-  const towerPrompt=document.createElement('div');towerPrompt.textContent='EINTRETEN?';Object.assign(towerPrompt.style,{position:'absolute',left:'0',top:'100%',width:'100%',paddingTop:'25px',font:'bold 78px/1.2 Georgia,serif',color:'#fff',webkitTextStroke:'4px #111',paintOrder:'stroke fill',textShadow:'0 0 15px #fff',whiteSpace:'nowrap'});buildingPresentation[0].label.appendChild(towerPrompt);
+  const towerContent=document.createElement('div');Object.assign(towerContent.style,{position:'absolute',inset:'calc(clamp(48px,11vmin,140px) + 16px)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',paddingBottom:'min(16vh,140px)',boxSizing:'border-box',gap:'8px'});
+  const towerTitle=document.createElement('div'),towerSubtitle=document.createElement('div');towerTitle.textContent='HAUS WINTERBACH';towerSubtitle.textContent='TURRIS LAPIDEA';
+  for(const title of [towerTitle,towerSubtitle])Object.assign(title.style,{color:'#000',webkitTextStroke:'3px #fff',paintOrder:'stroke fill',textShadow:'none',textAlign:'center',maxWidth:'100%',flexShrink:'0',fontFamily:'Georgia,serif',fontWeight:'bold',lineHeight:'1.2'});
+  towerTitle.style.fontSize='clamp(20px,3vw,36px)';towerSubtitle.style.fontSize='clamp(14px,2vw,23px)';
+  Object.assign(towerArt.style,{position:'static',width:'min(430px,43vw)',maxWidth:'100%',maxHeight:'min(40vh, calc(100% - 100px))',height:'auto',objectFit:'contain',pointerEvents:'none',flexShrink:'1',minHeight:'0'});
+  towerContent.appendChild(towerTitle);towerContent.appendChild(towerSubtitle);towerContent.appendChild(towerArt);towerPane.appendChild(towerContent);towerPane.appendChild(towerFrame);game.appendChild(towerPane);
+  const towerSnow=document.createElement('canvas');towerSnow.setAttribute('aria-hidden','true');Object.assign(towerSnow.style,{position:'absolute',inset:'0',width:'100%',height:'100%',zIndex:'1',pointerEvents:'none'});towerPane.appendChild(towerSnow);
+  const towerSnowContext=towerSnow.getContext('2d');let towerSnowSurface=[],towerSnowFlakes=[],towerSnowSerial=0;
+  function prepareTowerSnow(){
+    const mask=document.createElement('canvas');mask.width=256;mask.height=Math.max(1,Math.round(256*towerArt.naturalHeight/towerArt.naturalWidth));const ctx=mask.getContext('2d');ctx.drawImage(towerArt,0,0,mask.width,mask.height);const pixels=ctx.getImageData(0,0,mask.width,mask.height).data;
+    towerSnowSurface=Array.from({length:mask.width},(_,x)=>{for(let y=0;y<mask.height;y++)if(pixels[(y*mask.width+x)*4+3]>80)return y/mask.height;return 1;});
+  }
+  function towerSnowFloor(x,rect){const i=clamp(Math.floor((x-rect.left)/rect.width*255),0,255);return Math.min(rect.bottom,rect.top+(towerSnowSurface[i]??1)*rect.height);}
+  function startTowerSnow(){
+    prepareTowerSnow();const serial=++towerSnowSerial;let last=0,spawn=0;const initial=towerArt.getBoundingClientRect();
+    function flake(rect,seed){const x=rect.left+Math.random()*rect.width,floor=towerSnowFloor(x,rect);return {x,y:seed?rect.top-45+Math.random()*(floor-rect.top+45):rect.top-45,r:.9+Math.random()*1.6,speed:13+Math.random()*18,phase:Math.random()*Math.PI*2,fade:null};}
+    towerSnowFlakes=Array.from({length:55},()=>flake(initial,true));
+    function paint(now){
+      if(serial!==towerSnowSerial||!towerView.active)return;const dt=last&&!document.hidden?Math.min(.05,(now-last)/1000):0;last=now;
+      const box=towerPane.getBoundingClientRect(),art=towerArt.getBoundingClientRect(),dpr=Math.min(2,devicePixelRatio||1),w=Math.round(box.width*dpr),h=Math.round(box.height*dpr);if(towerSnow.width!==w||towerSnow.height!==h){towerSnow.width=w;towerSnow.height=h;}
+      const ctx=towerSnowContext;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,box.width,box.height);ctx.save();ctx.beginPath();ctx.rect(art.left-box.left,art.top-box.top-48,art.width,art.height+48);ctx.clip();spawn+=dt*22;while(spawn>=1){spawn--;towerSnowFlakes.push(flake(art,false));}
+      for(const f of towerSnowFlakes){if(f.fade===null){f.y+=f.speed*dt;f.phase+=dt*.8;f.x+=Math.sin(f.phase)*3*dt;const floor=towerSnowFloor(f.x,art);if(f.y>=floor){f.y=Math.max(floor,f.y-f.speed*dt);f.fade=0;}}else f.fade+=dt;
+        const alpha=f.fade===null?.78:Math.max(0,1-f.fade/.38)*.78;ctx.globalAlpha=alpha;ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(f.x-box.left,f.y-box.top,f.r,0,Math.PI*2);ctx.fill();}
+      ctx.restore();towerSnowFlakes=towerSnowFlakes.filter(f=>(f.fade===null||f.fade<.38)&&f.x>=art.left&&f.x<=art.right);requestAnimationFrame(paint);
+    }requestAnimationFrame(paint);
+  }
+  function stopTowerSnow(){++towerSnowSerial;towerSnowFlakes=[];towerSnowContext.clearRect(0,0,towerSnow.width,towerSnow.height);}
+
+  const towerPrompt=document.createElement('div');towerPrompt.textContent='EINTRETEN?';Object.assign(towerPrompt.style,{position:'absolute',left:'0',top:'100%',width:'100%',paddingTop:'25px',font:'bold 78px/1.2 Georgia,serif',color:'#000',webkitTextStroke:'4px #fff',paintOrder:'stroke fill',textShadow:'0 0 15px #fff',whiteSpace:'nowrap'});buildingPresentation[0].label.appendChild(towerPrompt);
   function towerGateAvailable(){return state.playing&&!opening.active&&!state.transitioning&&!towerView.active&&!towerView.busy&&activeMapId==='winterbach'&&castleGateHighlighted(state.player);}
   function castleGlowInteraction(){return buildingPresentation.some(e=>e.active);}
-  function closeGameIris(){return new Promise(resolve=>{mapCurtain.style.display='block';mapCurtain.style.transition='none';mapCurtain.style.opacity='1';const began=performance.now();const paint=now=>{const p=clamp((now-began)/950,0,1),r=Math.hypot(width,height)*.6*(1-p*p*(3-2*p));const mask=p>=1?'none':`radial-gradient(circle at 50% 50%, transparent 0 ${r}px, #000 ${r+2}px)`;mapCurtain.style.maskImage=mask;mapCurtain.style.webkitMaskImage=mask;if(p<1)requestAnimationFrame(paint);else resolve();};paint(began);});}
+  function closeGameIris(){beginIngameMusicTransition();return new Promise(resolve=>{mapCurtain.style.display='block';mapCurtain.style.transition='none';mapCurtain.style.opacity='1';const began=performance.now();const paint=now=>{const p=clamp((now-began)/950,0,1),r=Math.hypot(width,height)*.6*(1-p*p*(3-2*p));const mask=p>=1?'none':`radial-gradient(circle at 50% 50%, transparent 0 ${r}px, #000 ${r+2}px)`;mapCurtain.style.maskImage=mask;mapCurtain.style.webkitMaskImage=mask;if(p<1)requestAnimationFrame(paint);else resolve();};paint(began);});}
   function clearGameIris(){mapCurtain.style.display='none';mapCurtain.style.opacity='0';mapCurtain.style.maskImage='none';mapCurtain.style.webkitMaskImage='none';}
   async function enterTowerView(){
-    if(!towerGateAvailable())return;towerView.busy=true;state.transitioning=true;stopAttack();keys.clear();stopTreeLeaves();syncOberkirchMusic();
+    if(!towerGateAvailable())return;towerView.busy=true;state.transitioning=true;stopAttack();keys.clear();stopTreeLeaves();
     try{await closeGameIris();await waitForImage(towerArt);const source=document.getElementById('intro');if(source){const style=getComputedStyle(source);towerPane.style.backgroundColor=style.backgroundColor;towerPane.style.backgroundImage=style.backgroundImage;}
-      towerView.active=true;towerPane.hidden=false;playerEl.style.visibility='hidden';hudRoot.style.visibility='hidden';syncOberkirchMusic();await openMapIris();
-    }catch(error){console.error('Tower view failed',error);towerView.active=false;towerPane.hidden=true;playerEl.style.visibility='visible';hudRoot.style.visibility='visible';state.transitioning=false;syncOberkirchMusic();}
+      towerView.active=true;towerPane.hidden=false;playerEl.style.visibility='hidden';hudRoot.style.visibility='hidden';startTowerSnow();await openMapIris();
+    }catch(error){console.error('Tower view failed',error);ingameMusicFade.between=false;stopTowerSnow();towerView.active=false;towerPane.hidden=true;playerEl.style.visibility='visible';hudRoot.style.visibility='visible';state.transitioning=false;syncOberkirchMusic();}
     finally{clearGameIris();towerView.busy=false;keys.clear();lastTime=0;}
   }
   async function leaveTowerView(){
     if(!towerView.active||towerView.busy)return;towerView.busy=true;
-    try{await closeGameIris();towerView.active=false;towerPane.hidden=true;playerEl.style.visibility='visible';hudRoot.style.visibility='visible';syncOberkirchMusic();render();await openMapIris();}
+    try{await closeGameIris();towerView.active=false;towerPane.hidden=true;stopTowerSnow();playerEl.style.visibility='visible';hudRoot.style.visibility='visible';render();await openMapIris();}
     finally{clearGameIris();towerView.busy=false;state.transitioning=false;keys.clear();lastTime=0;syncOberkirchMusic();game.focus({preventScroll:true});}
   }
   game.addEventListener('click',event=>{
@@ -2773,10 +2813,10 @@
     openingStop('whistle');openingStop('trot');openingPlay('slash');
   }
   function openingBeginEntry(){
-    opening.stage='entry';opening.entryTime=0;opening.rider=null;opening.farmer=null;
+    opening.stage='camera';opening.cameraTime=0;opening.entryTime=0;opening.rider=null;opening.farmer=null;
     for(const key of Object.keys(openingAudio))openingStop(key);
     opening.entryStart=openingLength-370;opening.entryEnd=openingLength-2350;opening.entryDuration=(opening.entryStart-opening.entryEnd)/PLAYER.speed;
-    const p=openingPoint(opening.entryStart);Object.assign(state.player,p,{facing:'up'});playerEl.style.visibility='visible';updateAnimation(true,0);
+    opening.cameraDuration=opening.entryDuration;const p=openingPoint(opening.entryStart);Object.assign(state.player,p,{facing:'up'});playerEl.style.visibility='hidden';updateAnimation(false,0);
   }
   function advanceOpening(dt){
     if(!opening.active)return;
@@ -2795,6 +2835,8 @@
       }
       if(opening.trotRestartAt!==null&&t>=opening.trotRestartAt){opening.trotRestartAt=null;if(opening.rider)openingPlay('trot');}
       if(opening.hitTime!==null){const age=t-opening.hitTime;if(age>=1.5&&opening.farmer)opening.farmer.key='farmer-dead';if(age>=6.5)openingBeginEntry();}
+    }else if(opening.stage==='camera'){
+      opening.cameraTime+=dt;if(opening.cameraTime>=opening.cameraDuration){opening.cameraTime=opening.cameraDuration;Object.assign(camera,openingCamera());opening.stage='entry';playerEl.style.visibility='visible';updateAnimation(true,0);}
     }else if(opening.stage==='entry'){
       opening.entryTime+=dt;const t=clamp(opening.entryTime/opening.entryDuration,0,1),p=openingPoint(opening.entryStart+(opening.entryEnd-opening.entryStart)*t);
       Object.assign(state.player,p,{facing:'up'});updateAnimation(t<1,dt);
@@ -2805,9 +2847,9 @@
   }
   function openingCamera(){
     const full={x:WORLD.width/2,y:WORLD.height/2,scale:Math.min(width/WORLD.width,height/WORLD.height)};
-    if(opening.stage==='thought')return coverCamera(width,height,state.player.x,state.player.y-PLAYER.height*.5);
-    if(opening.stage!=='entry')return full;
-    const p=clamp(opening.entryTime/opening.entryDuration,0,1),z=clamp(p/.55,0,1),pan=clamp((p-.55)/.45,0,1),zoomEase=z*z*(3-2*z),panEase=pan*pan*(3-2*pan),target=openingPoint(opening.entryEnd),normal=coverCamera(width,height,target.x,target.y-PLAYER.height*.5);
+    if(['entry','thought'].includes(opening.stage)){const target=openingPoint(opening.entryEnd);return coverCamera(width,height,target.x,target.y-PLAYER.height*.5);}
+    if(opening.stage!=='camera')return full;
+    const p=clamp(opening.cameraTime/opening.cameraDuration,0,1),z=clamp(p/.55,0,1),pan=clamp((p-.55)/.45,0,1),zoomEase=z*z*(3-2*z),panEase=pan*pan*(3-2*pan),target=openingPoint(opening.entryEnd),normal=coverCamera(width,height,target.x,target.y-PLAYER.height*.5);
     return {x:full.x+(normal.x-full.x)*panEase,y:full.y+(normal.y-full.y)*panEase,scale:full.scale+(normal.scale-full.scale)*zoomEase};
   }
   function drawOpeningActor(ctx,actor){if(!actor)return;const image=openingImages[actor.key];if(!image.complete||!image.naturalWidth)return;ctx.save();ctx.translate(actor.x,actor.y);ctx.scale((actor.flip?-1:1)*actor.perspective,actor.perspective);ctx.drawImage(image,-500,-1080,1000,1120);ctx.restore();}
