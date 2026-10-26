@@ -2505,6 +2505,7 @@
       }
       sceneBaseContext.drawImage(sceneMapCache,0,0,WORLD.width,WORLD.height);
     }
+    drawOpeningBorders(sceneBaseContext,m,dpr);
     allerCavePresentation.active=allerCaveHighlighted(state.player);
     let list=[];
     if(activeMapId==='winterbach')list=[{p:WINTER_CASTLE,image:castleImage,front:castleBehindFoot(state.player.x,state.player.y)}];
@@ -2662,7 +2663,7 @@
   }
   async function switchMap(route){
     stopAttack();
-    if(state.transitioning)return;
+    if(state.transitioning)return;oberkirchMusic.pause();
     state.transitioning=true;keys.clear();clearIceMotion();updateAnimation(false,0);stopTreeLeaves();
     const previous={map:activeMapId,x:state.player.x,y:state.player.y};
     mapCurtain.style.display='block';mapCurtain.style.maskImage='none';mapCurtain.style.webkitMaskImage='none';
@@ -2689,7 +2690,7 @@
       map.src=MAPS[previous.map].image;world.style.height=`${WORLD.height}px`;render();
     }finally{
       mapCurtain.style.display='none';mapCurtain.style.opacity='0';mapCurtain.style.maskImage='none';mapCurtain.style.webkitMaskImage='none';
-      keys.clear();lastTime=0;state.transitioning=false;
+      keys.clear();lastTime=0;state.transitioning=false;syncOberkirchMusic();
     }
   }
   // Opening scene: Event 3 from the former game, isolated from normal gameplay.
@@ -2707,13 +2708,31 @@
   function openingStop(key){const a=openingAudio[key];a.pause();a.currentTime=0;}
   openingAudio.whinny.addEventListener('ended',()=>{if(opening.active&&opening.stage==='event'&&opening.time<14.031&&opening.hitTime===null)openingPlay('trot');});
   openingAudio.slash.addEventListener('ended',()=>{if(opening.active&&opening.stage==='event')opening.trotRestartAt=opening.time+.5;});
+  const openingRiver=new Image();openingRiver.src='assets/intro/river.webp';
+  const oberkirchMusic=new Audio('assets/audio/oberkirch-castle-jam.mp3');oberkirchMusic.preload='auto';oberkirchMusic.loop=true;oberkirchMusic.volume=.85;
+  function syncOberkirchMusic(){if(state.playing&&activeMapId==='oberkirch'&&['thought','done'].includes(opening.stage)&&!document.hidden){if(oberkirchMusic.paused){const p=oberkirchMusic.play();if(p?.catch)p.catch(()=>{});}}else oberkirchMusic.pause();}
+  document.addEventListener('visibilitychange',syncOberkirchMusic);
+  const openingThought=document.createElement('div');openingThought.id='opening-thought';openingThought.textContent="Oberkirch. Was für ein herrlich ruhiger Ort. Auf geht's!";
+  Object.assign(openingThought.style,{position:'absolute',zIndex:'100',maxWidth:'min(340px,75vw)',boxSizing:'border-box',padding:'15px 20px',background:'#fff',color:'#000',border:'3px solid #000',borderRadius:'30px',font:'18px/1.4 Georgia,serif',textAlign:'center',pointerEvents:'none',transform:'translate(-50%,-100%)',display:'none',opacity:'0'});game.appendChild(openingThought);
+  const thoughtStyle=document.createElement('style');thoughtStyle.textContent='#opening-thought::after{content:"";position:absolute;left:calc(50% - 6px);top:calc(100% + 5px);width:9px;height:9px;border:2px solid #000;border-radius:50%;background:#fff;box-shadow:5px 15px 0 -2px #fff,5px 15px 0 0 #000}';document.head.appendChild(thoughtStyle);
+  function startOpeningThought(){opening.stage='thought';opening.thoughtTime=0;updateAnimation(false,0);openingThought.style.display='block';openingThought.style.opacity='0';syncOberkirchMusic();}
+  function finishOpeningThought(){openingThought.style.display='none';openingThought.style.opacity='0';opening.active=false;opening.stage='done';state.transitioning=false;keys.clear();lastTime=0;playerEl.style.visibility='visible';hudRoot.style.visibility='visible';updateAnimation(false,0);game.focus({preventScroll:true});}
+  function positionOpeningThought(c){if(opening.stage!=='thought')return;const m=sceneCamera(width,height,c.x,c.y,c.scale,1),x=state.player.x*m.scale+m.tx,y=(state.player.y-TARGET_VISIBLE_HEIGHT)*m.scale+m.ty-16;
+    openingThought.style.left=`${clamp(x,Math.min(180,width/2),width-Math.min(180,width/2))}px`;openingThought.style.top=`${Math.max(36,y)}px`;
+    const t=opening.thoughtTime;openingThought.style.opacity=String(Math.min(1,t/.35,Math.max(0,(5.8-t)/.45)));
+  }
+  function drawOpeningBorders(ctx,m,dpr){if(!opening.active||!openingRiver.complete||!openingRiver.naturalWidth)return;const left=m.tx,right=m.tx+WORLD.width*m.scale;
+    ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);const length=WORLD.height*m.scale,thickness=Math.min(95,Math.max(36,length*.1));
+    for(const [x,angle,visible] of [[left,Math.PI/2,left>1],[right,-Math.PI/2,right<width-1]])if(visible){ctx.save();ctx.translate(x,m.ty+length/2);ctx.rotate(angle);ctx.drawImage(openingRiver,-length/2,-thickness/2,length,thickness);ctx.restore();}ctx.restore();
+  }
   const openingPausedAudio=new Set();
   document.addEventListener('visibilitychange',()=>{if(!opening.active)return;if(document.hidden){for(const audio of Object.values(openingAudio))if(!audio.paused){openingPausedAudio.add(audio);audio.pause();}}else{for(const audio of openingPausedAudio){const p=audio.play();if(p?.catch)p.catch(()=>{});}openingPausedAudio.clear();}});
   function startOpening(){
-    opening.active=true;opening.stage='event';opening.time=0;opening.hitTime=null;opening.farmer=null;opening.rider=null;opening.whinnyStarted=false;opening.trotRestartAt=null;
+    opening.active=true;opening.stage='event';opening.time=0;opening.hitTime=null;opening.farmer=null;opening.rider=null;opening.whinnyStarted=false;opening.trotRestartAt=null;opening.riderOffset=0;
     state.transitioning=true;keys.clear();stopAttack();stopTreeLeaves();playerEl.style.visibility='hidden';hudRoot.style.visibility='hidden';
     mapCurtain.style.display='block';mapCurtain.style.transition='none';mapCurtain.style.opacity='1';mapCurtain.style.maskImage='none';mapCurtain.style.webkitMaskImage='none';
-    render();openingPlay('whistle');
+    const parchment=document.getElementById('intro');if(parchment){const bg=getComputedStyle(parchment);game.style.backgroundColor=bg.backgroundColor;game.style.backgroundImage=bg.backgroundImage;}
+    render();window.dispatchEvent(new CustomEvent('renchtal:opening-visible'));openingPlay('whistle');
     openMapIris().then(()=>{if(opening.active){mapCurtain.style.display='none';mapCurtain.style.opacity='0';mapCurtain.style.maskImage='none';mapCurtain.style.webkitMaskImage='none';}});
   }
   function openingHit(){
@@ -2735,9 +2754,10 @@
         if(!opening.whinnyStarted){opening.whinnyStarted=true;openingPlay('whinny');}
         const p=clamp((t-7)/7.031,0,1);
         if(p<1){const pos=openingPoint(openingLength*p),age=opening.hitTime===null?null:t-opening.hitTime;let key=`rider-${[1,2,3,2][Math.floor((t-7)/.175)%4]}`;
-          if(age!==null&&age<.5)key='rider-slash';
-          else if(age===null&&opening.farmer){const distance=Math.hypot(pos.x-opening.farmer.x,pos.y-opening.farmer.y);if(distance<=78*10000/1536){openingHit();key='rider-slash';}else if(distance<=235*10000/1536)key='rider-ready';}
-          opening.rider={...pos,key,flip:false,perspective:1.026};
+          if(age!==null&&age<.36)key='rider-slash';
+          else if(age===null&&opening.farmer){const distance=Math.hypot(pos.x-opening.farmer.x,pos.y-opening.farmer.y);if(distance<=78*10000/1536){openingHit();key='rider-slash';}else if(distance<=165*10000/1536)key='rider-ready';}
+          const attackOffset=key==='rider-ready'||key==='rider-slash'?95:0;opening.riderOffset=(opening.riderOffset||0)+(attackOffset-(opening.riderOffset||0))*(1-Math.exp(-20*dt));
+          opening.rider={...pos,x:pos.x+opening.riderOffset,key,flip:false,perspective:1.026*.95};
         }else{opening.rider=null;openingStop('trot');}
       }
       if(opening.trotRestartAt!==null&&t>=opening.trotRestartAt){opening.trotRestartAt=null;if(opening.rider)openingPlay('trot');}
@@ -2745,11 +2765,14 @@
     }else if(opening.stage==='entry'){
       opening.entryTime+=dt;const t=clamp(opening.entryTime/opening.entryDuration,0,1),p=openingPoint(opening.entryStart+(opening.entryEnd-opening.entryStart)*t);
       Object.assign(state.player,p,{facing:'up'});updateAnimation(t<1,dt);
-      if(t>=1){const c=openingCamera();Object.assign(camera,c);opening.active=false;opening.stage='done';state.transitioning=false;keys.clear();lastTime=0;playerEl.style.visibility='visible';hudRoot.style.visibility='visible';updateAnimation(false,0);game.focus({preventScroll:true});}
+      if(t>=1){const c=openingCamera();Object.assign(camera,c);startOpeningThought();}
+    }else if(opening.stage==='thought'){
+      opening.thoughtTime+=dt;if(opening.thoughtTime>=5.8)finishOpeningThought();
     }
   }
   function openingCamera(){
     const full={x:WORLD.width/2,y:WORLD.height/2,scale:Math.min(width/WORLD.width,height/WORLD.height)};
+    if(opening.stage==='thought')return coverCamera(width,height,state.player.x,state.player.y-PLAYER.height*.5);
     if(opening.stage!=='entry')return full;
     const p=clamp(opening.entryTime/opening.entryDuration,0,1),e=p*p*(3-2*p),target=openingPoint(opening.entryEnd),normal=coverCamera(width,height,target.x,target.y-PLAYER.height*.5);
     return {x:full.x+(normal.x-full.x)*e,y:full.y+(normal.y-full.y)*e,scale:full.scale+(normal.scale-full.scale)*e};
@@ -2769,7 +2792,7 @@
   function render() {
     renderSwordFire(performance.now()/1000);
     const c=opening.active?openingCamera():coverCamera(width,height,camera.x,camera.y);
-    Object.assign(camera,c);
+    Object.assign(camera,c);positionOpeningThought(c);
     // One camera transform is applied to map and props together in renderScene.
     playerEl.style.left=`${state.player.x}px`;playerEl.style.top=`${state.player.y}px`;
     const perspective=lierRenderedScale(state.player);
@@ -2842,7 +2865,7 @@
     if(state.starting || state.playing) return;
     state.starting=true;status.hidden=false;status.textContent='Oberkirch wird geöffnet …';
     try {
-      const jobs=[...Object.values(openingImages).map(waitForImage),prepareBearLitSprites(),...Object.values(moleImages).map(waitForImage),...Object.values(rabbitImages).map(waitForImage),prepareAttackAudio(),prepareBladeFireAtlas(),prepareFallingFlameAtlas(),waitForImage(flameSwordInventoryImage),waitForImage(swordBlade),waitForImage(swordInventoryImage),...hudImages.map(waitForImage),...inventoryGlows.map(waitForImage),...inventoryPages.map(waitForImage),...Object.values(helmetImages).flatMap(variant=>Object.values(variant).map(waitForImage)),waitForImage(map),waitForImage(sendSignImage),waitForImage(sendWheelImage),waitForImage(caveHeraldry.crest),waitForImage(allerCaveSource),waitForImage(allerMonasteryImage),waitForImage(oppGateImage),...sendImages.map(waitForImage),waitForImage(oppCastleImage),waitForImage(castleImage),...hubPropImages.map(waitForImage),...ramsFortImages.map(waitForImage),...westPropImages.map(waitForImage),...buildingPresentation.map(e=>waitForImage(e.crest))];
+      const jobs=[waitForImage(openingRiver),...Object.values(openingImages).map(waitForImage),prepareBearLitSprites(),...Object.values(moleImages).map(waitForImage),...Object.values(rabbitImages).map(waitForImage),prepareAttackAudio(),prepareBladeFireAtlas(),prepareFallingFlameAtlas(),waitForImage(flameSwordInventoryImage),waitForImage(swordBlade),waitForImage(swordInventoryImage),...hudImages.map(waitForImage),...inventoryGlows.map(waitForImage),...inventoryPages.map(waitForImage),...Object.values(helmetImages).flatMap(variant=>Object.values(variant).map(waitForImage)),waitForImage(map),waitForImage(sendSignImage),waitForImage(sendWheelImage),waitForImage(caveHeraldry.crest),waitForImage(allerCaveSource),waitForImage(allerMonasteryImage),waitForImage(oppGateImage),...sendImages.map(waitForImage),waitForImage(oppCastleImage),waitForImage(castleImage),...hubPropImages.map(waitForImage),...ramsFortImages.map(waitForImage),...westPropImages.map(waitForImage),...buildingPresentation.map(e=>waitForImage(e.crest))];
       for(const direction of ['down','left','right','up']) {
         const image=new Image();image.src=`assets/player/stand-${direction}.png`;
         images[`stand-${direction}`]=image;jobs.push(waitForImage(image));
@@ -2855,14 +2878,14 @@
       for(const [key,pose] of Object.entries(SWORD_POSES)){const image=new Image();image.src=pose.file;images[key]=image;jobs.push(waitForImage(image));}
       for(let i=1;i<=8;i++){const number=String(i).padStart(2,'0'),image=new Image();image.src=`assets/player/attack/frame-${number}.png`;images[`attack-${number}`]=image;jobs.push(waitForImage(image));}
       // All frames stay resident and decoded before control is enabled.
-      await Promise.all(jobs);
+      await Promise.all([Promise.all(jobs),window.renchtalOpeningClose||Promise.resolve()]);
       prepareHelmetFrames();prepareAllerCave();prepareBuildingGlows();prepareSendLayers();
       updateAnimation(false,0);
       menu.hidden=true;game.hidden=false;state.playing=true;keys.clear();
       camera.x=state.player.x;camera.y=state.player.y-PLAYER.height*.5;
       startOpening();resize();game.focus({preventScroll:true});
     } catch(error) {
-      console.error(error);status.textContent='Eine Bilddatei fehlt oder konnte nicht geladen werden. Bitte das ZIP vollständig entpacken und erneut versuchen.';
+      console.error(error);window.dispatchEvent(new CustomEvent('renchtal:opening-error'));status.textContent='Eine Bilddatei fehlt oder konnte nicht geladen werden. Bitte das ZIP vollständig entpacken und erneut versuchen.';
     } finally {state.starting=false;}
   });
   // MEHRSPIELER (LOKAL) deliberately has no click handler, navigation or action.
