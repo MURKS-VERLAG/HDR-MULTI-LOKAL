@@ -31,6 +31,8 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d6b783}[hi
 #menu.intro-game-loading .choices{display:none!important;pointer-events:none!important}
 
 #intro-musician{position:absolute;left:100%;top:64%;transform:translate(-50%,-97.142857%);opacity:0;pointer-events:none;z-index:2}
+#intro-goat{position:absolute;left:50%;transform:translate(-50%,-96.73913%);z-index:2;pointer-events:none}
+#intro-goat img{display:block;width:100%;height:100%}
 #intro-bassist{position:absolute;left:30%;transform:translate(-50%,-96%);pointer-events:none;z-index:2}
 #intro-bassist img{display:block;width:100%;height:100%}
 #intro-musician img{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:fill;pointer-events:none}
@@ -39,7 +41,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d6b783}[hi
 </head>
 <body><section id="intro" aria-label="Renchtal Intro">
 <div id="intro-sun-window" aria-hidden="true"><div id="intro-sun"></div></div><img id="intro-river" src="assets/intro/river.webp" alt="" aria-hidden="true"><img id="intro-title" src="assets/intro/title.webp" alt="Die Herren der Rench"><img id="intro-sun-reaction" alt="" hidden><img id="intro-stone" src="assets/intro/stone.webp" alt="" hidden><canvas id="intro-dust" hidden aria-hidden="true"></canvas><img id="intro-drop" src="assets/intro/drop-1.webp" alt="" hidden>
-<div id="intro-musician" hidden aria-hidden="true"><img id="intro-musician-a" alt=""><img id="intro-musician-b" alt=""></div><div id="intro-bassist" hidden aria-hidden="true"><img id="intro-bassist-sprite" alt=""></div><canvas id="intro-music-notes" hidden aria-hidden="true"></canvas>
+<div id="intro-musician" hidden aria-hidden="true"><img id="intro-musician-a" alt=""><img id="intro-musician-b" alt=""></div><div id="intro-bassist" hidden aria-hidden="true"><img id="intro-bassist-sprite" alt=""></div><div id="intro-goat" hidden aria-hidden="true"><img id="intro-goat-sprite" alt=""></div><canvas id="intro-music-notes" hidden aria-hidden="true"></canvas>
 <div id="intro-tapestry" aria-hidden="true"></div>
 <div id="intro-start-control"><svg id="intro-ring" viewBox="0 0 112 112" aria-hidden="true"><circle id="intro-progress" cx="56" cy="56" r="50"/></svg><button id="intro-play" type="button" aria-disabled="true" aria-label="Intro starten"></button></div><button id="intro-enter" type="button" hidden>LEER</button></section>
   <main id="menu" aria-label="Spielmodus wählen" inert aria-hidden="true">
@@ -117,6 +119,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d6b783}[hi
    if(inGame)return;const rect=sun.getBoundingClientRect(),h=root.clientHeight,targetY=rect.top+rect.height*.5,targetSize=rect.width*.54,startSize=Math.max(targetSize*2,h*.55);stone.hidden=false;
    await tween(1450,t=>{const ease=1-(1-t)*(1-t);stone.style.top=`${h+startSize*.55+(targetY-h-startSize*.55)*ease}px`;stone.style.width=`${startSize+(targetSize-startSize)*ease}px`;stone.style.transform=`translate(-50%,-50%) rotate(${t*70}deg)`;});if(inGame)return;
    reactionPose(1);effect('sun-splat');effect('stone-impact');spawnDust();
+   stone.animate([{transform:'translate(-50%,-50%) rotate(70deg)'},{transform:'translate(calc(-50% + 4px),calc(-50% - 2px)) rotate(73deg)'},{transform:'translate(calc(-50% - 3px),-50%) rotate(68deg)'},{transform:'translate(calc(-50% + 1px),-50%) rotate(71deg)'},{transform:'translate(-50%,-50%) rotate(70deg)'}],{duration:240,easing:'ease-out'});
    await delay(1500);if(inGame)return;
    // Hard-swap the sun while the opaque rock still covers the impact face.
    reaction.style.transition='none';reactionPose(2);reaction.style.opacity=1;
@@ -124,9 +127,9 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d6b783}[hi
    await delay(80);if(inGame)return;
    stone.style.transition='opacity 300ms ease';stone.style.opacity=0;
    await delay(300);if(inGame)return;stone.hidden=true;
-   await delay(1100);if(inGame)return;reactionPose(3);await delay(1300);if(inGame)return;
+   await delay(1100);if(inGame)return;reactionPose(3);
    reaction.style.transition='none';
-   await tween(1500,t=>{const glow=Math.sin(Math.PI*t*2)**2;reaction.style.filter=`brightness(${1+glow*5}) drop-shadow(0 0 ${24*glow}px #fff)`;reaction.style.opacity=String(1-t);});
+   await tween(2800,t=>{const cycles=1.2*t+4*t*t,glow=Math.sin(Math.PI*cycles)**2;reaction.style.filter=`brightness(${1+glow*5}) drop-shadow(0 0 ${24*glow}px #fff)`;reaction.style.opacity=String((1-.7*glow)*(t<1300/2800?1:1-(t*2800-1300)/1500));});
    reaction.hidden=true;stone.hidden=true;
  }
  function start(){if(started||!ready)return;started=true;root.classList.add('intro-started');play.setAttribute('aria-disabled','true');buildRiverMask();nextSun();positionSun(0);
@@ -136,6 +139,20 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d6b783}[hi
  const musicianArt={};for(const [kind,indices] of [['walk',[6,3,4]],['bob',[1,2,3,4]]])for(const i of indices){const key=`${kind}-${i}`,im=new Image();im.src=`assets/intro/musician-${key}.webp`;musicianArt[key]=im;waitImage(im);}
  const bassist=$('intro-bassist'),bassistSprite=$('intro-bassist-sprite'),bassArt=[];
  for(let i=1;i<=4;i++){const im=new Image();im.src=`assets/intro/bassist-${i}.webp`;bassArt.push(im);waitImage(im);}
+ const goat=$('intro-goat'),goatSprite=$('intro-goat-sprite'),goatArt=[];
+ for(let i=1;i<=8;i++){const im=new Image();im.src=`assets/intro/goat-${i}.webp`;goatArt.push(im);waitImage(im);}
+ let goatStarted=false,goatLastBeat=-1;
+ function footDust(x,y,scale){
+   for(let i=0;i<20;i++){const light=i%3===0; bassParticles.push({x:x+(Math.random()-.5)*scale*.035,y:y,vx:(Math.random()-.5)*scale*.26,vy:-scale*(.025+Math.random()*.10),age:0,life:.32+Math.random()*.2,r:scale*(light?.010:.031)*(1+Math.random()),white:false,light});}
+ }
+ function renderGoat(w,h,size,dt){
+   if(musicianElapsed<4)return;
+   const height=size*.83,width=height*500/460,x=w*.5,foot=Math.min(h-height*.035,river.getBoundingClientRect().bottom+height*.62);
+   goat.style.left=`${x}px`;goat.style.top=`${foot}px`;goat.style.height=`${height}px`;goat.style.width=`${width}px`;
+   const beat=Math.floor((musicianElapsed-4)/.24994228);goatSprite.src=goatArt[beat%8].src;
+   if(!goatStarted){goatStarted=true;goat.hidden=false;for(let i=0;i<28;i++)bassParticles.push({x:x+(Math.random()-.5)*width*.5,y:foot-height*.45,vx:(Math.random()-.5)*130,vy:-30-Math.random()*65,age:0,life:.65+Math.random()*.35,r:height*.1*(1+Math.random()),white:true});}
+   if(beat!==goatLastBeat){footDust(x,foot,size*.40);goatLastBeat=beat;}
+ }
  let bassLastBeat=-1,bassNoteClock=0,bassParticles=[],bassPuffStarted=false;
  function renderBassist(ctx,w,h,size,foot,dt){
    const height=size*1.06,width=height*512/682,x=w*.30;
@@ -144,9 +161,9 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d6b783}[hi
    bassistSprite.src=bassArt[index].src;
    function puff(px,py,count,white){for(let i=0;i<count;i++)bassParticles.push({x:px,y:py,vx:(Math.random()-.5)*(white?130:45),vy:-(white?30:12)-Math.random()*(white?65:22),age:0,life:white?.65+Math.random()*.35:.25+Math.random()*.22,r:(white?height*.10:height*.018)*(1+Math.random()),white});}
    if(!bassPuffStarted){bassPuffStarted=true;puff(x,foot-height*.43,26,true);}
-   if(beat!==bassLastBeat){if(index===0||index===2)puff(x-width*.33,foot-height*.012,9,false);bassLastBeat=beat;}
+   if(beat!==bassLastBeat){if(index===0||index===2)footDust(x-width*.33,foot-height*.012,height);bassLastBeat=beat;}
    if(!menuMusic.paused){bassNoteClock+=dt;while(bassNoteClock>=.26){bassNoteClock-=.26;notes.push({bass:true,x:x+width*.24,y:foot-height*.42,vx:45+Math.random()*55,vy:-25-Math.random()*25,age:0,life:1.5+Math.random()*.6,angle:(Math.random()-.5)*.3,text:Math.random()<.5?'♪':'♫'});}}
-   for(const p of bassParticles){p.age+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;const r=p.r*(1+p.age);ctx.save();ctx.globalAlpha=Math.max(0,1-p.age/p.life)*.7;const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r);g.addColorStop(0,p.white?'#fff':'#95623b');g.addColorStop(1,p.white?'#ffffff00':'#95623b00');ctx.fillStyle=g;ctx.fillRect(p.x-r,p.y-r,r*2,r*2);ctx.restore();}bassParticles=bassParticles.filter(p=>p.age<p.life);
+   for(const p of bassParticles){p.age+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;const r=p.r*(1+p.age);ctx.save();ctx.globalAlpha=Math.max(0,1-p.age/p.life)*.7;if(p.light){ctx.fillStyle='#c79862';ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fill();}else{const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r);g.addColorStop(0,p.white?'#fff':'#95623b');g.addColorStop(1,p.white?'#ffffff00':'#95623b00');ctx.fillStyle=g;ctx.fillRect(p.x-r,p.y-r,r*2,r*2);}ctx.restore();}bassParticles=bassParticles.filter(p=>p.age<p.life);
  }
  let musicianStarted=false,musicianElapsed=0,musicianLastAudio=0,noteLast=0,noteClock=0,notes=[],musicianLastRAF=0;
  function musicianPose(t){if(t<4)return {key:`walk-${[6,3,4,3][Math.floor(t/.18)%4]}`,next:null,blend:0};const phase=(t-3.9688553)/.24994228,index=Math.floor(phase)%4,blend=Math.max(0,Math.min(1,((phase-Math.floor(phase))-.76)/.24));return {key:`bob-${index+1}`,next:`bob-${(index+1)%4+1}`,blend:blend*blend*(3-2*blend)};}
@@ -161,6 +178,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d6b783}[hi
    const trumpetPlaying=audioTime>=4&&!menuMusic.paused;const pose=musicianElapsed<4?musicianPose(musicianElapsed):trumpetPlaying?musicianPose(audioTime):{key:'bob-1',next:null,blend:0};musicianA.src=musicianArt[pose.key].src;musicianA.style.opacity=String(1-pose.blend);musicianB.style.opacity=String(pose.blend);if(pose.next)musicianB.src=musicianArt[pose.next].src;
    if(trumpetPlaying){noteClock+=dt;while(noteClock-noteLast>=.26){noteLast+=.26;notes.push({x:x+width*.32,y:foot-size*.69,vx:45+Math.random()*55,vy:-25-Math.random()*25,age:0,life:1.5+Math.random()*.6,angle:(Math.random()-.5)*.3,text:Math.random()<.5?'♪':'♫'});}}
    if(notesCanvas.width!==w||notesCanvas.height!==h){notesCanvas.width=w;notesCanvas.height=h;}const ctx=notesCanvas.getContext('2d');ctx.clearRect(0,0,w,h);ctx.fillStyle='#000';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`bold ${Math.max(16,size*.1)}px Georgia,serif`;
+   renderGoat(w,h,size,dt);
    renderBassist(ctx,w,h,size,foot,dt);
    for(const n of notes){n.age+=dt;n.x+=n.vx*dt;n.y+=n.vy*dt;n.vy+=85*dt;ctx.save();ctx.translate(n.x,n.y);ctx.rotate(n.angle+n.age*.2);ctx.globalAlpha=Math.min(1,(n.life-n.age)*3);ctx.fillText(n.text,0,0);ctx.restore();}notes=notes.filter(n=>n.age<n.life&&n.y<h);requestAnimationFrame(renderMusician);
  }
@@ -170,7 +188,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d6b783}[hi
  function enterSequence(){if(!started||!entryReady||entered||inGame)return;entered=true;enter.classList.add('intro-key-leaving');effect('catapult-fire');setTimeout(()=>{if(!inGame)launchStone();},120);setTimeout(()=>{enter.hidden=true;},450);setTimeout(()=>{if(inGame)return;menu.removeAttribute('inert');menu.setAttribute('aria-hidden','false');menu.classList.add('intro-menu-visible');single.focus({preventScroll:true});},15000);}
  enter.addEventListener('click',enterSequence);
  addEventListener('keydown',e=>{if(inGame||entered)return;if(e.code==='Space'){e.preventDefault();e.stopImmediatePropagation();if(!e.repeat){if(!started)play.click();else enterSequence();}}},{capture:true});
- single.addEventListener('click',()=>{menu.classList.add('intro-game-loading');inGame=true;bassist.hidden=true;fadeToken++;for(const a of [introMusic,menuMusic,...Object.values(sounds)]){a.pause();a.currentTime=0;}root.hidden=true;musician.hidden=true;notesCanvas.hidden=true;},{capture:true});
+ single.addEventListener('click',()=>{menu.classList.add('intro-game-loading');inGame=true;bassist.hidden=true;goat.hidden=true;fadeToken++;for(const a of [introMusic,menuMusic,...Object.values(sounds)]){a.pause();a.currentTime=0;}root.hidden=true;musician.hidden=true;notesCanvas.hidden=true;},{capture:true});
  requestAnimationFrame(()=>requestAnimationFrame(()=>{const s=document.createElement('script');s.src='game.js?v=95';document.head.appendChild(s);}));
  function parchment(){const style=getComputedStyle(menu);root.style.backgroundColor=style.backgroundColor;root.style.backgroundImage=style.backgroundImage;} // Critical inline parchment remains authoritative; menu itself is transparent.
  paintProgress();
