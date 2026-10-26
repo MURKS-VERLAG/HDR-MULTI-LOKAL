@@ -9,40 +9,22 @@
 
 <style>
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d6b783}[hidden]{display:none!important}
-#intro{position:fixed;inset:0;z-index:2147483000;background:#d6b783;transition:opacity 450ms ease}
-#intro{background-image: radial-gradient(ellipse at 45% 37%, #f5e2bc99, transparent 68%), radial-gradient(ellipse at center, transparent 35%, #79502638), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%23704420' opacity='.13' filter='url(%23n)' d='M0 0h180v180H0z'/%3E%3C/svg%3E");}
-#intro.intro-leaving{opacity:0;pointer-events:none}
-#intro-tapestry{position:absolute;inset:-3px;border:clamp(48px,11vmin,140px) solid transparent;border-image-source:url('assets/intro/tapestry-frame.webp');border-image-slice:140;border-image-repeat:stretch;border-image-width:1;opacity:0;pointer-events:none;transition:opacity 650ms ease}
-.intro-started #intro-tapestry{opacity:1}
-#intro-start-control{position:absolute;left:50%;top:50%;width:112px;height:112px;transform:translate(-50%,-50%);transition:opacity 650ms ease}
-.intro-started #intro-start-control{opacity:0;pointer-events:none}
-#intro-ring{position:absolute;inset:0;width:112px;height:112px;pointer-events:none;transform:rotate(-90deg);overflow:visible}
-#intro-progress{fill:none;stroke:#fff;stroke-width:2.6;stroke-linecap:round;stroke-dasharray:314.159;stroke-dashoffset:314.159;transition:stroke-dashoffset 220ms ease;filter:drop-shadow(0 0 3px #fff8)}
-#intro-play{position:absolute;left:14px;top:14px;width:84px;height:84px;padding:0;border:0;border-radius:50%;background:#000;cursor:wait;transition:box-shadow 180ms ease}
-#intro-play::after{content:'';position:absolute;left:34px;top:25px;border-left:25px solid #d6b783;border-top:15px solid transparent;border-bottom:15px solid transparent}
-#intro-play:hover,#intro-play:focus-visible{box-shadow:0 0 18px 7px #fff4d5,0 0 55px 17px #fff0bdbb;outline:none}
-.intro-is-ready #intro-play{cursor:pointer}
-#intro-enter{position:absolute;left:50%;top:calc(50% + 100px);transform:translateX(-50%);min-width:180px;height:66px;padding:8px 28px;text-align:center;border:2px solid #514938;border-bottom:7px solid #514938;border-radius:10px;background:linear-gradient(#fffaf0,#ddcfb6);color:#17130e;font:bold 19px Georgia,serif;letter-spacing:2px;box-shadow:0 0 23px #e9f9ffb0,0 5px 9px #36230e44;cursor:pointer}
-#intro-enter:hover,#intro-enter:focus-visible{background:#fff9ec;box-shadow:0 0 30px #fff0bd;outline:2px solid #d6b783;outline-offset:4px}
-@media(prefers-reduced-motion:reduce){#intro,#intro-tapestry,#intro-start-control,#intro-play,#intro-progress{transition:none}}
-
-#intro-sun-window{position:absolute;left:0;right:0;top:0;height:64%;overflow:hidden;pointer-events:none}
-#intro-sun{position:absolute;left:50%;top:100%;width:36vh;height:36vh;background-size:100% 100%;background-repeat:no-repeat;transform:translateX(-50%);will-change:top;pointer-events:none}
-#intro-river{position:absolute;left:50%;top:64%;transform:translateX(-50%);width:calc(100% - clamp(96px,22vmin,280px));height:14%;object-fit:fill;opacity:0;transition:opacity 750ms ease;pointer-events:none}
-.intro-river-visible #intro-river{opacity:1}
-#intro-tapestry{z-index:3}#intro-start-control,#intro-enter{z-index:4}
-#intro-enter{top:calc(78% + 16px);background:#000;color:#fff;border-color:#000;border-bottom-color:#161616;box-shadow:0 0 20px #fff3}
-#intro-enter:hover,#intro-enter:focus-visible{background:#111;color:#fff}
-</style>
+#intro{position:fixed;inset:0;z-index:2147483000;background:#d6b783}
+#intro-tapestry{position:absolute;inset:-3px;z-index:3;border:clamp(48px,11vmin,140px) solid transparent;border-image:url('assets/intro/tapestry-frame.webp') 140 stretch;opacity:0;pointer-events:none;transition:opacity 650ms ease}.intro-started #intro-tapestry{opacity:1}
+#intro-start-control{position:absolute;left:50%;top:50%;z-index:4;width:112px;height:112px;transform:translate(-50%,-50%);transition:opacity 650ms ease}.intro-started #intro-start-control{opacity:0;pointer-events:none}
+#intro-ring{position:absolute;inset:0;width:112px;height:112px;pointer-events:none;transform:rotate(-90deg);overflow:visible}#intro-progress{fill:none;stroke:#fff;stroke-width:2.6;stroke-linecap:round;stroke-dasharray:314.159;stroke-dashoffset:314.159;transition:stroke-dashoffset 220ms ease}
+#intro-play{position:absolute;left:14px;top:14px;width:84px;height:84px;padding:0;border:0;border-radius:50%;background:#000;cursor:wait;transition:box-shadow 180ms ease}#intro-play::after{content:'';position:absolute;left:34px;top:25px;border-left:25px solid #d6b783;border-top:15px solid transparent;border-bottom:15px solid transparent}#intro-play:hover,#intro-play:focus-visible{box-shadow:0 0 18px 7px #fff4d5,0 0 55px 17px #fff0bdbb;outline:none}.intro-is-ready #intro-play{cursor:pointer}
+#intro-sun-window{position:absolute;inset:0;overflow:hidden;pointer-events:none;mask-size:100% 100%;-webkit-mask-size:100% 100%;mask-repeat:no-repeat;-webkit-mask-repeat:no-repeat}#intro-sun{position:absolute;left:50%;top:100%;background-size:100% 100%;transform:translateX(-50%);will-change:top;pointer-events:none}
+#intro-river{position:absolute;left:50%;top:64%;transform:translateX(-50%);width:calc(100% - clamp(96px,22vmin,280px));height:14%;object-fit:fill;opacity:0;transition:opacity 750ms ease;pointer-events:none}.intro-river-visible #intro-river{opacity:1}
+#intro-enter{position:absolute;left:50%;top:calc(78% + 16px);z-index:4;transform:translateX(-50%);min-width:180px;height:66px;text-align:center;border:2px solid #000;border-bottom:7px solid #161616;border-radius:10px;background:#000;color:#fff;font:bold 19px Georgia,serif;letter-spacing:2px;box-shadow:0 0 20px #fff3;cursor:pointer;transition:opacity 450ms ease}#intro-enter:hover{box-shadow:0 0 30px #fff8}.intro-key-leaving{opacity:0;pointer-events:none}
+#menu{z-index:2147483001;background:none!important;pointer-events:none;display:block!important}#menu .choices{position:absolute;inset:0;width:auto;display:block;opacity:0;transition:opacity 900ms ease;pointer-events:none}#menu.intro-menu-visible .choices{opacity:1}#menu.intro-menu-visible button{pointer-events:auto}
+#menu .choices button{position:absolute;top:71%;transform:translate(-50%,-50%);width:min(310px,30vw);min-height:64px;padding:14px 12px;background:#73c8ec;color:#fff;border:2px solid #000;font:bold clamp(12px,1.5vw,22px) Georgia,serif;text-shadow:0 1px 2px #35708b;box-shadow:0 3px 8px #0004;transition:box-shadow 180ms ease,background 180ms ease}#singleplayer{left:30%}#multiplayer{left:70%}#menu .choices button:hover,#menu .choices button:focus-visible{background:#9cdef7;box-shadow:0 0 25px #d0f7ff,0 0 40px #8adfff88;outline:none}#menu[hidden]{display:none!important}#menu #status{position:absolute;left:50%;top:85%;transform:translateX(-50%)}
+@media(prefers-reduced-motion:reduce){#intro-tapestry,#intro-start-control,#intro-progress,#intro-river,#intro-enter,#menu .choices{transition:none}}
+#intro{background-image: radial-gradient(ellipse at 45% 37%, #f5e2bc99, transparent 68%), radial-gradient(ellipse at center, transparent 35%, #79502638), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%23704420' opacity='.13' filter='url(%23n)' d='M0 0h180v180H0z'/%3E%3C/svg%3E");}</style>
 </head>
-<body>
-<section id="intro" aria-label="Renchtal Intro">
-<div id="intro-sun-window" aria-hidden="true"><div id="intro-sun"></div></div>
-<img id="intro-river" src="assets/intro/river.webp" alt="" aria-hidden="true">
-<div id="intro-tapestry" aria-hidden="true"></div>
-<div id="intro-start-control"><svg id="intro-ring" viewBox="0 0 112 112" aria-hidden="true"><circle id="intro-progress" cx="56" cy="56" r="50"/></svg><button id="intro-play" type="button" aria-disabled="true" aria-label="Seite wird geladen"></button></div>
-<button id="intro-enter" type="button" hidden>LEER</button>
-</section>
+<body><section id="intro" aria-label="Renchtal Intro">
+<div id="intro-sun-window" aria-hidden="true"><div id="intro-sun"></div></div><img id="intro-river" src="assets/intro/river.webp" alt="" aria-hidden="true"><div id="intro-tapestry" aria-hidden="true"></div>
+<div id="intro-start-control"><svg id="intro-ring" viewBox="0 0 112 112" aria-hidden="true"><circle id="intro-progress" cx="56" cy="56" r="50"/></svg><button id="intro-play" type="button" aria-disabled="true" aria-label="Intro starten"></button></div><button id="intro-enter" type="button" hidden>LEER</button></section>
   <main id="menu" aria-label="Spielmodus wählen" inert aria-hidden="true">
     <div class="choices">
       <button id="singleplayer" type="button">EINZELSPIELER</button>
@@ -58,81 +40,50 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d6b783}[hi
   </section>
 <script>
 (()=>{
-  'use strict';
-  const root=document.getElementById('intro'),play=document.getElementById('intro-play'),enter=document.getElementById('intro-enter'),menu=document.getElementById('menu'),single=document.getElementById('singleplayer'),ring=document.getElementById('intro-progress');
-  const introMusic=new Audio('assets/intro/house-of-rising-sun.mp3'),menuMusic=new Audio('assets/intro/tavern-music.mp3');
-  for(const music of [introMusic,menuMusic]){music.preload='auto';music.loop=true;music.volume=1;}
-  let started=false,ready=false,passed=false,finished=false,inGame=false,generation=0,fadeGeneration=0,done=0,total=3,gameReady=false,tabReady=document.readyState==='complete',pendingImages=0;
-  function paintProgress(){const progress=ready?1:Math.min(.99,done/Math.max(1,total));ring.style.strokeDashoffset=String(314.159*(1-progress));play.setAttribute('aria-label',ready?'Intro und Musik starten':'Seite wird geladen');play.setAttribute('aria-disabled',String(!ready));root.classList.toggle('intro-is-ready',ready);}
-  function reveal(){if(started&&passed&&ready&&!finished)enter.hidden=false;}
-  function checkReady(){if(!ready&&tabReady&&gameReady&&pendingImages===0&&done>=total){ready=true;paintProgress();reveal();}}
-  function complete(){done++;paintProgress();checkReady();}
-  function waitImage(image){pendingImages++;total++;paintProgress();const settle=()=>{pendingImages--;complete();};if(image.complete){if(image.decode)image.decode().catch(()=>{}).then(settle);else settle();}else{let once=false;const finish=()=>{if(once)return;once=true;settle();};image.addEventListener('load',finish,{once:true});image.addEventListener('error',finish,{once:true});}}
-  if(tabReady)complete();else addEventListener('load',()=>{tabReady=true;complete();},{once:true});
-  if(document.fonts?.ready)document.fonts.ready.then(complete,complete);else complete();
-  const frame=new Image();frame.src='assets/intro/tapestry-frame.webp';waitImage(frame);
-  addEventListener('renchtal:menu-ready',event=>{gameReady=true;for(const im of new Set(event.detail?.images||document.images))waitImage(im);complete();},{once:true});
-  const river=document.getElementById('intro-river'),sun=document.getElementById('intro-sun'),sunWindow=document.getElementById('intro-sun-window');
-  const sunFrames=Array.from({length:6},(_,i)=>{const im=new Image();im.src=`assets/intro/sun-${i+1}.webp`;waitImage(im);return im;});
-  const riverPreload=new Image();riverPreload.src='assets/intro/river.webp';waitImage(riverPreload);
-  let sunBag=[],lastSun=-1,sunNext=0,sunClock=0,sunLastTime=0,sunFinished=false;
-  function nextSun(){
-    if(!sunBag.length){const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};sunBag=[...shuffle([0,1,2,3,4,5]),...shuffle([6,7,8,9,10,11])];if(sunBag[0]%6===lastSun%6)[sunBag[0],sunBag[1]]=[sunBag[1],sunBag[0]];}
-    lastSun=sunBag.shift();sun.style.backgroundImage=`url('${sunFrames[lastSun%6].src}')`;sun.style.transform=`translateX(-50%) scaleX(${lastSun>=6?-1:1})`;
-  }
-  function positionSun(t){
-    const h=root.clientHeight,w=root.clientWidth,riverTop=h*.64,size=Math.min(h*.36,w*.35),frameBorder=Math.min(140,Math.max(48,Math.min(w,h)*.11)),end=frameBorder+8;
-    // The common flute anchor is at 57% of the registered sprite canvas.
-    // Crossing is clocked by the actual music, not by a wall-clock timeout.
-    const atEleven=riverTop-size*.57;
-    const y=t<=11?riverTop+(atEleven-riverTop)*Math.max(0,t)/11:atEleven+(end-atEleven)*Math.min(1,(t-11)/9);
-    sun.style.width=`${size}px`;sun.style.height=`${size}px`;sun.style.top=`${y}px`;sunWindow.style.height=`${riverTop}px`;
-    // A strict pre-11 mask also covers the small differences between flute poses.
-    sun.style.clipPath=t<11?'inset(0 0 44% 0)':'none';
-  }
-  function animateSun(now){
-    if(finished||inGame)return;const dt=sunLastTime?Math.min(.1,(now-sunLastTime)/1000):0;sunLastTime=now;
-    const t=sunFinished?20:Math.min(20,introMusic.currentTime||0);positionSun(t);
-    if(!introMusic.paused){sunClock+=dt;if(sunClock>=sunNext){nextSun();sunNext=sunClock+.24+Math.random()*.22;}}
-    if(t>=20&&!sunFinished){sunFinished=true;passed=true;reveal();}
-    requestAnimationFrame(animateSun);
-  }
-  function startRiverSequence(){
-    nextSun();positionSun(0);
-    // Reserve the media gesture now; the song itself remains paused until the plop ends.
-    introMusic.volume=0;const warm=introMusic.play();if(warm?.then)warm.then(()=>{introMusic.pause();introMusic.currentTime=0;},()=>{});
-    const song=()=>{if(inGame||finished)return;introMusic.volume=1;introMusic.currentTime=0;introMusic.play().catch(()=>{});requestAnimationFrame(animateSun);};
-    setTimeout(()=>{
-      if(inGame||finished)return;root.classList.add('intro-river-visible');
-      // The requested plop attachment was not included. This slot accepts it unchanged.
-      const plop=new Audio('assets/intro/river-plop.mp3');plop.volume=1;let ended=false;
-      const proceed=()=>{if(ended)return;ended=true;song();};plop.addEventListener('ended',proceed,{once:true});plop.addEventListener('error',proceed,{once:true});
-      const p=plop.play();if(p?.catch)p.catch(proceed);
-    },650);
-  }
-
-  function stopMusic(){inGame=true;fadeGeneration++;for(const m of [introMusic,menuMusic]){m.pause();m.currentTime=0;}}
-  single.addEventListener('click',stopMusic,{capture:true});
-  function start(){
-    if(started||!ready)return;started=true;const token=++generation;root.classList.add('intro-started');play.setAttribute('aria-disabled','true');
-    setTimeout(()=>{if(started&&generation===token)document.getElementById('intro-start-control').hidden=true;},650);
-    startRiverSequence();
-  }
-  play.addEventListener('click',start);
-  function crossfade(){
-    const token=++fadeGeneration;menuMusic.volume=0;const playing=menuMusic.play();
-    const run=()=>{if(inGame||token!==fadeGeneration)return;const born=performance.now(),initial=introMusic.volume;
-      function step(now){if(inGame||token!==fadeGeneration)return;const t=Math.min(1,Math.max(0,(now-born)/1600));introMusic.volume=initial*Math.cos(t*Math.PI/2);menuMusic.volume=Math.sin(t*Math.PI/2);if(t<1)requestAnimationFrame(step);else{introMusic.pause();introMusic.currentTime=0;menuMusic.volume=1;}}
-      requestAnimationFrame(step);
-    };
-    if(playing?.then)playing.then(run,()=>{});else run();
-  }
-  function enterMenu(){if(!started||!ready||!passed||finished)return;finished=true;crossfade();root.classList.add('intro-leaving');menu.removeAttribute('inert');menu.setAttribute('aria-hidden','false');setTimeout(()=>{root.hidden=true;single.focus({preventScroll:true});},450);}
-  enter.addEventListener('click',enterMenu);
-  addEventListener('keydown',event=>{if(finished)return;if(event.code==='Space'){event.preventDefault();event.stopImmediatePropagation();if(!event.repeat){if(!started)play.click();else enterMenu();}}},{capture:true});
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{const script=document.createElement('script');script.src='game.js?v=89';document.head.appendChild(script);}));
-  function copyParchment(){const style=getComputedStyle(menu);root.style.backgroundColor=style.backgroundColor;root.style.backgroundImage=style.backgroundImage;}
-  if(tabReady)copyParchment();else addEventListener('load',copyParchment,{once:true});paintProgress();
+ 'use strict';
+ const $=id=>document.getElementById(id),root=$('intro'),play=$('intro-play'),enter=$('intro-enter'),menu=$('menu'),single=$('singleplayer'),ring=$('intro-progress'),sun=$('intro-sun'),sunWindow=$('intro-sun-window'),river=$('intro-river');
+ const introMusic=new Audio('assets/intro/house-of-rising-sun.mp3'),menuMusic=new Audio('assets/intro/tavern-music.mp3');
+ for(const a of [introMusic,menuMusic]){a.preload='auto';a.loop=true;a.volume=1;}
+ const sounds=Object.fromEntries(['river-plop','catapult-load','engineer-catapult','catapult-fire'].map(k=>{const a=new Audio(`assets/intro/${k}.mp3`);a.preload='auto';return [k,a];}));
+ let started=false,ready=false,arrived=false,entryReady=false,entered=false,inGame=false,tabReady=document.readyState==='complete',gameReady=false,done=0,total=3,pendingImages=0,fadeToken=0,clock=0,lastNow=0,nextFrame=0,lastSun=-1,bag=[],horizon=innerHeight*.64;
+ function paintProgress(){ring.style.strokeDashoffset=String(314.159*(1-(ready?1:Math.min(.99,done/total))));play.setAttribute('aria-disabled',String(!ready));root.classList.toggle('intro-is-ready',ready);}
+ function check(){if(tabReady&&gameReady&&pendingImages===0&&done>=total)ready=true;paintProgress();}
+ function complete(){done++;check();}
+ function waitImage(im){pendingImages++;total++;const finish=()=>{pendingImages--;complete();};if(im.complete){if(im.decode)im.decode().catch(()=>{}).then(finish);else finish();}else{let settled=false;const once=()=>{if(!settled){settled=true;finish();}};im.addEventListener('load',once,{once:true});im.addEventListener('error',once,{once:true});}}
+ if(tabReady)complete();else addEventListener('load',()=>{tabReady=true;complete();},{once:true});
+ if(document.fonts?.ready)document.fonts.ready.then(complete,complete);else complete();
+ const frame=new Image();frame.src='assets/intro/tapestry-frame.webp';waitImage(frame);waitImage(river);
+ const sunFrames=Array.from({length:6},(_,i)=>{const im=new Image();im.src=`assets/intro/sun-${i+1}.webp`;waitImage(im);return im;});
+ addEventListener('renchtal:menu-ready',e=>{gameReady=true;for(const im of new Set(e.detail?.images||document.images))waitImage(im);complete();},{once:true});
+ function effect(name){return new Promise(resolve=>{if(inGame){resolve();return;}const a=sounds[name];let ended=false;const finish=()=>{if(ended)return;ended=true;a.removeEventListener('ended',finish);a.removeEventListener('error',finish);resolve();};a.addEventListener('ended',finish,{once:true});a.addEventListener('error',finish,{once:true});a.currentTime=0;const p=a.play();if(p?.catch)p.catch(finish);});}
+ function nextSun(){if(!bag.length){const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};bag=[...shuffle([0,1,2,3,4,5]),...shuffle([6,7,8,9,10,11])];if(bag[0]%6===lastSun%6)[bag[0],bag[1]]=[bag[1],bag[0]];}lastSun=bag.shift();sun.style.backgroundImage=`url('${sunFrames[lastSun%6].src}')`;sun.style.transform=`translateX(-50%) scaleX(${lastSun>=6?-1:1})`;}
+ function buildRiverMask(){
+   if(!river.complete||!river.naturalWidth)return;
+   const w=root.clientWidth,h=root.clientHeight,rect=river.getBoundingClientRect(),base=root.getBoundingClientRect(),x=rect.left-base.left,y=rect.top-base.top;
+   const c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(river,x,y,rect.width,rect.height);
+   const art=ctx.getImageData(0,0,w,h),mask=ctx.createImageData(w,h);let middle=y;
+   // Per-screen-pixel alpha horizon: no straight clipping edge, no guessed outline.
+   for(let px=0;px<w;px++){let edge=h;for(let py=Math.max(0,Math.floor(y));py<Math.min(h,Math.ceil(y+rect.height));py++){if(art.data[(py*w+px)*4+3]>12){edge=py;break;}}if(px===Math.floor(w/2))middle=edge;for(let py=0;py<edge;py++){const k=(py*w+px)*4;mask.data[k]=mask.data[k+1]=mask.data[k+2]=255;mask.data[k+3]=255;}if(edge<h){const k=(edge*w+px)*4;mask.data[k]=mask.data[k+1]=mask.data[k+2]=255;mask.data[k+3]=255-art.data[k+3];}}
+   ctx.putImageData(mask,0,0);const url=`url('${c.toDataURL()}')`;sunWindow.style.maskImage=url;sunWindow.style.webkitMaskImage=url;horizon=middle;
+ }
+ river.addEventListener('load',buildRiverMask);addEventListener('resize',()=>{buildRiverMask();positionSun(arrived?20:introMusic.currentTime||0);});
+ function positionSun(t){const w=root.clientWidth,h=root.clientHeight,size=Math.min(h*.36,w*.35),end=Math.min(140,Math.max(48,Math.min(w,h)*.11))+8,eleven=horizon-size*.57;const y=t<=11?horizon+(eleven-horizon)*Math.max(0,t)/11:eleven+(end-eleven)*Math.min(1,(t-11)/9);sun.style.width=`${size}px`;sun.style.height=`${size}px`;sun.style.top=`${y}px`;}
+ async function arrival(){await effect('catapult-load');if(inGame)return;await effect('engineer-catapult');if(inGame||entered)return;entryReady=true;enter.hidden=false;}
+ function animate(now){if(inGame)return;const dt=lastNow?Math.min(.1,(now-lastNow)/1000):0;lastNow=now;const t=arrived?20:Math.min(20,introMusic.currentTime||0);positionSun(t);if(!introMusic.paused||arrived){clock+=dt;if(clock>=nextFrame){nextSun();nextFrame=clock+.24+Math.random()*.22;}}if(t>=20&&!arrived){arrived=true;arrival();}requestAnimationFrame(animate);}
+ function start(){if(started||!ready)return;started=true;root.classList.add('intro-started');play.setAttribute('aria-disabled','true');buildRiverMask();nextSun();positionSun(0);
+   // Unlock the song in this gesture; audible playback starts only after the plop.
+   introMusic.volume=0;const warm=introMusic.play();if(warm?.then)warm.then(()=>{introMusic.pause();introMusic.currentTime=0;},()=>{});
+   setTimeout(async()=>{if(inGame)return;root.classList.add('intro-river-visible');await effect('river-plop');if(inGame)return;introMusic.volume=1;introMusic.currentTime=0;introMusic.play().catch(()=>{});requestAnimationFrame(animate);},650);
+ }
+ play.addEventListener('click',start);
+ function crossfade(){const token=++fadeToken;menuMusic.volume=0;const p=menuMusic.play();const begin=()=>{const born=performance.now(),initial=introMusic.volume;function step(now){if(inGame||token!==fadeToken)return;const t=Math.min(1,Math.max(0,(now-born)/1600));introMusic.volume=initial*Math.cos(t*Math.PI/2);menuMusic.volume=Math.sin(t*Math.PI/2);if(t<1)requestAnimationFrame(step);else{introMusic.pause();introMusic.currentTime=0;menuMusic.volume=1;}}requestAnimationFrame(step);};if(p?.then)p.then(begin,()=>{});else begin();}
+ function enterSequence(){if(!started||!entryReady||entered||inGame)return;entered=true;enter.classList.add('intro-key-leaving');effect('catapult-fire');crossfade();setTimeout(()=>{enter.hidden=true;},450);setTimeout(()=>{if(inGame)return;menu.removeAttribute('inert');menu.setAttribute('aria-hidden','false');menu.classList.add('intro-menu-visible');single.focus({preventScroll:true});},15000);}
+ enter.addEventListener('click',enterSequence);
+ addEventListener('keydown',e=>{if(inGame||entered)return;if(e.code==='Space'){e.preventDefault();e.stopImmediatePropagation();if(!e.repeat){if(!started)play.click();else enterSequence();}}},{capture:true});
+ single.addEventListener('click',()=>{inGame=true;fadeToken++;for(const a of [introMusic,menuMusic,...Object.values(sounds)]){a.pause();a.currentTime=0;}root.hidden=true;},{capture:true});
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{const s=document.createElement('script');s.src='game.js?v=91';document.head.appendChild(s);}));
+ function parchment(){const style=getComputedStyle(menu);root.style.backgroundColor=style.backgroundColor;root.style.backgroundImage=style.backgroundImage;} // Critical inline parchment remains authoritative; menu itself is transparent.
+ paintProgress();
 })();
 
 </script>
