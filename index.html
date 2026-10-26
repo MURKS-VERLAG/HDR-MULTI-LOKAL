@@ -29,10 +29,15 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d6b783}[hi
 #intro-dust{position:absolute;inset:0;width:100%;height:100%;z-index:7;pointer-events:none}
 #intro-tapestry{z-index:9}
 #menu.intro-game-loading .choices{display:none!important;pointer-events:none!important}
+
+#intro-musician{position:absolute;left:100%;top:64%;transform:translate(-50%,-97.142857%);opacity:0;pointer-events:none;z-index:2}
+#intro-musician img{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:fill;pointer-events:none}
+#intro-music-notes{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}
 </style>
 </head>
 <body><section id="intro" aria-label="Renchtal Intro">
 <div id="intro-sun-window" aria-hidden="true"><div id="intro-sun"></div></div><img id="intro-river" src="assets/intro/river.webp" alt="" aria-hidden="true"><img id="intro-title" src="assets/intro/title.webp" alt="Die Herren der Rench"><img id="intro-sun-reaction" alt="" hidden><img id="intro-stone" src="assets/intro/stone.webp" alt="" hidden><canvas id="intro-dust" hidden aria-hidden="true"></canvas><img id="intro-drop" src="assets/intro/drop-1.webp" alt="" hidden>
+<div id="intro-musician" hidden aria-hidden="true"><img id="intro-musician-a" alt=""><img id="intro-musician-b" alt=""></div><canvas id="intro-music-notes" hidden aria-hidden="true"></canvas>
 <div id="intro-tapestry" aria-hidden="true"></div>
 <div id="intro-start-control"><svg id="intro-ring" viewBox="0 0 112 112" aria-hidden="true"><circle id="intro-progress" cx="56" cy="56" r="50"/></svg><button id="intro-play" type="button" aria-disabled="true" aria-label="Intro starten"></button></div><button id="intro-enter" type="button" hidden>LEER</button></section>
   <main id="menu" aria-label="Spielmodus wählen" inert aria-hidden="true">
@@ -110,9 +115,10 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d6b783}[hi
    if(inGame)return;const rect=sun.getBoundingClientRect(),h=root.clientHeight,targetY=rect.top+rect.height*.5,targetSize=rect.width*.54,startSize=Math.max(targetSize*2,h*.55);stone.hidden=false;
    await tween(1450,t=>{const ease=1-(1-t)*(1-t);stone.style.top=`${h+startSize*.55+(targetY-h-startSize*.55)*ease}px`;stone.style.width=`${startSize+(targetSize-startSize)*ease}px`;stone.style.transform=`translate(-50%,-50%) rotate(${t*70}deg)`;});if(inGame)return;
    reactionPose(1);effect('sun-splat');effect('stone-impact');spawnDust();
-   await delay(500);if(inGame)return;
+   await delay(1500);if(inGame)return;
    // Replace the underlying face before fading the rock, preventing a one-frame flash.
-   reactionPose(2);title.style.top=`${targetY}px`;title.classList.add('intro-title-visible');stone.style.opacity=0;crossfade();
+   title.style.top=`${targetY}px`;title.classList.add('intro-title-visible');stone.style.opacity=0;crossfade();
+   await delay(1300);if(inGame)return;reactionPose(2);
    await delay(600);if(inGame)return;reactionPose(3);await delay(1300);if(inGame)return;
    reaction.style.transition='none';
    await tween(1500,t=>{const glow=Math.sin(Math.PI*t*2)**2;reaction.style.filter=`brightness(${1+glow*5}) drop-shadow(0 0 ${24*glow}px #fff)`;reaction.style.opacity=String(1-t);});
@@ -121,12 +127,31 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d6b783}[hi
  function start(){if(started||!ready)return;started=true;root.classList.add('intro-started');play.setAttribute('aria-disabled','true');buildRiverMask();nextSun();positionSun(0);
  introMusic.volume=0;const warm=introMusic.play();if(warm?.then)warm.then(()=>{introMusic.pause();introMusic.currentTime=0;},()=>{});dropSequence();}
  play.addEventListener('click',start);
- function crossfade(){const token=++fadeToken;menuMusic.volume=0;const p=menuMusic.play();const begin=()=>{const born=performance.now(),initial=introMusic.volume;function step(now){if(inGame||token!==fadeToken)return;const t=Math.min(1,Math.max(0,(now-born)/1600));introMusic.volume=initial*Math.cos(t*Math.PI/2);menuMusic.volume=Math.sin(t*Math.PI/2);if(t<1)requestAnimationFrame(step);else{introMusic.pause();introMusic.currentTime=0;menuMusic.volume=1;}}requestAnimationFrame(step);};if(p?.then)p.then(begin,()=>{});else begin();}
+ const musician=$('intro-musician'),musicianA=$('intro-musician-a'),musicianB=$('intro-musician-b'),notesCanvas=$('intro-music-notes');
+ const musicianArt={};for(const kind of ['walk','bob'])for(let i=1;i<=(kind==='walk'?6:4);i++){const key=`${kind}-${i}`,im=new Image();im.src=`assets/intro/musician-${key}.webp`;musicianArt[key]=im;waitImage(im);}
+ let musicianStarted=false,musicianElapsed=0,musicianLastAudio=0,noteLast=0,noteClock=0,notes=[],musicianLastRAF=0;
+ function musicianPose(t){if(t<4)return {key:`walk-${[6,3,4,3][Math.floor(t/.18)%4]}`,next:null,blend:0};const phase=(t-4)/.3,index=Math.floor(phase)%4,blend=Math.min(1,(phase-Math.floor(phase))/.24);return {key:`bob-${index+1}`,next:`bob-${(index+1)%4+1}`,blend:blend*blend*(3-2*blend)};}
+ function renderMusician(now){
+   if(inGame){musician.hidden=true;notesCanvas.hidden=true;return;}
+   const dt=musicianLastRAF?Math.min(.05,(now-musicianLastRAF)/1000):0;musicianLastRAF=now;
+   const audioTime=menuMusic.currentTime||0;
+   if(!menuMusic.paused){let delta=audioTime-musicianLastAudio;if(delta<-.1)delta=(Number.isFinite(menuMusic.duration)?menuMusic.duration:0)-musicianLastAudio+audioTime;musicianElapsed+=Math.max(0,delta);musicianLastAudio=audioTime;}
+   const w=root.clientWidth,h=root.clientHeight,size=Math.min(h*.33,w*.23),width=size*600/700,foot=river.getBoundingClientRect().top-2;
+   const t=Math.min(1,musicianElapsed/4),start=w+width*.6,end=w*.63,x=start+(end-start)*t;
+   musician.style.left=`${x}px`;musician.style.top=`${foot}px`;musician.style.width=`${width}px`;musician.style.height=`${size}px`;musician.style.opacity=String(Math.min(1,musicianElapsed/.3));
+   const pose=musicianPose(musicianElapsed);musicianA.src=musicianArt[pose.key].src;musicianA.style.opacity=String(1-pose.blend);musicianB.style.opacity=String(pose.blend);if(pose.next)musicianB.src=musicianArt[pose.next].src;
+   if(musicianElapsed>=4&&!menuMusic.paused){noteClock+=dt;while(noteClock-noteLast>=.26){noteLast+=.26;notes.push({x:x+width*.32,y:foot-size*.69,vx:45+Math.random()*55,vy:-25-Math.random()*25,age:0,life:1.5+Math.random()*.6,angle:(Math.random()-.5)*.3,text:Math.random()<.5?'♪':'♫'});}}
+   if(notesCanvas.width!==w||notesCanvas.height!==h){notesCanvas.width=w;notesCanvas.height=h;}const ctx=notesCanvas.getContext('2d');ctx.clearRect(0,0,w,h);ctx.fillStyle='#000';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`bold ${Math.max(16,size*.1)}px Georgia,serif`;
+   for(const n of notes){n.age+=dt;n.x+=n.vx*dt;n.y+=n.vy*dt;n.vy+=85*dt;ctx.save();ctx.translate(n.x,n.y);ctx.rotate(n.angle+n.age*.2);ctx.globalAlpha=Math.min(1,(n.life-n.age)*3);ctx.fillText(n.text,0,0);ctx.restore();}notes=notes.filter(n=>n.age<n.life&&n.y<h);requestAnimationFrame(renderMusician);
+ }
+ function startMusician(){if(musicianStarted||inGame)return;musicianStarted=true;musicianElapsed=0;musicianLastAudio=menuMusic.currentTime||0;musician.hidden=false;notesCanvas.hidden=false;requestAnimationFrame(renderMusician);}
+
+ function crossfade(){const token=++fadeToken;menuMusic.volume=0;const p=menuMusic.play();const begin=()=>{startMusician();const born=performance.now(),initial=introMusic.volume;function step(now){if(inGame||token!==fadeToken)return;const t=Math.min(1,Math.max(0,(now-born)/1600));introMusic.volume=initial*Math.cos(t*Math.PI/2);menuMusic.volume=Math.sin(t*Math.PI/2);if(t<1)requestAnimationFrame(step);else{introMusic.pause();introMusic.currentTime=0;menuMusic.volume=1;}}requestAnimationFrame(step);};if(p?.then)p.then(begin,()=>{});else begin();}
  function enterSequence(){if(!started||!entryReady||entered||inGame)return;entered=true;enter.classList.add('intro-key-leaving');effect('catapult-fire');setTimeout(()=>{if(!inGame)launchStone();},120);setTimeout(()=>{enter.hidden=true;},450);setTimeout(()=>{if(inGame)return;menu.removeAttribute('inert');menu.setAttribute('aria-hidden','false');menu.classList.add('intro-menu-visible');single.focus({preventScroll:true});},15000);}
  enter.addEventListener('click',enterSequence);
  addEventListener('keydown',e=>{if(inGame||entered)return;if(e.code==='Space'){e.preventDefault();e.stopImmediatePropagation();if(!e.repeat){if(!started)play.click();else enterSequence();}}},{capture:true});
- single.addEventListener('click',()=>{menu.classList.add('intro-game-loading');inGame=true;fadeToken++;for(const a of [introMusic,menuMusic,...Object.values(sounds)]){a.pause();a.currentTime=0;}root.hidden=true;},{capture:true});
- requestAnimationFrame(()=>requestAnimationFrame(()=>{const s=document.createElement('script');s.src='game.js?v=93';document.head.appendChild(s);}));
+ single.addEventListener('click',()=>{menu.classList.add('intro-game-loading');inGame=true;fadeToken++;for(const a of [introMusic,menuMusic,...Object.values(sounds)]){a.pause();a.currentTime=0;}root.hidden=true;musician.hidden=true;notesCanvas.hidden=true;},{capture:true});
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{const s=document.createElement('script');s.src='game.js?v=94';document.head.appendChild(s);}));
  function parchment(){const style=getComputedStyle(menu);root.style.backgroundColor=style.backgroundColor;root.style.backgroundImage=style.backgroundImage;} // Critical inline parchment remains authoritative; menu itself is transparent.
  paintProgress();
 })();
