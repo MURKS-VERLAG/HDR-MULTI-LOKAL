@@ -2734,10 +2734,9 @@
   }
   function drawOpeningBorders(ctx,m,dpr){
     if(!opening.active||!openingRiver.complete||!openingRiver.naturalWidth)return;
-    const contain=Math.min(width/WORLD.width,height/WORLD.height),left=(width-WORLD.width*contain)/2,right=width-left,length=WORLD.height*contain,top=(height-length)/2;
-    const elapsed=opening.stage==='event'?0:(opening.cameraTime||0),duration=(opening.cameraDuration||3.8)*.55,progress=clamp((elapsed-1)/duration,0,1),opacity=1-progress*progress*(3-2*progress);if(opacity<=0)return;
-    ctx.save();ctx.globalAlpha=opacity;ctx.setTransform(dpr,0,0,dpr,0,0);const thickness=Math.min(95,Math.max(36,length*.1));
-    for(const [x,angle,visible] of [[left,Math.PI/2,left>1],[right,-Math.PI/2,right<width-1]])if(visible){ctx.save();ctx.translate(x,top+length/2);ctx.rotate(angle);ctx.drawImage(openingRiver,-length/2,-thickness/2,length,thickness);ctx.restore();}ctx.restore();
+    const left=m.tx,right=m.tx+WORLD.width*m.scale,length=WORLD.height*m.scale,top=m.ty,thickness=Math.min(95,Math.max(36,length*.1));
+    ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);
+    for(const [x,angle,visible] of [[left,Math.PI/2,left>-thickness],[right,-Math.PI/2,right<width+thickness]])if(visible){ctx.save();ctx.translate(x,top+length/2);ctx.rotate(angle);ctx.drawImage(openingRiver,-length/2,-thickness/2,length,thickness);ctx.restore();}ctx.restore();
   }
   const towerView={active:false,busy:false};
   const winterbachMusic=new Audio('assets/audio/winterbach-minstrelosity.mp3'),towerMusic=new Audio('assets/audio/winterbach-tower-polka.mp3');
@@ -2746,12 +2745,15 @@
   Object.assign(towerPane.style,{position:'absolute',inset:'0',zIndex:'4000',overflow:'hidden',backgroundColor:'#d6b783',pointerEvents:'auto'});
   const towerFrame=document.createElement('div');Object.assign(towerFrame.style,{position:'absolute',inset:'-3px',border:'clamp(48px,11vmin,140px) solid transparent',borderImage:"url('assets/intro/tapestry-frame.webp') 140 stretch",pointerEvents:'none',zIndex:'2'});
   const towerArt=new Image();towerArt.src='assets/interiors/winterbach-tapestry.webp';towerArt.alt='Winterbacher Turm';towerArt.draggable=false;
-  const towerContent=document.createElement('div');Object.assign(towerContent.style,{position:'absolute',inset:'calc(clamp(48px,11vmin,140px) + 16px)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',paddingBottom:'min(16vh,140px)',boxSizing:'border-box',gap:'8px'});
+  const towerContent=document.createElement('div');Object.assign(towerContent.style,{position:'absolute',inset:'calc(clamp(48px,11vmin,140px) + 16px)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'flex-start',paddingBottom:'0',boxSizing:'border-box',gap:'clamp(8px,1.5vh,16px)'});
   const towerTitle=document.createElement('div'),towerSubtitle=document.createElement('div');towerTitle.textContent='HAUS WINTERBACH';towerSubtitle.textContent='TURRIS LAPIDEA';
   for(const title of [towerTitle,towerSubtitle])Object.assign(title.style,{color:'#000',webkitTextStroke:'3px #fff',paintOrder:'stroke fill',textShadow:'none',textAlign:'center',maxWidth:'100%',flexShrink:'0',fontFamily:'Georgia,serif',fontWeight:'bold',lineHeight:'1.2'});
-  towerTitle.style.fontSize='clamp(20px,3vw,36px)';towerSubtitle.style.fontSize='clamp(14px,2vw,23px)';
-  Object.assign(towerArt.style,{position:'static',width:'min(430px,43vw)',maxWidth:'100%',maxHeight:'min(40vh, calc(100% - 100px))',height:'auto',objectFit:'contain',pointerEvents:'none',flexShrink:'1',minHeight:'0'});
-  towerContent.appendChild(towerTitle);towerContent.appendChild(towerSubtitle);towerContent.appendChild(towerArt);towerPane.appendChild(towerContent);towerPane.appendChild(towerFrame);game.appendChild(towerPane);
+  towerTitle.style.fontSize='clamp(27px,4vw,52px)';towerSubtitle.style.fontSize='clamp(14px,2vw,23px)';
+  Object.assign(towerArt.style,{position:'static',width:'min(430px,43vw)',maxWidth:'100%',maxHeight:'min(35vh, calc(100% - 210px))',height:'auto',objectFit:'contain',pointerEvents:'none',flexShrink:'1',minHeight:'0'});
+  towerContent.appendChild(towerTitle);towerContent.appendChild(towerSubtitle);towerContent.appendChild(towerArt);
+  const towerUnits=document.createElement('div');Object.assign(towerUnits.style,{display:'flex',justifyContent:'center',alignItems:'end',gap:'clamp(12px,2vw,28px)',width:'100%',minHeight:'0'});
+  for(const [i,number] of [[3,1],[1,2],[2,2]]){const slot=document.createElement('div'),unit=new Image(),count=document.createElement('div');unit.src=`assets/interiors/winterbach-unit-${i}.webp`;unit.alt=`Winterbacher Einheit ${i}`;Object.assign(slot.style,{textAlign:'center',width:'clamp(55px,6vw,100px)'});Object.assign(unit.style,{width:'100%',height:'clamp(60px,12vh,125px)',objectFit:'contain',display:'block'});count.textContent=String(number);Object.assign(count.style,{font:'bold clamp(20px,2vw,30px) Georgia,serif',color:'#000',webkitTextStroke:'2px #fff',paintOrder:'stroke fill'});slot.appendChild(unit);slot.appendChild(count);towerUnits.appendChild(slot);}
+  towerContent.appendChild(towerUnits);towerPane.appendChild(towerContent);towerPane.appendChild(towerFrame);game.appendChild(towerPane);
   const towerSnow=document.createElement('canvas');towerSnow.setAttribute('aria-hidden','true');Object.assign(towerSnow.style,{position:'absolute',inset:'0',width:'100%',height:'100%',zIndex:'1',pointerEvents:'none'});towerPane.appendChild(towerSnow);
   const towerSnowContext=towerSnow.getContext('2d');let towerSnowSurface=[],towerSnowFlakes=[],towerSnowSerial=0;
   function prepareTowerSnow(){
