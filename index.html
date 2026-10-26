@@ -31,13 +31,15 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d6b783}[hi
 #menu.intro-game-loading .choices{display:none!important;pointer-events:none!important}
 
 #intro-musician{position:absolute;left:100%;top:64%;transform:translate(-50%,-97.142857%);opacity:0;pointer-events:none;z-index:2}
+#intro-bassist{position:absolute;left:30%;transform:translate(-50%,-96%);pointer-events:none;z-index:2}
+#intro-bassist img{display:block;width:100%;height:100%}
 #intro-musician img{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:fill;pointer-events:none}
 #intro-music-notes{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}
 </style>
 </head>
 <body><section id="intro" aria-label="Renchtal Intro">
 <div id="intro-sun-window" aria-hidden="true"><div id="intro-sun"></div></div><img id="intro-river" src="assets/intro/river.webp" alt="" aria-hidden="true"><img id="intro-title" src="assets/intro/title.webp" alt="Die Herren der Rench"><img id="intro-sun-reaction" alt="" hidden><img id="intro-stone" src="assets/intro/stone.webp" alt="" hidden><canvas id="intro-dust" hidden aria-hidden="true"></canvas><img id="intro-drop" src="assets/intro/drop-1.webp" alt="" hidden>
-<div id="intro-musician" hidden aria-hidden="true"><img id="intro-musician-a" alt=""><img id="intro-musician-b" alt=""></div><canvas id="intro-music-notes" hidden aria-hidden="true"></canvas>
+<div id="intro-musician" hidden aria-hidden="true"><img id="intro-musician-a" alt=""><img id="intro-musician-b" alt=""></div><div id="intro-bassist" hidden aria-hidden="true"><img id="intro-bassist-sprite" alt=""></div><canvas id="intro-music-notes" hidden aria-hidden="true"></canvas>
 <div id="intro-tapestry" aria-hidden="true"></div>
 <div id="intro-start-control"><svg id="intro-ring" viewBox="0 0 112 112" aria-hidden="true"><circle id="intro-progress" cx="56" cy="56" r="50"/></svg><button id="intro-play" type="button" aria-disabled="true" aria-label="Intro starten"></button></div><button id="intro-enter" type="button" hidden>LEER</button></section>
   <main id="menu" aria-label="Spielmodus wählen" inert aria-hidden="true">
@@ -132,28 +134,43 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d6b783}[hi
  play.addEventListener('click',start);
  const musician=$('intro-musician'),musicianA=$('intro-musician-a'),musicianB=$('intro-musician-b'),notesCanvas=$('intro-music-notes');
  const musicianArt={};for(const [kind,indices] of [['walk',[6,3,4]],['bob',[1,2,3,4]]])for(const i of indices){const key=`${kind}-${i}`,im=new Image();im.src=`assets/intro/musician-${key}.webp`;musicianArt[key]=im;waitImage(im);}
+ const bassist=$('intro-bassist'),bassistSprite=$('intro-bassist-sprite'),bassArt=[];
+ for(let i=1;i<=4;i++){const im=new Image();im.src=`assets/intro/bassist-${i}.webp`;bassArt.push(im);waitImage(im);}
+ let bassLastBeat=-1,bassNoteClock=0,bassParticles=[],bassPuffStarted=false;
+ function renderBassist(ctx,w,h,size,foot,dt){
+   const height=size*1.06,width=height*512/682,x=w*.30;
+   bassist.style.left=`${x}px`;bassist.style.top=`${foot}px`;bassist.style.width=`${width}px`;bassist.style.height=`${height}px`;
+   const beat=Math.floor((musicianElapsed+.0311447)/.24994228),index=beat%4;
+   bassistSprite.src=bassArt[index].src;
+   function puff(px,py,count,white){for(let i=0;i<count;i++)bassParticles.push({x:px,y:py,vx:(Math.random()-.5)*(white?130:45),vy:-(white?30:12)-Math.random()*(white?65:22),age:0,life:white?.65+Math.random()*.35:.25+Math.random()*.22,r:(white?height*.10:height*.018)*(1+Math.random()),white});}
+   if(!bassPuffStarted){bassPuffStarted=true;puff(x,foot-height*.43,26,true);}
+   if(beat!==bassLastBeat){if(index===0||index===2)puff(x-width*.33,foot-height*.012,9,false);bassLastBeat=beat;}
+   if(!menuMusic.paused){bassNoteClock+=dt;while(bassNoteClock>=.26){bassNoteClock-=.26;notes.push({bass:true,x:x+width*.24,y:foot-height*.42,vx:45+Math.random()*55,vy:-25-Math.random()*25,age:0,life:1.5+Math.random()*.6,angle:(Math.random()-.5)*.3,text:Math.random()<.5?'♪':'♫'});}}
+   for(const p of bassParticles){p.age+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;const r=p.r*(1+p.age);ctx.save();ctx.globalAlpha=Math.max(0,1-p.age/p.life)*.7;const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r);g.addColorStop(0,p.white?'#fff':'#95623b');g.addColorStop(1,p.white?'#ffffff00':'#95623b00');ctx.fillStyle=g;ctx.fillRect(p.x-r,p.y-r,r*2,r*2);ctx.restore();}bassParticles=bassParticles.filter(p=>p.age<p.life);
+ }
  let musicianStarted=false,musicianElapsed=0,musicianLastAudio=0,noteLast=0,noteClock=0,notes=[],musicianLastRAF=0;
  function musicianPose(t){if(t<4)return {key:`walk-${[6,3,4,3][Math.floor(t/.18)%4]}`,next:null,blend:0};const phase=(t-3.9688553)/.24994228,index=Math.floor(phase)%4,blend=Math.max(0,Math.min(1,((phase-Math.floor(phase))-.76)/.24));return {key:`bob-${index+1}`,next:`bob-${(index+1)%4+1}`,blend:blend*blend*(3-2*blend)};}
  function renderMusician(now){
    if(inGame){musician.hidden=true;notesCanvas.hidden=true;return;}
    const dt=musicianLastRAF?Math.min(.05,(now-musicianLastRAF)/1000):0;musicianLastRAF=now;
    const audioTime=menuMusic.currentTime||0;
-   if(!menuMusic.paused){let delta=audioTime-musicianLastAudio;if(delta<-.1)delta=(Number.isFinite(menuMusic.duration)?menuMusic.duration:0)-musicianLastAudio+audioTime;musicianElapsed+=Math.max(0,delta);musicianLastAudio=audioTime;}
+   if(!menuMusic.paused){let delta=audioTime-musicianLastAudio;if(delta<-.1){notes=notes.filter(n=>n.bass);delta=(Number.isFinite(menuMusic.duration)?menuMusic.duration:0)-musicianLastAudio+audioTime;}musicianElapsed+=Math.max(0,delta);musicianLastAudio=audioTime;}
    const w=root.clientWidth,h=root.clientHeight,size=Math.min(h*.33,w*.23),width=size*600/700,foot=river.getBoundingClientRect().top-2;
    const t=Math.min(1,musicianElapsed/4),start=w+width*.6,end=w*.70,x=start+(end-start)*t;
    musician.style.left=`${x}px`;musician.style.top=`${foot}px`;musician.style.width=`${width}px`;musician.style.height=`${size}px`;musician.style.opacity=String(Math.min(1,musicianElapsed/.3));
-   const pose=musicianPose(musicianElapsed);musicianA.src=musicianArt[pose.key].src;musicianA.style.opacity=String(1-pose.blend);musicianB.style.opacity=String(pose.blend);if(pose.next)musicianB.src=musicianArt[pose.next].src;
-   if(musicianElapsed>=4&&!menuMusic.paused){noteClock+=dt;while(noteClock-noteLast>=.26){noteLast+=.26;notes.push({x:x+width*.32,y:foot-size*.69,vx:45+Math.random()*55,vy:-25-Math.random()*25,age:0,life:1.5+Math.random()*.6,angle:(Math.random()-.5)*.3,text:Math.random()<.5?'♪':'♫'});}}
+   const trumpetPlaying=audioTime>=4&&!menuMusic.paused;const pose=musicianElapsed<4?musicianPose(musicianElapsed):trumpetPlaying?musicianPose(audioTime):{key:'bob-1',next:null,blend:0};musicianA.src=musicianArt[pose.key].src;musicianA.style.opacity=String(1-pose.blend);musicianB.style.opacity=String(pose.blend);if(pose.next)musicianB.src=musicianArt[pose.next].src;
+   if(trumpetPlaying){noteClock+=dt;while(noteClock-noteLast>=.26){noteLast+=.26;notes.push({x:x+width*.32,y:foot-size*.69,vx:45+Math.random()*55,vy:-25-Math.random()*25,age:0,life:1.5+Math.random()*.6,angle:(Math.random()-.5)*.3,text:Math.random()<.5?'♪':'♫'});}}
    if(notesCanvas.width!==w||notesCanvas.height!==h){notesCanvas.width=w;notesCanvas.height=h;}const ctx=notesCanvas.getContext('2d');ctx.clearRect(0,0,w,h);ctx.fillStyle='#000';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`bold ${Math.max(16,size*.1)}px Georgia,serif`;
+   renderBassist(ctx,w,h,size,foot,dt);
    for(const n of notes){n.age+=dt;n.x+=n.vx*dt;n.y+=n.vy*dt;n.vy+=85*dt;ctx.save();ctx.translate(n.x,n.y);ctx.rotate(n.angle+n.age*.2);ctx.globalAlpha=Math.min(1,(n.life-n.age)*3);ctx.fillText(n.text,0,0);ctx.restore();}notes=notes.filter(n=>n.age<n.life&&n.y<h);requestAnimationFrame(renderMusician);
  }
- function startMusician(){if(musicianStarted||inGame)return;musicianStarted=true;musicianElapsed=0;musicianLastAudio=menuMusic.currentTime||0;musician.hidden=false;notesCanvas.hidden=false;requestAnimationFrame(renderMusician);}
+ function startMusician(){if(musicianStarted||inGame)return;musicianStarted=true;musicianElapsed=0;musicianLastAudio=menuMusic.currentTime||0;musician.hidden=false;bassist.hidden=false;notesCanvas.hidden=false;requestAnimationFrame(renderMusician);}
 
  function crossfade(){const token=++fadeToken;menuMusic.volume=0;const p=menuMusic.play();const begin=()=>{startMusician();const born=performance.now(),initial=introMusic.volume;function step(now){if(inGame||token!==fadeToken)return;const t=Math.min(1,Math.max(0,(now-born)/1600));introMusic.volume=initial*Math.cos(t*Math.PI/2);menuMusic.volume=Math.sin(t*Math.PI/2);if(t<1)requestAnimationFrame(step);else{introMusic.pause();introMusic.currentTime=0;menuMusic.volume=1;}}requestAnimationFrame(step);};if(p?.then)p.then(begin,()=>{});else begin();}
  function enterSequence(){if(!started||!entryReady||entered||inGame)return;entered=true;enter.classList.add('intro-key-leaving');effect('catapult-fire');setTimeout(()=>{if(!inGame)launchStone();},120);setTimeout(()=>{enter.hidden=true;},450);setTimeout(()=>{if(inGame)return;menu.removeAttribute('inert');menu.setAttribute('aria-hidden','false');menu.classList.add('intro-menu-visible');single.focus({preventScroll:true});},15000);}
  enter.addEventListener('click',enterSequence);
  addEventListener('keydown',e=>{if(inGame||entered)return;if(e.code==='Space'){e.preventDefault();e.stopImmediatePropagation();if(!e.repeat){if(!started)play.click();else enterSequence();}}},{capture:true});
- single.addEventListener('click',()=>{menu.classList.add('intro-game-loading');inGame=true;fadeToken++;for(const a of [introMusic,menuMusic,...Object.values(sounds)]){a.pause();a.currentTime=0;}root.hidden=true;musician.hidden=true;notesCanvas.hidden=true;},{capture:true});
+ single.addEventListener('click',()=>{menu.classList.add('intro-game-loading');inGame=true;bassist.hidden=true;fadeToken++;for(const a of [introMusic,menuMusic,...Object.values(sounds)]){a.pause();a.currentTime=0;}root.hidden=true;musician.hidden=true;notesCanvas.hidden=true;},{capture:true});
  requestAnimationFrame(()=>requestAnimationFrame(()=>{const s=document.createElement('script');s.src='game.js?v=95';document.head.appendChild(s);}));
  function parchment(){const style=getComputedStyle(menu);root.style.backgroundColor=style.backgroundColor;root.style.backgroundImage=style.backgroundImage;} // Critical inline parchment remains authoritative; menu itself is transparent.
  paintProgress();
