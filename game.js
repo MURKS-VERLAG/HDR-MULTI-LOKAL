@@ -2091,14 +2091,14 @@
     const stamp=`${clock.generation}:${clock.cycle}:${pose.index}`;if(stamp===clock.stamp)return;clock.stamp=stamp;
     const damage=combatDamage(swordEquipped?equippedSwordId:null,pose.index);
     if(activeMapId==='ramsbach'){
-      for(const b of bears)if(bearInPlayerHitBox(state.player,attack.facing,b)&&damageBear(b,damage,state.player)){
+      for(const b of bears)if(b.x>=0&&b.x<=WORLD.width&&b.y>=0&&b.y<=WORLD.height&&bearInPlayerHitBox(state.player,attack.facing,b)&&damageBear(b,damage,state.player)){
         if(b.hp===0)playBearCombatSound('death',b);
         const body=bearCombatBody(b);rabbitSystem.numbers.push({x:b.x,y:b.y-(body?.height||400),age:0,damage,map:'ramsbach'});
       }
       return;
     }
-    for(const rabbit of rabbitSystem.rabbits)if(rabbitInFistBox(state.player,attack.facing,rabbit)&&damageRabbit(rabbit,damage,state.player)){playAnimalHitSound();rabbitSystem.numbers.push({x:rabbit.x,y:rabbit.y-170*RABBIT_RULES.size,age:0,damage});}
-    if(mole.mode==='surface'&&rabbitInFistBox(state.player,attack.facing,mole)&&damageMole(mole,damage)){playAnimalHitSound();rabbitSystem.numbers.push({x:mole.x,y:mole.y-110*MOLE_RULES.size,age:0,damage});}
+    for(const rabbit of rabbitSystem.rabbits)if(rabbit.x>=0&&rabbit.x<=WORLD.width&&rabbit.y>=0&&rabbit.y<=WORLD.height&&rabbitInFistBox(state.player,attack.facing,rabbit)&&damageRabbit(rabbit,damage,state.player)){playAnimalHitSound();rabbitSystem.numbers.push({x:rabbit.x,y:rabbit.y-170*RABBIT_RULES.size,age:0,damage});}
+    if(mole.x>=0&&mole.x<=WORLD.width&&mole.y>=0&&mole.y<=WORLD.height&&mole.mode==='surface'&&rabbitInFistBox(state.player,attack.facing,mole)&&damageMole(mole,damage)){playAnimalHitSound();rabbitSystem.numbers.push({x:mole.x,y:mole.y-110*MOLE_RULES.size,age:0,damage});}
   }
   const bearCombatVoices=new Set();
   const bearCombatSoundHistory={attack:{last:0,streak:0},death:{last:0,streak:0}};
@@ -2162,8 +2162,9 @@
     }
   }
   function updateRabbitSystem(dt){
-    updateMoleSystem(dt);
-    if(!state.playing||state.transitioning||inventoryState.open||teleportState.open||document.hidden)return;
+    const openingRabbits=opening.active&&opening.stage==='event'&&activeMapId==='oberkirch';
+    if(!openingRabbits)updateMoleSystem(dt);
+    if(!state.playing||(state.transitioning&&!openingRabbits)||inventoryState.open||teleportState.open||document.hidden)return;
     for(const r of rabbitSystem.rabbits){const previousMode=r.mode;stepRabbit(r,dt,Math.random,activeMapId==='oberkirch');if(previousMode==='dead'&&r.mode!=='dead')spawnMobExp('rabbit',r,'oberkirch');}
     for(let i=bearPlayerNumbers.length-1;i>=0;i--){const n=bearPlayerNumbers[i];n.age+=dt;if(n.age>=1.1)bearPlayerNumbers.splice(i,1);}
     for(let i=rabbitSystem.numbers.length-1;i>=0;i--){const n=rabbitSystem.numbers[i];n.age+=dt;if(n.age>=1.1)rabbitSystem.numbers.splice(i,1);}
@@ -2505,7 +2506,6 @@
       }
       sceneBaseContext.drawImage(sceneMapCache,0,0,WORLD.width,WORLD.height);
     }
-    drawOpeningBorders(sceneBaseContext,m,dpr);
     allerCavePresentation.active=allerCaveHighlighted(state.player);
     let list=[];
     if(activeMapId==='winterbach')list=[{p:WINTER_CASTLE,image:castleImage,front:castleBehindFoot(state.player.x,state.player.y)}];
@@ -2533,6 +2533,7 @@
     }
     renderBears(sceneBaseContext,sceneFrontContext);
     renderRabbits(sceneBaseContext,sceneFrontContext);renderPlayerExperience(sceneFrontContext);drawOpening(sceneFrontContext);
+    drawOpeningBorders(sceneFrontContext,m,dpr);
   }
   const weatherCanvas=document.createElement('canvas');weatherCanvas.setAttribute('aria-hidden','true');
   Object.assign(weatherCanvas.style,{position:'absolute',inset:'0',width:'100%',height:'100%',pointerEvents:'none',zIndex:'30',display:'none'});game.appendChild(weatherCanvas);
@@ -2734,8 +2735,9 @@
     const t=opening.thoughtTime;openingThought.style.opacity=String(Math.min(1,t/.35,Math.max(0,(5.8-t)/.45)));
   }
   function drawOpeningBorders(ctx,m,dpr){
-    if(!opening.active||!openingRiver.complete||!openingRiver.naturalWidth)return;
-    const left=m.tx,right=m.tx+WORLD.width*m.scale,length=WORLD.height*m.scale,top=m.ty,thickness=Math.min(95,Math.max(36,length*.1));
+    if(!state.playing||towerView.active||!openingRiver.complete||!openingRiver.naturalWidth)return;
+    const length=WORLD.height*m.scale,top=m.ty,thickness=Math.min(95,Math.max(36,length*.1)),shift=thickness*.08;
+    const left=m.tx-shift,right=m.tx+WORLD.width*m.scale+shift;
     ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);
     for(const [x,angle,visible] of [[left,Math.PI/2,left>-thickness],[right,-Math.PI/2,right<width+thickness]])if(visible){ctx.save();ctx.translate(x,top+length/2);ctx.rotate(angle);ctx.drawImage(openingRiver,-length/2,-thickness/2,length,thickness);ctx.restore();}ctx.restore();
   }
@@ -2839,7 +2841,7 @@
       if(opening.trotRestartAt!==null&&t>=opening.trotRestartAt){opening.trotRestartAt=null;if(opening.rider)openingPlay('trot');}
       if(opening.hitTime!==null){
         if(opening.kneelTime===null&&opening.farmer){
-          if(opening.slashFinished){opening.kneelTime=t;opening.farmer={...opening.farmer,key:'farmer-kneel',flip:false,perspective:1};}
+          if(opening.slashFinished||(Number.isFinite(openingAudio.slash.duration)&&openingAudio.slash.duration>0&&!openingAudio.slash.paused&&openingAudio.slash.currentTime>=Math.max(0,openingAudio.slash.duration-.2))){opening.kneelTime=t;opening.farmer={...opening.farmer,key:'farmer-kneel',flip:false,perspective:1};}
           else opening.farmer.flip=Math.floor((t-3)/.430)%2===1;
         }
         if(opening.kneelTime!==null){const age=t-opening.kneelTime;if(age>=1.5&&opening.farmer)opening.farmer.key='farmer-dead';if(age>=6.5)openingBeginEntry();}
