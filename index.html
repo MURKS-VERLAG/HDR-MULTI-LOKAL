@@ -116,11 +116,12 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d6b783}[hi
    await tween(1450,t=>{const ease=1-(1-t)*(1-t);stone.style.top=`${h+startSize*.55+(targetY-h-startSize*.55)*ease}px`;stone.style.width=`${startSize+(targetSize-startSize)*ease}px`;stone.style.transform=`translate(-50%,-50%) rotate(${t*70}deg)`;});if(inGame)return;
    reactionPose(1);effect('sun-splat');effect('stone-impact');spawnDust();
    await delay(1500);if(inGame)return;
-   // The impact pose and rock share their hold and fade; neither remains alone.
-   title.style.top=`${targetY}px`;title.classList.add('intro-title-visible');
-   reaction.style.transition='opacity 800ms ease';stone.style.opacity=0;reaction.style.opacity=0;crossfade();
-   await delay(800);if(inGame)return;stone.hidden=true;
+   // Hard-swap the sun while the opaque rock still covers the impact face.
    reaction.style.transition='none';reactionPose(2);reaction.style.opacity=1;
+   title.style.top=`${targetY}px`;title.classList.add('intro-title-visible');crossfade();
+   await delay(80);if(inGame)return;
+   stone.style.transition='opacity 300ms ease';stone.style.opacity=0;
+   await delay(300);if(inGame)return;stone.hidden=true;
    await delay(1100);if(inGame)return;reactionPose(3);await delay(1300);if(inGame)return;
    reaction.style.transition='none';
    await tween(1500,t=>{const glow=Math.sin(Math.PI*t*2)**2;reaction.style.filter=`brightness(${1+glow*5}) drop-shadow(0 0 ${24*glow}px #fff)`;reaction.style.opacity=String(1-t);});
