@@ -2712,13 +2712,13 @@
   const oberkirchMusic=new Audio('assets/audio/oberkirch-castle-jam.mp3');oberkirchMusic.preload='auto';oberkirchMusic.loop=true;oberkirchMusic.volume=.85;
   function syncOberkirchMusic(){if(state.playing&&activeMapId==='oberkirch'&&['thought','done'].includes(opening.stage)&&!document.hidden){if(oberkirchMusic.paused){const p=oberkirchMusic.play();if(p?.catch)p.catch(()=>{});}}else oberkirchMusic.pause();}
   document.addEventListener('visibilitychange',syncOberkirchMusic);
-  const openingThought=document.createElement('div');openingThought.id='opening-thought';openingThought.textContent="Oberkirch. Was für ein herrlich ruhiger Ort. Auf geht's!";
+  const openingThought=document.createElement('div');openingThought.id='opening-thought';openingThought.textContent="Oberkirch! Ein gar stilles Flecklein. Hier wird mir gewiss kein Leid widerfahren.";
   Object.assign(openingThought.style,{position:'absolute',zIndex:'100',maxWidth:'min(340px,75vw)',boxSizing:'border-box',padding:'15px 20px',background:'#fff',color:'#000',border:'3px solid #000',borderRadius:'30px',font:'18px/1.4 Georgia,serif',textAlign:'center',pointerEvents:'none',transform:'translate(-50%,-100%)',display:'none',opacity:'0'});game.appendChild(openingThought);
-  const thoughtStyle=document.createElement('style');thoughtStyle.textContent='#opening-thought::after{content:"";position:absolute;left:calc(50% - 6px);top:calc(100% + 5px);width:9px;height:9px;border:2px solid #000;border-radius:50%;background:#fff;box-shadow:5px 15px 0 -2px #fff,5px 15px 0 0 #000}';document.head.appendChild(thoughtStyle);
+  const thoughtStyle=document.createElement('style');thoughtStyle.textContent='#opening-thought::before,#opening-thought::after{content:"";position:absolute;border:2px solid #000;border-radius:50%;background:#fff}#opening-thought::before{left:calc(50% - 8px);top:calc(100% + 8px);width:12px;height:12px}#opening-thought::after{left:calc(50% + 4px);top:calc(100% + 35px);width:7px;height:7px}';document.head.appendChild(thoughtStyle);
   function startOpeningThought(){opening.stage='thought';opening.thoughtTime=0;updateAnimation(false,0);openingThought.style.display='block';openingThought.style.opacity='0';syncOberkirchMusic();}
   function finishOpeningThought(){openingThought.style.display='none';openingThought.style.opacity='0';opening.active=false;opening.stage='done';state.transitioning=false;keys.clear();lastTime=0;playerEl.style.visibility='visible';hudRoot.style.visibility='visible';updateAnimation(false,0);game.focus({preventScroll:true});}
-  function positionOpeningThought(c){if(opening.stage!=='thought')return;const m=sceneCamera(width,height,c.x,c.y,c.scale,1),x=state.player.x*m.scale+m.tx,y=(state.player.y-TARGET_VISIBLE_HEIGHT)*m.scale+m.ty-16;
-    openingThought.style.left=`${clamp(x,Math.min(180,width/2),width-Math.min(180,width/2))}px`;openingThought.style.top=`${Math.max(36,y)}px`;
+  function positionOpeningThought(c){if(opening.stage!=='thought')return;const m=sceneCamera(width,height,c.x,c.y,c.scale,1),x=state.player.x*m.scale+m.tx,y=(state.player.y-TARGET_VISIBLE_HEIGHT)*m.scale+m.ty-64;
+    openingThought.style.left=`${clamp(x,Math.min(180,width/2),width-Math.min(180,width/2))}px`;openingThought.style.top=`${y}px`;
     const t=opening.thoughtTime;openingThought.style.opacity=String(Math.min(1,t/.35,Math.max(0,(5.8-t)/.45)));
   }
   function drawOpeningBorders(ctx,m,dpr){if(!opening.active||!openingRiver.complete||!openingRiver.naturalWidth)return;const left=m.tx,right=m.tx+WORLD.width*m.scale;
@@ -2863,7 +2863,7 @@
   }
   startButton.addEventListener('click',async()=>{
     if(state.starting || state.playing) return;
-    state.starting=true;status.hidden=false;status.textContent='Oberkirch wird geöffnet …';
+    state.starting=true;status.hidden=true;status.textContent='';
     try {
       const jobs=[waitForImage(openingRiver),...Object.values(openingImages).map(waitForImage),prepareBearLitSprites(),...Object.values(moleImages).map(waitForImage),...Object.values(rabbitImages).map(waitForImage),prepareAttackAudio(),prepareBladeFireAtlas(),prepareFallingFlameAtlas(),waitForImage(flameSwordInventoryImage),waitForImage(swordBlade),waitForImage(swordInventoryImage),...hudImages.map(waitForImage),...inventoryGlows.map(waitForImage),...inventoryPages.map(waitForImage),...Object.values(helmetImages).flatMap(variant=>Object.values(variant).map(waitForImage)),waitForImage(map),waitForImage(sendSignImage),waitForImage(sendWheelImage),waitForImage(caveHeraldry.crest),waitForImage(allerCaveSource),waitForImage(allerMonasteryImage),waitForImage(oppGateImage),...sendImages.map(waitForImage),waitForImage(oppCastleImage),waitForImage(castleImage),...hubPropImages.map(waitForImage),...ramsFortImages.map(waitForImage),...westPropImages.map(waitForImage),...buildingPresentation.map(e=>waitForImage(e.crest))];
       for(const direction of ['down','left','right','up']) {
