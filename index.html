@@ -132,14 +132,14 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d6b783}[hi
  const musician=$('intro-musician'),musicianA=$('intro-musician-a'),musicianB=$('intro-musician-b'),notesCanvas=$('intro-music-notes');
  const musicianArt={};for(const [kind,indices] of [['walk',[6,3,4]],['bob',[1,2,3,4]]])for(const i of indices){const key=`${kind}-${i}`,im=new Image();im.src=`assets/intro/musician-${key}.webp`;musicianArt[key]=im;waitImage(im);}
  let musicianStarted=false,musicianElapsed=0,musicianLastAudio=0,noteLast=0,noteClock=0,notes=[],musicianLastRAF=0;
- function musicianPose(t){if(t<4)return {key:`walk-${[6,3,4,3][Math.floor(t/.18)%4]}`,next:null,blend:0};const phase=(t-4)/.3,index=Math.floor(phase)%4,blend=Math.min(1,(phase-Math.floor(phase))/.24);return {key:`bob-${index+1}`,next:`bob-${(index+1)%4+1}`,blend:blend*blend*(3-2*blend)};}
+ function musicianPose(t){if(t<4)return {key:`walk-${[6,3,4,3][Math.floor(t/.18)%4]}`,next:null,blend:0};const phase=(t-3.9688553)/.24994228,index=Math.floor(phase)%4,blend=Math.max(0,Math.min(1,((phase-Math.floor(phase))-.76)/.24));return {key:`bob-${index+1}`,next:`bob-${(index+1)%4+1}`,blend:blend*blend*(3-2*blend)};}
  function renderMusician(now){
    if(inGame){musician.hidden=true;notesCanvas.hidden=true;return;}
    const dt=musicianLastRAF?Math.min(.05,(now-musicianLastRAF)/1000):0;musicianLastRAF=now;
    const audioTime=menuMusic.currentTime||0;
    if(!menuMusic.paused){let delta=audioTime-musicianLastAudio;if(delta<-.1)delta=(Number.isFinite(menuMusic.duration)?menuMusic.duration:0)-musicianLastAudio+audioTime;musicianElapsed+=Math.max(0,delta);musicianLastAudio=audioTime;}
    const w=root.clientWidth,h=root.clientHeight,size=Math.min(h*.33,w*.23),width=size*600/700,foot=river.getBoundingClientRect().top-2;
-   const t=Math.min(1,musicianElapsed/4),start=w+width*.6,end=w*.63,x=start+(end-start)*t;
+   const t=Math.min(1,musicianElapsed/4),start=w+width*.6,end=w*.70,x=start+(end-start)*t;
    musician.style.left=`${x}px`;musician.style.top=`${foot}px`;musician.style.width=`${width}px`;musician.style.height=`${size}px`;musician.style.opacity=String(Math.min(1,musicianElapsed/.3));
    const pose=musicianPose(musicianElapsed);musicianA.src=musicianArt[pose.key].src;musicianA.style.opacity=String(1-pose.blend);musicianB.style.opacity=String(pose.blend);if(pose.next)musicianB.src=musicianArt[pose.next].src;
    if(musicianElapsed>=4&&!menuMusic.paused){noteClock+=dt;while(noteClock-noteLast>=.26){noteLast+=.26;notes.push({x:x+width*.32,y:foot-size*.69,vx:45+Math.random()*55,vy:-25-Math.random()*25,age:0,life:1.5+Math.random()*.6,angle:(Math.random()-.5)*.3,text:Math.random()<.5?'♪':'♫'});}}
