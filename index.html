@@ -63,6 +63,9 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d6b783}[hi
  'use strict';
  const $=id=>document.getElementById(id),root=$('intro'),play=$('intro-play'),enter=$('intro-enter'),menu=$('menu'),single=$('singleplayer'),ring=$('intro-progress'),sun=$('intro-sun'),sunWindow=$('intro-sun-window'),river=$('intro-river');
  const introMusic=new Audio('assets/intro/house-of-rising-sun.mp3'),menuMusic=new Audio('assets/intro/tavern-music.mp3');
+ let menuAudioContext=null;
+ function boostMenuMusic(){if(menuAudioContext){menuAudioContext.resume().catch(()=>{});return;}try{const AudioCtx=window.AudioContext||window.webkitAudioContext;if(!AudioCtx)return;const ctx=new AudioCtx(),source=ctx.createMediaElementSource(menuMusic),gain=ctx.createGain(),limiter=ctx.createDynamicsCompressor();gain.gain.value=2.2;limiter.threshold.value=-3;limiter.knee.value=4;limiter.ratio.value=12;limiter.attack.value=.003;limiter.release.value=.15;source.connect(gain);gain.connect(limiter);limiter.connect(ctx.destination);menuAudioContext=ctx;ctx.resume().catch(()=>{});}catch(error){console.warn('Menu audio boost unavailable',error);}}
+
  for(const a of [introMusic,menuMusic]){a.preload='auto';a.loop=true;a.volume=1;}
  const sounds=Object.fromEntries(['river-plop','catapult-load','engineer-catapult','catapult-fire'].map(k=>{const a=new Audio(`assets/intro/${k}.mp3`);a.preload='auto';return [k,a];}));
  let started=false,ready=false,arrived=false,entryReady=false,entered=false,inGame=false,tabReady=document.readyState==='complete',gameReady=false,done=0,total=3,pendingImages=0,fadeToken=0,clock=0,lastNow=0,nextFrame=0,lastSun=-1,bag=[],horizon=innerHeight*.64;
@@ -133,7 +136,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d6b783}[hi
    await tween(2800,t=>{const cycles=1.2*t+4*t*t,glow=Math.sin(Math.PI*cycles)**2;reaction.style.filter=`brightness(${1+glow*5}) drop-shadow(0 0 ${24*glow}px #fff)`;reaction.style.opacity=String((1-.7*glow)*(t<1300/2800?1:1-(t*2800-1300)/1500));});
    reaction.hidden=true;stone.hidden=true;
  }
- function start(){if(started||!ready)return;started=true;root.classList.add('intro-started');play.setAttribute('aria-disabled','true');buildRiverMask();nextSun();positionSun(0);
+ function start(){if(started||!ready)return;boostMenuMusic();started=true;root.classList.add('intro-started');play.setAttribute('aria-disabled','true');buildRiverMask();nextSun();positionSun(0);
  introMusic.volume=0;const warm=introMusic.play();if(warm?.then)warm.then(()=>{introMusic.pause();introMusic.currentTime=0;},()=>{});dropSequence();}
  play.addEventListener('click',start);
  const musician=$('intro-musician'),musicianA=$('intro-musician-a'),musicianB=$('intro-musician-b'),notesCanvas=$('intro-music-notes');
@@ -199,7 +202,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d6b783}[hi
  single.addEventListener('click',()=>{if(inGame||leavingGame)return;leavingGame=true;menu.classList.add('intro-game-loading');fadeToken++;for(const a of [introMusic,menuMusic,...Object.values(sounds)]){a.pause();a.currentTime=0;}
    const initialMask=`radial-gradient(circle at 50% 50%, transparent 0 ${Math.hypot(innerWidth,innerHeight)*.6}px, #000 ${Math.hypot(innerWidth,innerHeight)*.6+2}px)`;loadingIris.style.maskImage=initialMask;loadingIris.style.webkitMaskImage=initialMask;loadingIris.style.display='block';window.renchtalOpeningClose=new Promise(resolve=>{const born=performance.now();function close(now){const p=Math.min(1,(now-born)/950),r=Math.hypot(innerWidth,innerHeight)*.6*(1-p*p*(3-2*p));const mask=p>=1?'none':`radial-gradient(circle at 50% 50%, transparent 0 ${r}px, #000 ${r+2}px)`;loadingIris.style.maskImage=mask;loadingIris.style.webkitMaskImage=mask;if(p<1)requestAnimationFrame(close);else{inGame=true;root.hidden=true;musician.hidden=true;bassist.hidden=true;goat.hidden=true;notesCanvas.hidden=true;resolve();}}requestAnimationFrame(close);});
  },{capture:true});
- requestAnimationFrame(()=>requestAnimationFrame(()=>{const s=document.createElement('script');s.src='game.js?v=107';document.head.appendChild(s);}));
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{const s=document.createElement('script');s.src='game.js?v=108';document.head.appendChild(s);}));
  function parchment(){const style=getComputedStyle(menu);root.style.backgroundColor=style.backgroundColor;root.style.backgroundImage=style.backgroundImage;} // Critical inline parchment remains authoritative; menu itself is transparent.
  paintProgress();
 })();

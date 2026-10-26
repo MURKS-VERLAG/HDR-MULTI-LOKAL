@@ -2489,7 +2489,7 @@
   }
   function renderScene(c){
     const dpr=typeof devicePixelRatio==='number'?Math.min(2,Math.max(1,devicePixelRatio)):1;
-    const m=sceneCamera(width,height,camera.x,camera.y,c.scale,dpr);
+    const m=opening.active?{scale:c.scale,tx:width/2-camera.x*c.scale,ty:height/2-camera.y*c.scale}:sceneCamera(width,height,camera.x,camera.y,c.scale,dpr);
     world.style.transform=`matrix(${m.scale},0,0,${m.scale},${m.tx},${m.ty})`;
     for(const [canvas,ctx] of [[sceneBase,sceneBaseContext],[sceneFront,sceneFrontContext]]){
       const w=Math.round(width*dpr),h=Math.round(height*dpr);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
@@ -2663,7 +2663,7 @@
   }
   async function switchMap(route){
     stopAttack();
-    if(state.transitioning)return;oberkirchMusic.pause();
+    if(state.transitioning)return;oberkirchMusic.pause();winterbachMusic.pause();towerMusic.pause();
     state.transitioning=true;keys.clear();clearIceMotion();updateAnimation(false,0);stopTreeLeaves();
     const previous={map:activeMapId,x:state.player.x,y:state.player.y};
     mapCurtain.style.display='block';mapCurtain.style.maskImage='none';mapCurtain.style.webkitMaskImage='none';
@@ -2710,7 +2710,7 @@
   openingAudio.slash.addEventListener('ended',()=>{if(opening.active&&opening.stage==='event')opening.trotRestartAt=opening.time+.5;});
   const openingRiver=new Image();openingRiver.src='assets/intro/river.webp';
   const oberkirchMusic=new Audio('assets/audio/oberkirch-castle-jam.mp3');oberkirchMusic.preload='auto';oberkirchMusic.loop=true;oberkirchMusic.volume=.85;
-  function syncOberkirchMusic(){if(state.playing&&activeMapId==='oberkirch'&&['thought','done'].includes(opening.stage)&&!document.hidden){if(oberkirchMusic.paused){const p=oberkirchMusic.play();if(p?.catch)p.catch(()=>{});}}else oberkirchMusic.pause();}
+  function syncOberkirchMusic(){let selected=null;if(state.playing&&!document.hidden){if(towerView.active)selected=towerMusic;else if(!state.transitioning&&activeMapId==='winterbach')selected=winterbachMusic;else if(activeMapId==='oberkirch'&&['thought','done'].includes(opening.stage))selected=oberkirchMusic;}for(const audio of [oberkirchMusic,winterbachMusic,towerMusic]){if(audio===selected){if(audio.paused){const p=audio.play();if(p?.catch)p.catch(()=>{});}}else audio.pause();}}
   document.addEventListener('visibilitychange',syncOberkirchMusic);
   const openingThought=document.createElement('div');openingThought.id='opening-thought';openingThought.textContent="Oberkirch! Ein gar stilles Flecklein. Hier wird mir gewiss kein Leid widerfahren.";
   Object.assign(openingThought.style,{position:'absolute',zIndex:'100',maxWidth:'min(340px,75vw)',boxSizing:'border-box',padding:'15px 20px',background:'#fff',color:'#000',border:'3px solid #000',borderRadius:'30px',font:'18px/1.4 Georgia,serif',textAlign:'center',pointerEvents:'none',transform:'translate(-50%,-100%)',display:'none',opacity:'0'});game.appendChild(openingThought);
@@ -2722,9 +2722,42 @@
     const t=opening.thoughtTime;openingThought.style.opacity=String(Math.min(1,t/.35,Math.max(0,(5.8-t)/.45)));
   }
   function drawOpeningBorders(ctx,m,dpr){if(!opening.active||!openingRiver.complete||!openingRiver.naturalWidth)return;const left=m.tx,right=m.tx+WORLD.width*m.scale;
-    ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);const length=WORLD.height*m.scale,thickness=Math.min(95,Math.max(36,length*.1));
+    ctx.save();const progress=opening.stage==='entry'?clamp(opening.entryTime/(opening.entryDuration*.55),0,1):0;ctx.globalAlpha=1-progress*progress*(3-2*progress);ctx.setTransform(dpr,0,0,dpr,0,0);const length=WORLD.height*m.scale,thickness=Math.min(95,Math.max(36,length*.1));
     for(const [x,angle,visible] of [[left,Math.PI/2,left>1],[right,-Math.PI/2,right<width-1]])if(visible){ctx.save();ctx.translate(x,m.ty+length/2);ctx.rotate(angle);ctx.drawImage(openingRiver,-length/2,-thickness/2,length,thickness);ctx.restore();}ctx.restore();
   }
+  const towerView={active:false,busy:false};
+  const winterbachMusic=new Audio('assets/audio/winterbach-minstrelosity.mp3'),towerMusic=new Audio('assets/audio/winterbach-tower-polka.mp3');
+  for(const a of [winterbachMusic,towerMusic]){a.preload='auto';a.loop=true;a.volume=.85;}
+  const towerPane=document.createElement('section');towerPane.hidden=true;towerPane.setAttribute('aria-label','Turris Lapidea');towerPane.setAttribute('role','dialog');towerPane.setAttribute('aria-modal','true');
+  Object.assign(towerPane.style,{position:'absolute',inset:'0',zIndex:'4000',overflow:'hidden',backgroundColor:'#d6b783',pointerEvents:'auto'});
+  const towerFrame=document.createElement('div');Object.assign(towerFrame.style,{position:'absolute',inset:'-3px',border:'clamp(48px,11vmin,140px) solid transparent',borderImage:"url('assets/intro/tapestry-frame.webp') 140 stretch",pointerEvents:'none',zIndex:'2'});
+  const towerArt=new Image();towerArt.src='assets/interiors/winterbach-tapestry.webp';towerArt.alt='Winterbacher Turm';towerArt.draggable=false;
+  Object.assign(towerArt.style,{position:'absolute',left:'50%',top:'50%',transform:'translate(-50%,-50%)',width:'min(430px,43vw)',maxHeight:'46vh',height:'auto',objectFit:'contain',pointerEvents:'none'});
+  towerPane.appendChild(towerArt);towerPane.appendChild(towerFrame);game.appendChild(towerPane);
+  const towerPrompt=document.createElement('div');towerPrompt.textContent='EINTRETEN?';Object.assign(towerPrompt.style,{position:'absolute',left:'0',top:'100%',width:'100%',paddingTop:'25px',font:'bold 78px/1.2 Georgia,serif',color:'#fff',webkitTextStroke:'4px #111',paintOrder:'stroke fill',textShadow:'0 0 15px #fff',whiteSpace:'nowrap'});buildingPresentation[0].label.appendChild(towerPrompt);
+  function towerGateAvailable(){return state.playing&&!opening.active&&!state.transitioning&&!towerView.active&&!towerView.busy&&activeMapId==='winterbach'&&castleGateHighlighted(state.player);}
+  function castleGlowInteraction(){return buildingPresentation.some(e=>e.active);}
+  function closeGameIris(){return new Promise(resolve=>{mapCurtain.style.display='block';mapCurtain.style.transition='none';mapCurtain.style.opacity='1';const began=performance.now();const paint=now=>{const p=clamp((now-began)/950,0,1),r=Math.hypot(width,height)*.6*(1-p*p*(3-2*p));const mask=p>=1?'none':`radial-gradient(circle at 50% 50%, transparent 0 ${r}px, #000 ${r+2}px)`;mapCurtain.style.maskImage=mask;mapCurtain.style.webkitMaskImage=mask;if(p<1)requestAnimationFrame(paint);else resolve();};paint(began);});}
+  function clearGameIris(){mapCurtain.style.display='none';mapCurtain.style.opacity='0';mapCurtain.style.maskImage='none';mapCurtain.style.webkitMaskImage='none';}
+  async function enterTowerView(){
+    if(!towerGateAvailable())return;towerView.busy=true;state.transitioning=true;stopAttack();keys.clear();stopTreeLeaves();syncOberkirchMusic();
+    try{await closeGameIris();await waitForImage(towerArt);const source=document.getElementById('intro');if(source){const style=getComputedStyle(source);towerPane.style.backgroundColor=style.backgroundColor;towerPane.style.backgroundImage=style.backgroundImage;}
+      towerView.active=true;towerPane.hidden=false;playerEl.style.visibility='hidden';hudRoot.style.visibility='hidden';syncOberkirchMusic();await openMapIris();
+    }catch(error){console.error('Tower view failed',error);towerView.active=false;towerPane.hidden=true;playerEl.style.visibility='visible';hudRoot.style.visibility='visible';state.transitioning=false;syncOberkirchMusic();}
+    finally{clearGameIris();towerView.busy=false;keys.clear();lastTime=0;}
+  }
+  async function leaveTowerView(){
+    if(!towerView.active||towerView.busy)return;towerView.busy=true;
+    try{await closeGameIris();towerView.active=false;towerPane.hidden=true;playerEl.style.visibility='visible';hudRoot.style.visibility='visible';syncOberkirchMusic();render();await openMapIris();}
+    finally{clearGameIris();towerView.busy=false;state.transitioning=false;keys.clear();lastTime=0;syncOberkirchMusic();game.focus({preventScroll:true});}
+  }
+  game.addEventListener('click',event=>{
+    if(event.button!==0||!towerGateAvailable()||inventoryState.open||teleportState.open)return;
+    const m=sceneCamera(width,height,camera.x,camera.y,camera.scale,1),bounds=game.getBoundingClientRect(),sx=event.clientX-bounds.left,sy=event.clientY-bounds.top,wx=(sx-m.tx)/m.scale,wy=(sy-m.ty)/m.scale,p=WINTER_CASTLE;
+    const within=el=>{const r=el.getBoundingClientRect();return event.clientX>=r.left&&event.clientX<=r.right&&event.clientY>=r.top&&event.clientY<=r.bottom;};
+    if((wx>=p.x-80&&wx<=p.x+p.width+80&&wy>=p.y-80&&wy<=p.y+p.height+80)||within(buildingPresentation[0].label)||within(towerPrompt)){event.preventDefault();enterTowerView();}
+  });
+
   const openingPausedAudio=new Set();
   document.addEventListener('visibilitychange',()=>{if(!opening.active)return;if(document.hidden){for(const audio of Object.values(openingAudio))if(!audio.paused){openingPausedAudio.add(audio);audio.pause();}}else{for(const audio of openingPausedAudio){const p=audio.play();if(p?.catch)p.catch(()=>{});}openingPausedAudio.clear();}});
   function startOpening(){
@@ -2774,8 +2807,8 @@
     const full={x:WORLD.width/2,y:WORLD.height/2,scale:Math.min(width/WORLD.width,height/WORLD.height)};
     if(opening.stage==='thought')return coverCamera(width,height,state.player.x,state.player.y-PLAYER.height*.5);
     if(opening.stage!=='entry')return full;
-    const p=clamp(opening.entryTime/opening.entryDuration,0,1),e=p*p*(3-2*p),target=openingPoint(opening.entryEnd),normal=coverCamera(width,height,target.x,target.y-PLAYER.height*.5);
-    return {x:full.x+(normal.x-full.x)*e,y:full.y+(normal.y-full.y)*e,scale:full.scale+(normal.scale-full.scale)*e};
+    const p=clamp(opening.entryTime/opening.entryDuration,0,1),z=clamp(p/.55,0,1),pan=clamp((p-.55)/.45,0,1),zoomEase=z*z*(3-2*z),panEase=pan*pan*(3-2*pan),target=openingPoint(opening.entryEnd),normal=coverCamera(width,height,target.x,target.y-PLAYER.height*.5);
+    return {x:full.x+(normal.x-full.x)*panEase,y:full.y+(normal.y-full.y)*panEase,scale:full.scale+(normal.scale-full.scale)*zoomEase};
   }
   function drawOpeningActor(ctx,actor){if(!actor)return;const image=openingImages[actor.key];if(!image.complete||!image.naturalWidth)return;ctx.save();ctx.translate(actor.x,actor.y);ctx.scale((actor.flip?-1:1)*actor.perspective,actor.perspective);ctx.drawImage(image,-500,-1080,1000,1120);ctx.restore();}
   function drawOpening(ctx){
@@ -2865,7 +2898,7 @@
     if(state.starting || state.playing) return;
     state.starting=true;status.hidden=true;status.textContent='';
     try {
-      const jobs=[waitForImage(openingRiver),...Object.values(openingImages).map(waitForImage),prepareBearLitSprites(),...Object.values(moleImages).map(waitForImage),...Object.values(rabbitImages).map(waitForImage),prepareAttackAudio(),prepareBladeFireAtlas(),prepareFallingFlameAtlas(),waitForImage(flameSwordInventoryImage),waitForImage(swordBlade),waitForImage(swordInventoryImage),...hudImages.map(waitForImage),...inventoryGlows.map(waitForImage),...inventoryPages.map(waitForImage),...Object.values(helmetImages).flatMap(variant=>Object.values(variant).map(waitForImage)),waitForImage(map),waitForImage(sendSignImage),waitForImage(sendWheelImage),waitForImage(caveHeraldry.crest),waitForImage(allerCaveSource),waitForImage(allerMonasteryImage),waitForImage(oppGateImage),...sendImages.map(waitForImage),waitForImage(oppCastleImage),waitForImage(castleImage),...hubPropImages.map(waitForImage),...ramsFortImages.map(waitForImage),...westPropImages.map(waitForImage),...buildingPresentation.map(e=>waitForImage(e.crest))];
+      const jobs=[waitForImage(towerArt),waitForImage(openingRiver),...Object.values(openingImages).map(waitForImage),prepareBearLitSprites(),...Object.values(moleImages).map(waitForImage),...Object.values(rabbitImages).map(waitForImage),prepareAttackAudio(),prepareBladeFireAtlas(),prepareFallingFlameAtlas(),waitForImage(flameSwordInventoryImage),waitForImage(swordBlade),waitForImage(swordInventoryImage),...hudImages.map(waitForImage),...inventoryGlows.map(waitForImage),...inventoryPages.map(waitForImage),...Object.values(helmetImages).flatMap(variant=>Object.values(variant).map(waitForImage)),waitForImage(map),waitForImage(sendSignImage),waitForImage(sendWheelImage),waitForImage(caveHeraldry.crest),waitForImage(allerCaveSource),waitForImage(allerMonasteryImage),waitForImage(oppGateImage),...sendImages.map(waitForImage),waitForImage(oppCastleImage),waitForImage(castleImage),...hubPropImages.map(waitForImage),...ramsFortImages.map(waitForImage),...westPropImages.map(waitForImage),...buildingPresentation.map(e=>waitForImage(e.crest))];
       for(const direction of ['down','left','right','up']) {
         const image=new Image();image.src=`assets/player/stand-${direction}.png`;
         images[`stand-${direction}`]=image;jobs.push(waitForImage(image));
@@ -2891,6 +2924,7 @@
   // MEHRSPIELER (LOKAL) deliberately has no click handler, navigation or action.
   addEventListener('keydown',event=>{
     if(!state.playing) return;
+    if(towerView.active||towerView.busy){event.preventDefault();if(event.code==='Escape'&&!event.repeat)leaveTowerView();return;}
     if(opening.active){if(['Space','Tab','KeyI','KeyT','KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.code))event.preventDefault();return;}
     if(event.code==='Tab'){event.preventDefault();if(!event.repeat)cycleHud();return;}
     if(event.code==='KeyI'){event.preventDefault();if(!event.repeat)setInventoryOpen(!inventoryState.open);return;}
@@ -2898,13 +2932,13 @@
     if(event.code==='KeyT'){event.preventDefault();if(!event.repeat)toggleTeleport();return;}
     if(teleportState.open||inventoryState.open||state.transitioning)return;
     if(state.autoTravel)return;
-    if(event.code==='Space'){event.preventDefault();if(!event.repeat)startAttack();return;}
+    if(event.code==='Space'){event.preventDefault();if(!event.repeat){if(towerGateAvailable())enterTowerView();else if(!castleGlowInteraction())startAttack();}return;}
     if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(event.code)) {
       event.preventDefault();keys.add(event.code);
     }
   },{passive:false});
   addEventListener('keyup',event=>{
-    if(opening.active){keys.delete(event.code);return;}
+    if(opening.active||towerView.active||towerView.busy){keys.delete(event.code);return;}
     if(event.code==='Space')stopAttack();
     keys.delete(event.code);
     if(!attack.active && state.playing && !['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].some(k=>keys.has(k))) {updateAnimation(false,0);stopTreeLeaves();}
