@@ -2763,12 +2763,35 @@
   towerContent.appendChild(towerUnits);towerPane.appendChild(towerContent);towerPane.appendChild(towerFrame);game.appendChild(towerPane);
   const houseDoor=document.createElement('button'),houseDoorImage=new Image();
   houseDoor.type='button';houseDoor.setAttribute('aria-label','Tür');
-  Object.assign(houseDoor.style,{position:'absolute',left:'calc(clamp(48px,11vmin,140px) + 8px)',bottom:'calc(clamp(48px,11vmin,140px) + 8px)',width:'clamp(70px,12vmin,125px)',padding:'0',border:'0',background:'transparent',zIndex:'3',cursor:'pointer'});
+  Object.assign(houseDoor.style,{position:'absolute',left:'calc(clamp(48px,11vmin,140px) + 8px)',bottom:'calc(clamp(48px,11vmin,140px) + 8px)',width:'clamp(70px,12vmin,125px)',padding:'0',border:'0',background:'transparent',zIndex:'3',cursor:'pointer',outline:'none',boxShadow:'none',appearance:'none',webkitAppearance:'none'});
   Object.assign(houseDoorImage.style,{width:'100%',height:'auto',display:'block',transition:'filter 180ms ease'});houseDoorImage.src='assets/interiors/house-door-closed.webp';houseDoor.appendChild(houseDoorImage);towerPane.appendChild(houseDoor);
   const houseDoorOpen=new Image();houseDoorOpen.src='assets/interiors/house-door-open.webp';let houseDoorHover=false;
   function resetHouseDoor(){houseDoorHover=false;houseDoorImage.src='assets/interiors/house-door-closed.webp';houseDoorImage.style.filter='none';}
   houseDoor.addEventListener('pointerenter',()=>{if(houseDoorHover||!towerView.active)return;houseDoorHover=true;houseDoorImage.src=houseDoorOpen.src;const color=towerView.kind==='nuwenstein'?'#24cbd5':towerView.kind==='sneite'?'#4cef3a':'#fff';houseDoorImage.style.filter=`drop-shadow(0 0 5px ${color}) drop-shadow(0 0 10px ${color})`;const sound=new Audio('assets/audio/house-door-open.mp3');sound.volume=.9;const playing=sound.play();if(playing?.catch)playing.catch(()=>{});});
   houseDoor.addEventListener('pointerleave',resetHouseDoor);
+  houseDoor.addEventListener('pointerdown',event=>{event.preventDefault();});
+  houseDoor.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();if(towerView.active&&!towerView.busy)leaveTowerView();});
+  houseDoor.addEventListener('keydown',event=>{if(event.code==='Space'){event.preventDefault();event.stopPropagation();}});
+  const snowmanFrames=Array.from({length:6},(_,i)=>{const img=new Image();img.src=`assets/interiors/snowman-${i+1}.webp`;return img;});
+  const snowmanCanvas=document.createElement('canvas');snowmanCanvas.setAttribute('aria-hidden','true');Object.assign(snowmanCanvas.style,{position:'absolute',inset:'0',width:'100%',height:'100%',zIndex:'3',pointerEvents:'none',display:'none'});towerPane.appendChild(snowmanCanvas);
+  const snowmanContext=snowmanCanvas.getContext('2d');let snowmanSerial=0;
+  function stopHouseSnowman(){snowmanSerial++;snowmanCanvas.style.display='none';snowmanContext.clearRect(0,0,snowmanCanvas.width,snowmanCanvas.height);}
+  function startHouseSnowman(){
+    const serial=++snowmanSerial,beat=.489;let previous=performance.now(),elapsed=0,lastFrame=-1,notes=[],dust=[];snowmanCanvas.style.display='block';
+    function frame(now){if(serial!==snowmanSerial||!towerView.active||towerView.kind!=='winterbach')return;
+      const dt=document.hidden?0:Math.min(.05,(now-previous)/1000);previous=now;elapsed+=dt;
+      const w=towerPane.clientWidth,h=towerPane.clientHeight,dpr=Math.min(2,devicePixelRatio||1),cw=Math.round(w*dpr),ch=Math.round(h*dpr);if(snowmanCanvas.width!==cw||snowmanCanvas.height!==ch){snowmanCanvas.width=cw;snowmanCanvas.height=ch;}
+      const c=snowmanContext;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,w,h);
+      const border=Math.min(140,Math.max(48,Math.min(w,h)*.11))+12,size=Math.min(165,h*.21,w*.16),right=w-border-10,foot=h-border-8,x=right-size,y=foot-size;
+      const step=Math.floor(elapsed/(beat/2)),index=step%6,mirror=Math.floor(step/6)%2===1;
+      c.save();c.beginPath();c.rect(border,border,Math.max(0,w-2*border),Math.max(0,h-2*border));c.clip();
+      const img=snowmanFrames[index];if(img.complete&&img.naturalWidth){c.save();if(mirror){c.translate(2*x+size,0);c.scale(-1,1);}c.drawImage(img,x,y,size,size);c.restore();}
+      if(step!==lastFrame){if(index%2===1){const fx=mirror?x+size*.28:x+size*.72;for(let i=0;i<8;i++)dust.push({x:fx+(Math.random()-.5)*size*.10,y:foot-size*.025,vx:(Math.random()-.5)*size*.25,vy:-Math.random()*size*.16,age:0,life:.35+Math.random()*.2,r:2+Math.random()*size*.025});}if(index===1||index===4){const nx=mirror?x+size*.12:x+size*.88;notes.push({x:nx,y:y+size*.34,vx:(mirror?-1:1)*size*.35,vy:-size*.09,age:0,life:1.2,text:Math.random()<.5?'♪':'♫'});}lastFrame=step;}
+      for(const d of dust){d.age+=dt;d.x+=d.vx*dt;d.y+=d.vy*dt;d.vy+=size*.35*dt;c.globalAlpha=Math.max(0,1-d.age/d.life)*.75;c.fillStyle='#fff';c.beginPath();c.arc(d.x,d.y,d.r*(1+d.age),0,Math.PI*2);c.fill();}dust=dust.filter(d=>d.age<d.life);
+      c.fillStyle='#222';c.font=`bold ${Math.max(13,size*.11)}px Georgia`;for(const n of notes){n.age+=dt;n.x+=n.vx*dt;n.y+=n.vy*dt;n.vy+=size*.2*dt;c.globalAlpha=Math.max(0,1-n.age/n.life);c.fillText(n.text,n.x,n.y);}notes=notes.filter(n=>n.age<n.life);c.globalAlpha=1;c.restore();requestAnimationFrame(frame);
+    }requestAnimationFrame(frame);
+  }
+
   const towerSnow=document.createElement('canvas');towerSnow.setAttribute('aria-hidden','true');Object.assign(towerSnow.style,{position:'absolute',inset:'0',width:'100%',height:'100%',zIndex:'1',pointerEvents:'none'});towerPane.appendChild(towerSnow);
   const towerSnowContext=towerSnow.getContext('2d');let towerSnowSurface=[],towerSnowFlakes=[],towerSnowSerial=0;
   function prepareTowerSnow(){
@@ -2818,13 +2841,13 @@
   async function enterTowerView(){
     if(!towerGateAvailable())return;const index=selectedHouseIndex(),kind=index===1?'nuwenstein':index===2?'sneite':'winterbach';towerView.busy=true;state.transitioning=true;stopAttack();keys.clear();stopTreeLeaves();
     try{await closeGameIris();configureHouse(kind);await Promise.all([waitForImage(towerArt),...towerUnitElements.map(({unit})=>waitForImage(unit))]);const source=document.getElementById('intro');if(source){const style=getComputedStyle(source);towerPane.style.backgroundColor=style.backgroundColor;towerPane.style.backgroundImage=style.backgroundImage;}
-      towerView.active=true;towerPane.hidden=false;playerEl.style.visibility='hidden';hudRoot.style.visibility='hidden';if(kind==='winterbach')startTowerSnow();await openMapIris();
-    }catch(error){console.error('Tower view failed',error);ingameMusicFade.between=false;stopTowerSnow();towerView.active=false;towerPane.hidden=true;playerEl.style.visibility='visible';hudRoot.style.visibility='visible';state.transitioning=false;syncOberkirchMusic();}
+      towerView.active=true;towerPane.hidden=false;playerEl.style.visibility='hidden';hudRoot.style.visibility='hidden';if(kind==='winterbach'){startTowerSnow();startHouseSnowman();}await openMapIris();
+    }catch(error){console.error('Tower view failed',error);ingameMusicFade.between=false;stopTowerSnow();stopHouseSnowman();towerView.active=false;towerPane.hidden=true;playerEl.style.visibility='visible';hudRoot.style.visibility='visible';state.transitioning=false;syncOberkirchMusic();}
     finally{clearGameIris();towerView.busy=false;keys.clear();lastTime=0;}
   }
   async function leaveTowerView(){
     if(!towerView.active||towerView.busy)return;towerView.busy=true;
-    try{await closeGameIris();resetHouseDoor();towerView.active=false;towerPane.hidden=true;stopTowerSnow();playerEl.style.visibility='visible';hudRoot.style.visibility='visible';render();await openMapIris();}
+    try{await closeGameIris();resetHouseDoor();stopHouseSnowman();towerView.active=false;towerPane.hidden=true;stopTowerSnow();playerEl.style.visibility='visible';hudRoot.style.visibility='visible';render();await openMapIris();}
     finally{clearGameIris();towerView.busy=false;state.transitioning=false;keys.clear();lastTime=0;syncOberkirchMusic();game.focus({preventScroll:true});}
   }
   game.addEventListener('click',event=>{
