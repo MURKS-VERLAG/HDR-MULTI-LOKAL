@@ -2427,7 +2427,7 @@
   // Stable, fixed-size heraldry and cached raster glow. No filter changes during play.
   const buildingPresentation=[
     {map:'winterbach',prop:WINTER_CASTLE,image:castleImage,title:'TURRIS LAPIDEA',crest:'assets/ui/crest-turris-lapidea.png',fill:'#fff',outline:'#111',glow:'#fff',brightness:1.12},
-    {map:'hubacker',prop:HUB_PROPS[0],image:hubPropImages[0],title:'NUWENSTEIN',crest:'assets/ui/crest-nuwenstein.png',fill:'#080808',outline:'#d6ae42',glow:'#333',brightness:.92},
+    {map:'hubacker',prop:HUB_PROPS[0],image:hubPropImages[0],title:'NUWENSTEIN',crest:'assets/ui/crest-nuwenstein.png',fill:'#080808',outline:'#d6ae42',glow:'#24cbd5',brightness:1.08},
     {map:'hubacker',prop:HUB_PROPS[1],image:hubPropImages[1],title:'HUWENEST',offsetY:-350,crest:'assets/ui/crest-huwenest.png',fill:'#259238',outline:'#d7b58a',glow:'#4cef3a',brightness:1.08},
     {map:'ramsbach',prop:RAMS_FORTS[0],image:ramsFortImages[0],title:'SCHLÖSSLE ZU RAMESBACH',crest:'assets/ui/crest-ramesbach-hellrot.png',fill:'#fff',outline:'#ff696e',titleGlow:'#fff',glow:'#ff696e',glowOuter:'#fff',brightness:1.08},
     {map:'ramsbach',prop:RAMS_FORTS[1],image:ramsFortImages[1],title:'BERENBACH',crest:'assets/ui/crest-berenbach.png',fill:'#fff',outline:'#c51e29',glow:'#ff555b',brightness:1.1},
@@ -2761,6 +2761,14 @@
   const towerUnitElements=[];
   for(const [i,number] of [[3,1],[1,2],[2,2]]){const slot=document.createElement('div'),unit=new Image(),count=document.createElement('div');unit.src=`assets/interiors/winterbach-unit-${i}.webp`;unit.alt=`Winterbacher Einheit ${i}`;Object.assign(slot.style,{textAlign:'center',width:'clamp(55px,6vw,100px)'});Object.assign(unit.style,{width:'100%',height:'clamp(60px,12vh,125px)',objectFit:'contain',display:'block'});count.textContent=String(number);Object.assign(count.style,{font:'bold clamp(20px,2vw,30px) Georgia,serif',color:'#000',webkitTextStroke:'2px #fff',paintOrder:'stroke fill'});slot.appendChild(unit);slot.appendChild(count);towerUnits.appendChild(slot);towerUnitElements.push({unit,count});}
   towerContent.appendChild(towerUnits);towerPane.appendChild(towerContent);towerPane.appendChild(towerFrame);game.appendChild(towerPane);
+  const houseDoor=document.createElement('button'),houseDoorImage=new Image();
+  houseDoor.type='button';houseDoor.setAttribute('aria-label','Tür');
+  Object.assign(houseDoor.style,{position:'absolute',left:'calc(clamp(48px,11vmin,140px) + 8px)',bottom:'calc(clamp(48px,11vmin,140px) + 8px)',width:'clamp(70px,12vmin,125px)',padding:'0',border:'0',background:'transparent',zIndex:'3',cursor:'pointer'});
+  Object.assign(houseDoorImage.style,{width:'100%',height:'auto',display:'block',transition:'filter 180ms ease'});houseDoorImage.src='assets/interiors/house-door-closed.webp';houseDoor.appendChild(houseDoorImage);towerPane.appendChild(houseDoor);
+  const houseDoorOpen=new Image();houseDoorOpen.src='assets/interiors/house-door-open.webp';let houseDoorHover=false;
+  function resetHouseDoor(){houseDoorHover=false;houseDoorImage.src='assets/interiors/house-door-closed.webp';houseDoorImage.style.filter='none';}
+  houseDoor.addEventListener('pointerenter',()=>{if(houseDoorHover||!towerView.active)return;houseDoorHover=true;houseDoorImage.src=houseDoorOpen.src;const color=towerView.kind==='nuwenstein'?'#24cbd5':towerView.kind==='sneite'?'#4cef3a':'#fff';houseDoorImage.style.filter=`drop-shadow(0 0 5px ${color}) drop-shadow(0 0 10px ${color})`;const sound=new Audio('assets/audio/house-door-open.mp3');sound.volume=.9;const playing=sound.play();if(playing?.catch)playing.catch(()=>{});});
+  houseDoor.addEventListener('pointerleave',resetHouseDoor);
   const towerSnow=document.createElement('canvas');towerSnow.setAttribute('aria-hidden','true');Object.assign(towerSnow.style,{position:'absolute',inset:'0',width:'100%',height:'100%',zIndex:'1',pointerEvents:'none'});towerPane.appendChild(towerSnow);
   const towerSnowContext=towerSnow.getContext('2d');let towerSnowSurface=[],towerSnowFlakes=[],towerSnowSerial=0;
   function prepareTowerSnow(){
@@ -2787,7 +2795,7 @@
   const sneiteArt=new Image();sneiteArt.src='assets/interiors/sneite-huwenest.webp';
   const sneiteUnits=[1,2,3].map(i=>{const im=new Image();im.src=`assets/interiors/sneite-unit-${i}.webp`;return im;});
   function configureHouse(kind){
-    const sneite=kind==='sneite',nuwen=kind==='nuwenstein';towerView.kind=kind;
+    const sneite=kind==='sneite',nuwen=kind==='nuwenstein';towerView.kind=kind;resetHouseDoor();
     towerTitle.textContent=nuwen?'HAUS NUWENSTEIN':sneite?'HAUS SNEITE':'HAUS WINTERBACH';
     towerSubtitle.textContent=nuwen?'NUWENSTEIN':sneite?'HUWENEST':'TURRIS LAPIDEA';
     for(const title of [towerTitle,towerSubtitle]){title.style.color=nuwen?'#168f9b':sneite?'#157a32':'#000';title.style.webkitTextStroke=nuwen?'3px #000':'3px #fff';}
@@ -2816,7 +2824,7 @@
   }
   async function leaveTowerView(){
     if(!towerView.active||towerView.busy)return;towerView.busy=true;
-    try{await closeGameIris();towerView.active=false;towerPane.hidden=true;stopTowerSnow();playerEl.style.visibility='visible';hudRoot.style.visibility='visible';render();await openMapIris();}
+    try{await closeGameIris();resetHouseDoor();towerView.active=false;towerPane.hidden=true;stopTowerSnow();playerEl.style.visibility='visible';hudRoot.style.visibility='visible';render();await openMapIris();}
     finally{clearGameIris();towerView.busy=false;state.transitioning=false;keys.clear();lastTime=0;syncOberkirchMusic();game.focus({preventScroll:true});}
   }
   game.addEventListener('click',event=>{
