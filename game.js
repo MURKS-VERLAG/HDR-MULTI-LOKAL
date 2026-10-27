@@ -2773,11 +2773,12 @@
   houseDoor.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();if(towerView.active&&!towerView.busy)leaveTowerView();});
   houseDoor.addEventListener('keydown',event=>{if(event.code==='Space'){event.preventDefault();event.stopPropagation();}});
   const snowmanFrames=Array.from({length:6},(_,i)=>{const img=new Image();img.src=`assets/interiors/snowman-${i+1}.webp`;return img;});
+  const snowmanSprite=document.createElement('img');snowmanSprite.alt='';snowmanSprite.setAttribute('aria-hidden','true');Object.assign(snowmanSprite.style,{position:'absolute',display:'none',zIndex:'4',pointerEvents:'none',objectFit:'contain',maxWidth:'none',maxHeight:'none'});towerPane.appendChild(snowmanSprite);
   const snowmanCanvas=document.createElement('canvas');snowmanCanvas.setAttribute('aria-hidden','true');Object.assign(snowmanCanvas.style,{position:'absolute',inset:'0',width:'100%',height:'100%',zIndex:'3',pointerEvents:'none',display:'none'});towerPane.appendChild(snowmanCanvas);
   const snowmanContext=snowmanCanvas.getContext('2d');let snowmanSerial=0;
-  function stopHouseSnowman(){snowmanSerial++;snowmanCanvas.style.display='none';snowmanContext.clearRect(0,0,snowmanCanvas.width,snowmanCanvas.height);}
+  function stopHouseSnowman(){snowmanSerial++;snowmanCanvas.style.display='none';snowmanSprite.style.display='none';snowmanContext.clearRect(0,0,snowmanCanvas.width,snowmanCanvas.height);}
   function startHouseSnowman(){
-    const serial=++snowmanSerial,beat=.489;let previous=performance.now(),elapsed=0,lastFrame=-1,notes=[],dust=[];snowmanCanvas.style.display='block';
+    const serial=++snowmanSerial,beat=.489;let previous=performance.now(),elapsed=0,lastFrame=-1,notes=[],dust=[];snowmanCanvas.style.display='block';snowmanSprite.src=snowmanFrames[0].src;snowmanSprite.style.display='block';
     function frame(now){if(serial!==snowmanSerial||!towerView.active||towerView.kind!=='winterbach')return;
       const dt=document.hidden?0:Math.min(.05,(now-previous)/1000);previous=now;elapsed+=dt;
       const w=towerPane.clientWidth,h=towerPane.clientHeight,dpr=Math.min(2,devicePixelRatio||1),cw=Math.round(w*dpr),ch=Math.round(h*dpr);if(snowmanCanvas.width!==cw||snowmanCanvas.height!==ch){snowmanCanvas.width=cw;snowmanCanvas.height=ch;}
@@ -2785,7 +2786,7 @@
       const border=Math.min(140,Math.max(48,Math.min(w,h)*.11))+12,size=Math.min(165,h*.21,w*.16),right=w-border-10,foot=h-border-8,x=right-size,y=foot-size;
       const step=Math.floor(elapsed/(beat/2)),index=step%6,mirror=Math.floor(step/6)%2===1;
       c.save();c.beginPath();c.rect(border,border,Math.max(0,w-2*border),Math.max(0,h-2*border));c.clip();
-      const img=snowmanFrames[index];if(img.complete&&img.naturalWidth){c.save();if(mirror){c.translate(2*x+size,0);c.scale(-1,1);}c.drawImage(img,x,y,size,size);c.restore();}
+      const img=snowmanFrames[index];if(snowmanSprite.src!==img.src)snowmanSprite.src=img.src;Object.assign(snowmanSprite.style,{left:`${x}px`,top:`${y}px`,width:`${size}px`,height:`${size}px`,transform:mirror?'scaleX(-1)':'none'});
       if(step!==lastFrame){if(index%2===1){const fx=mirror?x+size*.28:x+size*.72;for(let i=0;i<8;i++)dust.push({x:fx+(Math.random()-.5)*size*.10,y:foot-size*.025,vx:(Math.random()-.5)*size*.25,vy:-Math.random()*size*.16,age:0,life:.35+Math.random()*.2,r:2+Math.random()*size*.025});}if(index===1||index===4){const nx=mirror?x+size*.12:x+size*.88;notes.push({x:nx,y:y+size*.34,vx:(mirror?-1:1)*size*.35,vy:-size*.09,age:0,life:1.2,text:Math.random()<.5?'♪':'♫'});}lastFrame=step;}
       for(const d of dust){d.age+=dt;d.x+=d.vx*dt;d.y+=d.vy*dt;d.vy+=size*.35*dt;c.globalAlpha=Math.max(0,1-d.age/d.life)*.75;c.fillStyle='#fff';c.beginPath();c.arc(d.x,d.y,d.r*(1+d.age),0,Math.PI*2);c.fill();}dust=dust.filter(d=>d.age<d.life);
       c.fillStyle='#222';c.font=`bold ${Math.max(13,size*.11)}px Georgia`;for(const n of notes){n.age+=dt;n.x+=n.vx*dt;n.y+=n.vy*dt;n.vy+=size*.2*dt;c.globalAlpha=Math.max(0,1-n.age/n.life);c.fillText(n.text,n.x,n.y);}notes=notes.filter(n=>n.age<n.life);c.globalAlpha=1;c.restore();requestAnimationFrame(frame);
