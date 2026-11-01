@@ -17,7 +17,8 @@
     allerheiligen:Object.freeze({id:'allerheiligen',width:10000,height:10000*1365/2048,image:'assets/maps/allerheiligen.webp',name:'Allerheiligen'}),
     lierbach:Object.freeze({id:'lierbach',width:10000,height:10000*1365/2048,image:'assets/maps/lierbach.webp',name:'Lierbach'}),
     oppenau:Object.freeze({id:'oppenau',width:10000,height:5625,image:'assets/maps/oppenau.webp',name:'Oppenau'}),
-    westmap:Object.freeze({id:'westmap',width:10000,height:5625,image:'assets/maps/karte-6.webp',name:'Sulzbach'})
+    westmap:Object.freeze({id:'westmap',width:10000,height:5625,image:'assets/maps/karte-6.webp',name:'Sulzbach'}),
+    sohlberg:Object.freeze({id:'sohlberg',width:10000,height:5625,image:'assets/maps/sohlberg.webp',name:'Sohlberg'})
   });
   let activeMapId='oberkirch';
   function setActiveMap(id){if(!MAPS[id])throw new Error('Unknown map');activeMapId=id;}
@@ -46,15 +47,17 @@
     lierbach:[{x1:2650,x2:3150,side:'south',target:'oppenau',spawn:{x:1677.4716369529986,y:-40.52593659942363},autoOppDescent:true},
               {side:'trail',trigger:'lierTrail',target:'allerheiligen',spawn:{x:2760,y:10000*1365/2048-85}}],
     allerheiligen:[{x1:2500,x2:3050,side:'south',target:'lierbach',spawn:{x:1886.6396761133603,y:703.711648589199},autoLierDescent:true}],
-    westmap:[{side:'east',y1:5125,y2:6255,target:'hubacker',spawn:{x:1450,y:680}},
-             {x1:9400,x2:10300,side:'south',target:'hubacker',spawn:{x:1450,y:680}}]
+    westmap:[{x1:210,x2:850,side:'north',target:'sohlberg',spawn:{x:9700,y:5280},facing:'left'},
+             {side:'east',y1:5125,y2:6255,target:'hubacker',spawn:{x:1450,y:680}},
+             {x1:9400,x2:10300,side:'south',target:'hubacker',spawn:{x:1450,y:680}}],
+    sohlberg:[{side:'east',y1:5000,y2:5625,target:'westmap',spawn:{x:1250,y:320},facing:'down'}]
   });
-  const TELEPORT_MAP_ORDER=Object.freeze(['oberkirch','winterbach','lautenbach','hubacker','ramsbach','westmap','oppenau','sendelbach','lierbach','allerheiligen']);
+  const TELEPORT_MAP_ORDER=Object.freeze(['oberkirch','winterbach','lautenbach','hubacker','ramsbach','westmap','oppenau','sendelbach','lierbach','allerheiligen','sohlberg']);
   const TELEPORT_DESTINATIONS=Object.freeze(TELEPORT_MAP_ORDER.map(id=>{
     if(id==='oberkirch')return Object.freeze({id,name:MAPS[id].name,spawn:Object.freeze({x:4950,y:3750}),facing:'down'});
     const arrival=Object.values(MAP_ROUTES).flat().find(r=>r.target===id&&!r.autoOppDescent&&!r.autoLierDescent);
     if(!arrival)throw new Error('Missing teleport waypoint: '+id);
-    const facing=arrival.side==='north'||arrival.trigger==='lierTrail'?'up':arrival.side==='east'?'right':arrival.side==='west'?'left':'down';
+    const facing=arrival.facing||(arrival.side==='north'||arrival.trigger==='lierTrail'?'up':arrival.side==='east'?'right':arrival.side==='west'?'left':'down');
     return Object.freeze({id,name:MAPS[id].name,spawn:Object.freeze({...arrival.spawn}),facing});
   }));
   function getTeleportRoute(id){const p=TELEPORT_DESTINATIONS.find(p=>p.id===id);return p?{target:p.id,spawn:{...p.spawn},side:'teleport',facing:p.facing}:null;}
