@@ -2222,12 +2222,18 @@
   }
   // The three white reference segments, mapped from the full 1562 x 880 reference.
   const SOHL_WITCH_LINES=[[[562,235],[730,191]],[[478,428],[608,365]],[[969,344],[1073,438]]].map(seg=>seg.map(([x,y])=>[x/1562*10000,y/880*5625]));
-  const sohlWitch={triggered:false,bare:false,event:null,apples:[],hitMask:0,hitCycle:'',time:0};
+  const SOHL_WITCH_BLACK_LINES=[[[489,516],[494,566]],[[805,369],[805,478]],[[847,236],[852,291]],[[938,623],[942,677]]].map(seg=>seg.map(([x,y])=>[x/1560*10000,y/878*5625]));
+  const sohlWitch={triggered:false,bare:false,event:null,apples:[],hitMask:0,hitCycle:'',time:0,whiteCrossed:new Set()};
   const sohlWitchImages={fly:new Image(),magic:new Image(),bare:new Image(),apple:new Image()};
   for(const [key,file] of Object.entries({fly:'sohl-hexe-flug',magic:'sohl-hexe-zauber',bare:'sohl-apfelbaum-kahl',apple:'sohl-apfel'}))sohlWitchImages[key].src=`assets/props/${file}.webp`;
-  function resetSohlWitch(){sohlWitch.triggered=false;sohlWitch.bare=false;sohlWitch.event=null;sohlWitch.apples.length=0;sohlWitch.hitMask=0;sohlWitch.hitCycle='';sohlWitch.time=0;}
+  function resetSohlWitch(){sohlWitch.triggered=false;sohlWitch.bare=false;sohlWitch.event=null;sohlWitch.apples.length=0;sohlWitch.hitMask=0;sohlWitch.hitCycle='';sohlWitch.time=0;sohlWitch.whiteCrossed.clear();}
   function sohlCrossed(a,b,c,d){const cross=(p,q,r)=>(q.x-p.x)*(r.y-p.y)-(q.y-p.y)*(r.x-p.x),v1=cross(a,b,c),v2=cross(a,b,d),v3=cross(c,d,a),v4=cross(c,d,b);return v1*v2<0&&v3*v4<=0;}
-  function sohlCheckWitchCrossing(ox,oy,x,y){if(activeMapId!=='sohlberg'||sohlWitch.triggered||ox===x&&oy===y)return;const a={x:ox,y:oy},b={x,y};for(const [[x1,y1],[x2,y2]] of SOHL_WITCH_LINES)if(sohlCrossed(a,b,{x:x1,y:y1},{x:x2,y:y2})&&Math.random()<.1){startSohlWitch();break;}}
+  function sohlCheckWitchCrossing(ox,oy,x,y){
+    if(activeMapId!=='sohlberg'||sohlWitch.triggered||(ox===x&&oy===y))return;
+    const a={x:ox,y:oy},b={x,y};
+    for(let i=0;i<SOHL_WITCH_LINES.length;i++){const [[x1,y1],[x2,y2]]=SOHL_WITCH_LINES[i];if(!sohlWitch.whiteCrossed.has(i)&&sohlCrossed(a,b,{x:x1,y:y1},{x:x2,y:y2})){sohlWitch.whiteCrossed.add(i);if(Math.random()<.15){startSohlWitch();return;}}}
+    for(const [[x1,y1],[x2,y2]] of SOHL_WITCH_BLACK_LINES)if(sohlCrossed(a,b,{x:x1,y:y1},{x:x2,y:y2})&&Math.random()<.05){startSohlWitch();return;}
+  }
   function startSohlWitch(){sohlWitch.triggered=true;sohlWitch.event={age:0,cast:false};const audio=new Audio('assets/audio/witch-laugh.mp3');audio.volume=1;const p=audio.play();if(p?.catch)p.catch(()=>{});}
   function safeSohlAppleRoll(x,y,dx,dy){for(let i=0;i<=24;i++){const k=i/24,xx=x+dx*k,yy=y+dy*k;if(xx<0||xx>10000||yy<0||yy>5625||sohlLineAt(xx,yy))return false;}return true;}
   function spawnSohlApple(temporary=false){const t=SOHL_TREE;for(let attempt=0;attempt<60;attempt++){const x=t.rootX+(Math.random()-.5)*t.width*.72,y=t.depthY+70+Math.random()*140,dx=(Math.random()-.5)*220,dy=Math.random()*120;if(!safeSohlAppleRoll(x,y,dx,dy))continue;sohlWitch.apples.push({x,y,dx,dy,fromY:t.y+t.height*(.12+Math.random()*.45),age:0,temporary,rotation:Math.random()*6});return;}}
