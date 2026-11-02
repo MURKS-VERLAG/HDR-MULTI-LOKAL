@@ -2220,12 +2220,32 @@
     front.font='bold 76px Georgia, serif';front.textAlign='center';front.textBaseline='bottom';front.lineWidth=5;front.strokeStyle='#4b100c';front.fillStyle='#ff382d';
     for(const n of rabbitSystem.numbers){if(n.map==='ramsbach')continue;const t=n.age/1.1,y=n.y-95*(1-(1-t)*(1-t));front.globalAlpha=Math.min(1,(1-t)*3);front.strokeText(`-${n.damage}`,n.x,y);front.fillText(`-${n.damage}`,n.x,y);}front.globalAlpha=1;
   }
+  // The three white reference segments, mapped from the full 1562 x 880 reference.
+  const SOHL_WITCH_LINES=[[[562,235],[730,191]],[[478,428],[608,365]],[[969,344],[1073,438]]].map(seg=>seg.map(([x,y])=>[x/1562*10000,y/880*5625]));
+  const sohlWitch={triggered:false,bare:false,event:null,apples:[],hitMask:0,hitCycle:'',time:0};
+  const sohlWitchImages={fly:new Image(),magic:new Image(),bare:new Image(),apple:new Image()};
+  for(const [key,file] of Object.entries({fly:'sohl-hexe-flug',magic:'sohl-hexe-zauber',bare:'sohl-apfelbaum-kahl',apple:'sohl-apfel'}))sohlWitchImages[key].src=`assets/props/${file}.webp`;
+  function resetSohlWitch(){sohlWitch.triggered=false;sohlWitch.bare=false;sohlWitch.event=null;sohlWitch.apples.length=0;sohlWitch.hitMask=0;sohlWitch.hitCycle='';sohlWitch.time=0;}
+  function sohlCrossed(a,b,c,d){const cross=(p,q,r)=>(q.x-p.x)*(r.y-p.y)-(q.y-p.y)*(r.x-p.x),v1=cross(a,b,c),v2=cross(a,b,d),v3=cross(c,d,a),v4=cross(c,d,b);return v1*v2<0&&v3*v4<=0;}
+  function sohlCheckWitchCrossing(ox,oy,x,y){if(activeMapId!=='sohlberg'||sohlWitch.triggered||ox===x&&oy===y)return;const a={x:ox,y:oy},b={x,y};for(const [[x1,y1],[x2,y2]] of SOHL_WITCH_LINES)if(sohlCrossed(a,b,{x:x1,y:y1},{x:x2,y:y2})&&Math.random()<.1){startSohlWitch();break;}}
+  function startSohlWitch(){sohlWitch.triggered=true;sohlWitch.event={age:0,cast:false};const audio=new Audio('assets/audio/witch-laugh.mp3');audio.volume=1;const p=audio.play();if(p?.catch)p.catch(()=>{});}
+  function safeSohlAppleRoll(x,y,dx,dy){for(let i=0;i<=24;i++){const k=i/24,xx=x+dx*k,yy=y+dy*k;if(xx<0||xx>10000||yy<0||yy>5625||sohlLineAt(xx,yy))return false;}return true;}
+  function spawnSohlApple(temporary=false){const t=SOHL_TREE;for(let attempt=0;attempt<60;attempt++){const x=t.rootX+(Math.random()-.5)*t.width*.72,y=t.depthY+70+Math.random()*140,dx=(Math.random()-.5)*220,dy=Math.random()*120;if(!safeSohlAppleRoll(x,y,dx,dy))continue;sohlWitch.apples.push({x,y,dx,dy,fromY:t.y+t.height*(.12+Math.random()*.45),age:0,temporary,rotation:Math.random()*6});return;}}
+  function sohlTreeCombo(pose,elapsed,duration){if(sohlWitch.bare)return;const cycle=`${attack.generation}:${Math.floor(elapsed/duration)}`;if(sohlWitch.hitCycle!==cycle){sohlWitch.hitCycle=cycle;sohlWitch.hitMask=0;}sohlWitch.hitMask|=1<<pose.index;if(pose.index===3&&sohlWitch.hitMask===15){sohlWitch.hitMask=16;if(Math.random()<.5)spawnSohlApple(false);}}
+  function advanceSohlWitch(dt){if(activeMapId!=='sohlberg'||document.hidden||state.transitioning)return;sohlWitch.time+=dt;const e=sohlWitch.event;if(e){e.age+=dt;if(e.age>=3.3&&!e.cast){e.cast=true;sohlWitch.bare=true;e.particles=Array.from({length:36},(_,i)=>({angle:Math.random()*Math.PI*2,dist:130+Math.random()*350,size:25+Math.random()*50,leaf:i<20}));for(let i=0;i<18;i++)spawnSohlApple(true);}if(e.age>=6.2)sohlWitch.event=null;}for(const a of sohlWitch.apples)a.age+=dt;sohlWitch.apples=sohlWitch.apples.filter(a=>!a.temporary||a.age<2.2);}
+  function drawSohlWitch(ctx){const e=sohlWitch.event;if(!e)return;const t=SOHL_TREE;if(e.cast&&e.age<5.5){const q=(e.age-3.3)/2.2;ctx.save();for(const part of e.particles||[]){const x=t.rootX+Math.cos(part.angle)*part.dist*q,y=t.rootY+Math.sin(part.angle)*part.dist*q-(part.leaf?200:80)*q;ctx.globalAlpha=(1-q)*.7;ctx.fillStyle=part.leaf?'#6c982f':'#35302a';ctx.beginPath();ctx.arc(x,y,part.size*(part.leaf?.45:.7+q),0,Math.PI*2);ctx.fill();}ctx.restore();}const progress=Math.min(1,e.age/6.2),start={x:-250,y:2812},target={x:t.x+t.width*.5,y:t.y+t.height*.30},end={x:t.rootX+1800,y:-650},mid=3.3/6.2,p=progress<mid?progress/mid:(progress-mid)/(1-mid),from=progress<mid?start:target,to=progress<mid?target:end,x=from.x+(to.x-from.x)*p,y=from.y+(to.y-from.y)*p,magic=e.age>=2.8&&e.age<3.8,img=magic?sohlWitchImages.magic:sohlWitchImages.fly,w=700,h=w*1024/1536;
+    if(img.complete&&img.naturalWidth){ctx.save();if(magic){ctx.shadowColor='#ffc544';ctx.shadowBlur=100;}ctx.drawImage(img,x-w/2,y-h/2,w,h);ctx.restore();}
+    if(magic){ctx.save();ctx.fillStyle='#ffe780';ctx.shadowColor='#ffae00';ctx.shadowBlur=28;for(let i=0;i<15;i++){const phase=e.age*4+i*2.4,px=x+Math.sin(phase)*w*.43,py=y+Math.cos(phase*1.3)*h*.4;ctx.globalAlpha=.4+.6*Math.abs(Math.sin(phase));ctx.fillRect(px,py,12,12);}ctx.restore();}
+    if(e.age>=2.8&&e.age<=3.3){const p=Math.min(1,(e.age-2.8)/.5),ex=x+(t.rootX-x)*p,ey=y+(t.rootY-y)*p,dx=ex-x,dy=ey-y,len=Math.hypot(dx,dy)||1;ctx.save();ctx.strokeStyle='#fff8bd';ctx.lineWidth=13;ctx.shadowColor='#e9a83c';ctx.shadowBlur=30;ctx.beginPath();for(let i=0;i<=6;i++){const u=i/6,j=i===0||i===6?0:(i%2?20:-20),px=x+dx*u-dy/len*j,py=y+dy*u+dx/len*j;if(i)ctx.lineTo(px,py);else ctx.moveTo(px,py);}ctx.stroke();ctx.restore();}
+  }
+  function drawSohlApples(ctx){const im=sohlWitchImages.apple;if(!im.complete||!im.naturalWidth)return;for(const a of sohlWitch.apples){const fall=Math.min(1,a.age/.55),roll=Math.max(0,Math.min(1,(a.age-.75)/.7)),ease=roll*roll*(3-2*roll),x=a.x+a.dx*ease,y=a.age<.55?a.fromY+(a.y-a.fromY)*fall*fall:a.y+a.dy*ease-(a.age<.75?20*Math.sin(Math.PI*(a.age-.55)/.2):0);ctx.save();ctx.translate(x,y);ctx.rotate(a.rotation+roll*Math.hypot(a.dx,a.dy)/42);ctx.drawImage(im,-35,-35,70,70);ctx.restore();}}
+
   let sohlTreeLastHit='',sohlTreeShakeAt=-Infinity;
   const sohlHitVoices=new Set();let sohlHitBag=[];
   function playSohlTreeHit(){if(!sohlHitBag.length){sohlHitBag=[1,2,3,4];for(let i=sohlHitBag.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[sohlHitBag[i],sohlHitBag[j]]=[sohlHitBag[j],sohlHitBag[i]];}}const n=sohlHitBag.pop(),voice=new Audio(`assets/audio/sohl-apfel-hit-${n}.mp3`);sohlHitVoices.add(voice);const release=()=>sohlHitVoices.delete(voice);voice.addEventListener('ended',release,{once:true});voice.addEventListener('error',release,{once:true});try{const play=voice.play();if(play?.catch)play.catch(release);}catch{release();}}
 
   const sohlTreeImage=new Image();sohlTreeImage.src='assets/props/sohlberg-apfelbaum.webp';
-  function updateSohlTreeAttack(pose,elapsed,duration){if(activeMapId!=='sohlberg'||attack.facing!=='up'||!sohlGlow(state.player)||pose.index<0||pose.winding)return;const phase=elapsed%duration;if(phase<ATTACK_TIMING.peaks[pose.index])return;const key=`${attack.generation}:${Math.floor(elapsed/duration)}:${pose.index}`;if(key!==sohlTreeLastHit){sohlTreeLastHit=key;sohlTreeShakeAt=performance.now();playSohlTreeHit();}}
+  function updateSohlTreeAttack(pose,elapsed,duration){if(activeMapId!=='sohlberg'||sohlWitch.bare||attack.facing!=='up'||!sohlGlow(state.player)||pose.index<0||pose.winding)return;const phase=elapsed%duration;if(phase<ATTACK_TIMING.peaks[pose.index])return;const key=`${attack.generation}:${Math.floor(elapsed/duration)}:${pose.index}`;if(key!==sohlTreeLastHit){sohlTreeLastHit=key;sohlTreeShakeAt=performance.now();playSohlTreeHit();sohlTreeCombo(pose,elapsed,duration);}}
   function updateAttack(){
     if(!attack.active)return;
     let elapsed=attack.audioStarted?(attack.source?Math.max(0,attackAudioContext.currentTime-attack.startedAt):attackFallback.currentTime):0;
@@ -2576,9 +2596,10 @@
       const p=SEND_PROPS[SEND_DEPTH_LAYERS[i].prop];sceneFrontContext.drawImage(sendFrontLayers[i],p.x,p.y,p.width,p.height);
     }
     if(activeMapId==='sohlberg'&&sohlTreeImage.complete&&sohlTreeImage.naturalWidth){
-      const t=SOHL_TREE,ctx=state.player.y<t.depthY?sceneFrontContext:sceneBaseContext,age=(performance.now()-sohlTreeShakeAt)/1000,shake=age>=0&&age<.45?Math.sin(age*32)*Math.exp(-age*6)*24:0;
-      ctx.save();ctx.translate(t.x+t.width/2,t.y+t.height);ctx.rotate(shake/1000);if(sohlGlow(state.player)){ctx.shadowColor='#ffcf43';ctx.shadowBlur=90;ctx.drawImage(sohlTreeImage,-t.width/2,-t.height,t.width,t.height);ctx.shadowBlur=0;}ctx.drawImage(sohlTreeImage,-t.width/2,-t.height,t.width,t.height);ctx.restore();
+      const treeArt=sohlWitch.bare?sohlWitchImages.bare:sohlTreeImage,t=SOHL_TREE,ctx=state.player.y<t.depthY?sceneFrontContext:sceneBaseContext,age=(performance.now()-sohlTreeShakeAt)/1000,shake=age>=0&&age<.45?Math.sin(age*32)*Math.exp(-age*6)*24:0;
+      ctx.save();ctx.translate(t.x+t.width/2,t.y+t.height);ctx.rotate(shake/1000);if(sohlGlow(state.player)){ctx.shadowColor='#ffcf43';ctx.shadowBlur=90;ctx.drawImage(treeArt,-t.width/2,-t.height,t.width,t.height);ctx.shadowBlur=0;}if(treeArt.complete&&treeArt.naturalWidth)ctx.drawImage(treeArt,-t.width/2,-t.height,t.width,t.height);ctx.restore();
     }
+    if(activeMapId==='sohlberg'){advanceSohlWitch(state.playing&&!teleportState.open&&!inventoryState.open?dt:0);drawSohlApples(sceneFrontContext);drawSohlWitch(sceneFrontContext);}
     renderBears(sceneBaseContext,sceneFrontContext);
     renderRabbits(sceneBaseContext,sceneFrontContext);renderPlayerExperience(sceneFrontContext);drawOpening(sceneFrontContext);
     drawOpeningBorders(sceneFrontContext,m,dpr);
@@ -2721,7 +2742,7 @@
       const next=MAPS[route.target],image=new Image();image.src=next.image;
       await waitForImage(image);
       map.src=image.src;await waitForImage(map);
-      setActiveMap(route.target);state.bridge=null;state.autoTravel=null;state.player.trailScale=1;state.player.lierTrailExit=false;
+      setActiveMap(route.target);if(previous.map==='sohlberg'||route.target==='sohlberg')resetSohlWitch();state.bridge=null;state.autoTravel=null;state.player.trailScale=1;state.player.lierTrailExit=false;
       if(route.autoLierDescent){state.bridge=makeLierTrail(1,true);state.autoTravel='lierDescent';state.player.trailScale=0;}
       if(route.autoOppDescent){state.bridge={id:'oppNorth',path:OPP_NORTH_PATH,distance:getPathMetrics(OPP_NORTH_PATH).total,snapping:false};state.autoTravel='oppDescent';}
       state.player.x=route.spawn.x;state.player.y=route.spawn.y;if(route.target==='sohlberg')sohlVisualScale=sohlTargetScale(state.player);else sohlVisualScale=1;
@@ -3039,7 +3060,7 @@
       const finishedAuto=automatic&&!state.bridge;if(finishedAuto){state.autoTravel=null;keys.clear();}
       const route=exitRoute(state.player,dy,dx);
       if(route){if(route.trigger==='lierTrail')render();switchMap(route);requestAnimationFrame(frame);return;}
-      const movedDistance=Math.hypot(state.player.x-oldX,state.player.y-oldY);updateSohlScale(state.player,movedDistance);const moved=movedDistance>.00001;
+      sohlCheckWitchCrossing(oldX,oldY,state.player.x,state.player.y);const movedDistance=Math.hypot(state.player.x-oldX,state.player.y-oldY);updateSohlScale(state.player,movedDistance);const moved=movedDistance>.00001;
       updateAnimation(!finishedAuto && moved && (!onWinterIce(state.player.x,state.player.y) || Boolean(dx||dy)),dt);
       updateTreeEffects(moved,dt);
       updateCamera(dx,dy,dt);render();renderWinterWeather(dt);
@@ -3054,7 +3075,7 @@
   }
   let preloadPromise=null;
   function prepareOpeningResources(){if(preloadPromise)return preloadPromise;preloadPromise=(async()=>{
-      const jobs=[waitForImage(sohlTreeImage),waitForImage(towerArt),waitForImage(openingRiver),...Object.values(openingImages).map(waitForImage),prepareBearLitSprites(),...Object.values(moleImages).map(waitForImage),...Object.values(rabbitImages).map(waitForImage),prepareAttackAudio(),prepareBladeFireAtlas(),prepareFallingFlameAtlas(),waitForImage(flameSwordInventoryImage),waitForImage(swordBlade),waitForImage(swordInventoryImage),...hudImages.map(waitForImage),...inventoryGlows.map(waitForImage),...inventoryPages.map(waitForImage),...Object.values(helmetImages).flatMap(variant=>Object.values(variant).map(waitForImage)),waitForImage(map),waitForImage(sendSignImage),waitForImage(sendWheelImage),waitForImage(caveHeraldry.crest),waitForImage(allerCaveSource),waitForImage(allerMonasteryImage),waitForImage(oppGateImage),...sendImages.map(waitForImage),waitForImage(oppCastleImage),waitForImage(castleImage),...hubPropImages.map(waitForImage),...ramsFortImages.map(waitForImage),...westPropImages.map(waitForImage),...buildingPresentation.map(e=>waitForImage(e.crest))];
+      const jobs=[waitForImage(sohlTreeImage),...Object.values(sohlWitchImages).map(waitForImage),waitForImage(towerArt),waitForImage(openingRiver),...Object.values(openingImages).map(waitForImage),prepareBearLitSprites(),...Object.values(moleImages).map(waitForImage),...Object.values(rabbitImages).map(waitForImage),prepareAttackAudio(),prepareBladeFireAtlas(),prepareFallingFlameAtlas(),waitForImage(flameSwordInventoryImage),waitForImage(swordBlade),waitForImage(swordInventoryImage),...hudImages.map(waitForImage),...inventoryGlows.map(waitForImage),...inventoryPages.map(waitForImage),...Object.values(helmetImages).flatMap(variant=>Object.values(variant).map(waitForImage)),waitForImage(map),waitForImage(sendSignImage),waitForImage(sendWheelImage),waitForImage(caveHeraldry.crest),waitForImage(allerCaveSource),waitForImage(allerMonasteryImage),waitForImage(oppGateImage),...sendImages.map(waitForImage),waitForImage(oppCastleImage),waitForImage(castleImage),...hubPropImages.map(waitForImage),...ramsFortImages.map(waitForImage),...westPropImages.map(waitForImage),...buildingPresentation.map(e=>waitForImage(e.crest))];
       for(const direction of ['down','left','right','up']) {
         const image=new Image();image.src=`assets/player/stand-${direction}.png`;
         images[`stand-${direction}`]=image;jobs.push(waitForImage(image));
