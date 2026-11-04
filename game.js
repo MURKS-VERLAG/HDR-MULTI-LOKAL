@@ -2238,9 +2238,20 @@
   }
   function startSohlWitch(){sohlWitch.triggered=true;const t=SOHL_TREE,start={x:-250,y:2812},target={x:t.x+t.width*.5,y:t.y+t.height*.30},end={x:t.rootX+1800,y:-650},contact=3.3/.9,exit=Math.hypot(end.x-target.x,end.y-target.y)/(Math.hypot(target.x-start.x,target.y-start.y)/contact);sohlWitch.event={age:0,cast:false,start,target,end,contact,duration:contact+exit,magicSound:false};const audio=new Audio('assets/audio/witch-laugh.mp3');audio.volume=1;const p=audio.play();if(p?.catch)p.catch(()=>{});}
   function safeSohlAppleRoll(x,y,dx,dy){
-    // A continuous sweep including the visible apple's radius prevents crossing a thin rock line.
-    const clear=(px,py)=>px>=35&&px<=9965&&py>=35&&py<=5590&&[[0,0],[35,0],[-35,0],[0,35],[0,-35],[25,25],[-25,25],[25,-25],[-25,-25]].every(([ox,oy])=>!sohlLineAt(px+ox,py+oy));
-    const sweep=(ax,ay,bx,by)=>{const n=Math.ceil(Math.hypot(bx-ax,by-ay)/3);for(let i=0;i<=n;i++){const f=n?i/n:0;if(!clear(ax+(bx-ax)*f,ay+(by-ay)*f))return false;}return true;};
+    // Inspect every collision-mask pixel covered by the apple on both the
+    // landing route and the complete roll, including the visual radius.
+    const radius=36,cellX=10000/(SOHL_MASK_W-1),cellY=5625/(SOHL_MASK_H-1);
+    const clear=(px,py)=>{
+      if(px-radius<0||px+radius>10000||py-radius<0||py+radius>5625)return false;
+      const minX=Math.max(0,Math.floor((px-radius)/cellX)),maxX=Math.min(SOHL_MASK_W-1,Math.ceil((px+radius)/cellX));
+      const minY=Math.max(0,Math.floor((py-radius)/cellY)),maxY=Math.min(SOHL_MASK_H-1,Math.ceil((py+radius)/cellY));
+      for(let cy=minY;cy<=maxY;cy++)for(let cx=minX;cx<=maxX;cx++){
+        const k=cy*SOHL_MASK_W+cx;
+        if(SOHL_MASK[k>>3]&(128>>(k&7)))return false;
+      }
+      return true;
+    };
+    const sweep=(ax,ay,bx,by)=>{const steps=Math.max(1,Math.ceil(Math.hypot(bx-ax,by-ay)/Math.min(cellX,cellY)*2));for(let i=0;i<=steps;i++){const f=i/steps;if(!clear(ax+(bx-ax)*f,ay+(by-ay)*f))return false;}return true;};
     return sweep(SOHL_TREE.rootX,SOHL_TREE.depthY+70,x,y)&&sweep(x,y,x+dx,y+dy);
   }
   function spawnSohlApple(temporary=false){const t=SOHL_TREE;for(let attempt=0;attempt<60;attempt++){const x=t.rootX+(Math.random()-.5)*t.width*.72,y=t.depthY+70+Math.random()*140,dx=(Math.random()-.5)*220,dy=Math.random()*120;if(!safeSohlAppleRoll(x,y,dx,dy))continue;sohlWitch.apples.push({x,y,dx,dy,fromY:t.y+t.height*(.12+Math.random()*.45),age:0,temporary,rotation:Math.random()*6});return;}}
@@ -2822,9 +2833,10 @@
   const openingRiver=new Image();openingRiver.src='assets/intro/river.webp';
   const oberkirchMusic=new Audio('assets/audio/oberkirch-castle-jam.mp3');oberkirchMusic.preload='auto';oberkirchMusic.loop=true;oberkirchMusic.volume=.85;
   const ingameMusicFade={serial:0,target:null,between:false};
-  function desiredIngameMusic(){if(!state.playing||document.hidden)return null;if(towerView.active)return towerView.kind==='nuwenstein'?nuwensteinMusic:towerView.kind==='sneite'?sneiteMusic:towerMusic;if(activeMapId==='winterbach')return winterbachMusic;if(activeMapId==='hubacker')return hubackerMusic;if(activeMapId==='oberkirch'&&['thought','hud','done'].includes(opening.stage))return oberkirchMusic;return null;}
+  const addedMapMusic=Object.fromEntries(['oppenau','lautenbach','sohlberg','lierbach','sendelbach','ramsbach'].map(id=>{const a=new Audio(`assets/audio/map-${id}.mp3`);a.preload='auto';a.loop=true;a.volume=.85;return [id,a];}));
+  function desiredIngameMusic(){if(!state.playing||document.hidden)return null;if(towerView.active)return towerView.kind==='nuwenstein'?nuwensteinMusic:towerView.kind==='sneite'?sneiteMusic:towerMusic;if(activeMapId==='winterbach')return winterbachMusic;if(activeMapId==='hubacker')return hubackerMusic;if(addedMapMusic[activeMapId])return addedMapMusic[activeMapId];if(activeMapId==='oberkirch'&&['thought','hud','done'].includes(opening.stage))return oberkirchMusic;return null;}
   function rampIngameMusic(target,duration){
-    const tracks=[oberkirchMusic,winterbachMusic,towerMusic,sneiteMusic,nuwensteinMusic,hubackerMusic],start=tracks.map(a=>a.paused?0:a.volume),serial=++ingameMusicFade.serial,began=performance.now();ingameMusicFade.target=target;
+    const tracks=[oberkirchMusic,winterbachMusic,towerMusic,sneiteMusic,nuwensteinMusic,hubackerMusic,...Object.values(addedMapMusic)],start=tracks.map(a=>a.paused?0:a.volume),serial=++ingameMusicFade.serial,began=performance.now();ingameMusicFade.target=target;
     if(target&&target.paused){target.volume=0;const offset=houseMusicOffsets.get(target)||0;if(offset&&(target.currentTime<offset||target.ended))target.currentTime=offset;const p=target.play();if(p?.catch)p.catch(()=>{});}
     function paint(now){if(serial!==ingameMusicFade.serial)return;const t=clamp((now-began)/Math.max(1,duration),0,1),e=t*t*(3-2*t);tracks.forEach((a,i)=>{const end=a===target?.85:0;a.volume=clamp(start[i]+(end-start[i])*e,0,1);if(t>=1&&a!==target)a.pause();});if(t<1)requestAnimationFrame(paint);}
     paint(began);
@@ -2832,7 +2844,7 @@
   function beginIngameMusicTransition(){ingameMusicFade.between=true;rampIngameMusic(null,950);}
   function revealIngameMusic(){ingameMusicFade.between=false;const target=desiredIngameMusic();if(target!==ingameMusicFade.target||target?.paused)rampIngameMusic(target,2200);}
   function syncOberkirchMusic(){
-    if(document.hidden){++ingameMusicFade.serial;for(const a of [oberkirchMusic,winterbachMusic,towerMusic,sneiteMusic,nuwensteinMusic,hubackerMusic])a.pause();ingameMusicFade.target=null;return;}
+    if(document.hidden){++ingameMusicFade.serial;for(const a of [oberkirchMusic,winterbachMusic,towerMusic,sneiteMusic,nuwensteinMusic,hubackerMusic,...Object.values(addedMapMusic)])a.pause();ingameMusicFade.target=null;return;}
     if(ingameMusicFade.between)return;const target=desiredIngameMusic();if(target!==ingameMusicFade.target||target?.paused)rampIngameMusic(target,800);
   }
   document.addEventListener('visibilitychange',syncOberkirchMusic);
@@ -2891,11 +2903,11 @@
   function startHouseSnowman(){
     const serial=++snowmanSerial,beat=.489;let previous=performance.now(),elapsed=0,lastFrame=-1,notes=[],dust=[];snowmanCanvas.style.display='block';snowmanSprite.src=snowmanFrames[0].src;snowmanSprite.style.display='block';
     function frame(now){if(serial!==snowmanSerial||!towerView.active||towerView.kind!=='winterbach')return;
-      requestAnimationFrame(frame);const dt=document.hidden?0:Math.min(.05,(now-previous)/1000);previous=now;elapsed+=dt;const spriteStep=Math.floor(elapsed/(beat/2));snowmanSprite.src=snowmanFrames[spriteStep%6].src;snowmanSprite.style.transform=Math.floor(spriteStep/6)%2?'scaleX(-1)':'none';
+      requestAnimationFrame(frame);const dt=document.hidden?0:Math.min(.05,(now-previous)/1000);previous=now;elapsed+=dt;
       const w=towerPane.clientWidth,h=towerPane.clientHeight,dpr=Math.min(2,devicePixelRatio||1),cw=Math.round(w*dpr),ch=Math.round(h*dpr);if(snowmanCanvas.width!==cw||snowmanCanvas.height!==ch){snowmanCanvas.width=cw;snowmanCanvas.height=ch;}
       const c=snowmanContext;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,w,h);
       const border=Math.min(140,Math.max(48,Math.min(w,h)*.11))+12,size=Math.min(165,h*.21,w*.16),right=w-border-10,foot=h-border-8,x=right-size,y=foot-size;
-      const step=Math.floor(elapsed/(beat/2)),index=step%6,mirror=Math.floor(step/6)%2===1;
+      const step=Math.floor(elapsed/(beat/2)),sequence=[0,1,2,3,4,5,4,5],index=sequence[step%8],mirror=Math.floor(step/8)%2===1;
       c.save();c.beginPath();c.rect(border,border,Math.max(0,w-2*border),Math.max(0,h-2*border));c.clip();
       const img=snowmanFrames[index];if(snowmanSprite.src!==img.src)snowmanSprite.src=img.src;snowmanSprite.style.transform=mirror?'scaleX(-1)':'none';
       if(step!==lastFrame){if(index%2===1){const fx=mirror?x+size*.28:x+size*.72;for(let i=0;i<8;i++)dust.push({x:fx+(Math.random()-.5)*size*.10,y:foot-size*.025,vx:(Math.random()-.5)*size*.25,vy:-Math.random()*size*.16,age:0,life:.35+Math.random()*.2,r:2+Math.random()*size*.025});}if(index===1||index===4){const nx=mirror?x+size*.12:x+size*.88;notes.push({x:nx,y:y+size*.34,vx:(mirror?-1:1)*size*.35,vy:-size*.09,age:0,life:1.2,text:Math.random()<.5?'♪':'♫'});}lastFrame=step;}
@@ -2904,6 +2916,13 @@
     }requestAnimationFrame(frame);
   }
 
+  const houseBassist=document.createElement('div');houseBassist.setAttribute('aria-hidden','true');Object.assign(houseBassist.style,{position:'absolute',display:'none',right:'calc(clamp(48px,11vmin,140px) + 18px)',bottom:'calc(clamp(48px,11vmin,140px) + 20px)',width:'min(165px,21vh,16vw)',height:'min(165px,21vh,16vw)',zIndex:'4',pointerEvents:'none'});towerPane.appendChild(houseBassist);
+  const houseBassSprite=new Image(),houseBassHelmet=new Image();for(const image of [houseBassSprite,houseBassHelmet]){image.alt='';Object.assign(image.style,{position:'absolute',inset:'0',width:'100%',height:'100%',objectFit:'contain'});houseBassist.appendChild(image);}houseBassHelmet.src='assets/intro/bassist-helmet-v103.webp';houseBassHelmet.style.transform='translateX(-1.6%)';
+  const houseBassNotes=document.createElement('canvas');houseBassNotes.setAttribute('aria-hidden','true');Object.assign(houseBassNotes.style,{position:'absolute',inset:'0',width:'100%',height:'100%',zIndex:'3',pointerEvents:'none',display:'none'});towerPane.appendChild(houseBassNotes);let houseBassSerial=0;
+  function stopHouseBassist(){houseBassSerial++;houseBassist.style.display='none';houseBassNotes.style.display='none';}
+  function startHouseBassist(){const serial=++houseBassSerial,frames=Array.from({length:4},(_,i)=>`assets/intro/bassist-body-v103-${i+1}.webp`),notes=[];let prev=performance.now(),last=-1;houseBassist.style.display='block';houseBassNotes.style.display='block';
+    function draw(now){if(serial!==houseBassSerial||!towerView.active||towerView.kind!=='sneite')return;requestAnimationFrame(draw);const dt=document.hidden?0:Math.min(.05,(now-prev)/1000);prev=now;const beat=Math.floor((sneiteMusic.currentTime||0)/(.743/2)),index=beat%4;houseBassSprite.src=frames[index];const dpr=Math.min(2,devicePixelRatio||1),w=towerPane.clientWidth,h=towerPane.clientHeight;if(houseBassNotes.width!==Math.round(w*dpr)||houseBassNotes.height!==Math.round(h*dpr)){houseBassNotes.width=Math.round(w*dpr);houseBassNotes.height=Math.round(h*dpr);}const c=houseBassNotes.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,w,h);const pane=towerPane.getBoundingClientRect(),box=houseBassist.getBoundingClientRect(),border=Math.min(140,Math.max(48,Math.min(w,h)*.11))+12;c.save();c.beginPath();c.rect(border,border,Math.max(0,w-border*2),Math.max(0,h-border*2));c.clip();if(beat!==last&&!sneiteMusic.paused){notes.push({x:box.left-pane.left+box.width*.65,y:box.top-pane.top+box.height*.48,age:0,life:1.3,text:Math.random()<.5?'♪':'♫'});last=beat;}c.fillStyle='#222';c.font=`bold ${Math.max(13,box.width*.11)}px Georgia`;for(const n of notes){n.age+=dt;n.x+=40*dt;n.y+=25*dt;c.globalAlpha=Math.max(0,1-n.age/n.life);c.fillText(n.text,n.x,n.y);}for(let i=notes.length-1;i>=0;i--)if(notes[i].age>=notes[i].life)notes.splice(i,1);c.restore();}requestAnimationFrame(draw);
+  }
   const towerSnow=document.createElement('canvas');towerSnow.setAttribute('aria-hidden','true');Object.assign(towerSnow.style,{position:'absolute',inset:'0',width:'100%',height:'100%',zIndex:'1',pointerEvents:'none'});towerPane.appendChild(towerSnow);
   const towerSnowContext=towerSnow.getContext('2d');let towerSnowSurface=[],towerSnowFlakes=[],towerSnowSerial=0;
   function prepareTowerSnow(){
@@ -2953,13 +2972,13 @@
   async function enterTowerView(){
     if(!towerGateAvailable())return;const index=selectedHouseIndex(),kind=index===1?'nuwenstein':index===2?'sneite':'winterbach';towerView.busy=true;state.transitioning=true;stopAttack();keys.clear();stopTreeLeaves();
     try{await closeGameIris();configureHouse(kind);await Promise.all([waitForImage(towerArt),...towerUnitElements.map(({unit})=>waitForImage(unit))]);const source=document.getElementById('intro');if(source){const style=getComputedStyle(source);towerPane.style.backgroundColor=style.backgroundColor;towerPane.style.backgroundImage=style.backgroundImage;}
-      towerView.active=true;towerPane.hidden=false;playerEl.style.visibility='hidden';hudRoot.style.visibility='hidden';if(kind==='winterbach'){startTowerSnow();startHouseSnowman();}await openMapIris();
+      towerView.active=true;towerPane.hidden=false;playerEl.style.visibility='hidden';hudRoot.style.visibility='hidden';if(kind==='winterbach'){startTowerSnow();startHouseSnowman();}else if(kind==='sneite')startHouseBassist();await openMapIris();
     }catch(error){console.error('Tower view failed',error);ingameMusicFade.between=false;stopTowerSnow();stopHouseSnowman();towerView.active=false;towerPane.hidden=true;playerEl.style.visibility='visible';hudRoot.style.visibility='visible';state.transitioning=false;syncOberkirchMusic();}
     finally{clearGameIris();towerView.busy=false;keys.clear();lastTime=0;}
   }
   async function leaveTowerView(){
     if(!towerView.active||towerView.busy)return;towerView.busy=true;
-    try{await closeGameIris();resetHouseDoor();stopHouseSnowman();towerView.active=false;towerPane.hidden=true;stopTowerSnow();playerEl.style.visibility='visible';hudRoot.style.visibility='visible';render();await openMapIris();}
+    try{await closeGameIris();resetHouseDoor();stopHouseSnowman();stopHouseBassist();towerView.active=false;towerPane.hidden=true;stopTowerSnow();playerEl.style.visibility='visible';hudRoot.style.visibility='visible';render();await openMapIris();}
     finally{clearGameIris();towerView.busy=false;state.transitioning=false;keys.clear();lastTime=0;syncOberkirchMusic();game.focus({preventScroll:true});}
   }
   game.addEventListener('click',event=>{
