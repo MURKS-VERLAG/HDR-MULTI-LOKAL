@@ -1912,6 +1912,8 @@
   const moleImages=Object.fromEntries(Object.entries(MOLE_SPRITES).map(([key,p])=>{const im=new Image();im.src=p.file;return [key,im];}));
   const mole=createMole(),moleDigAudio=new Audio(MOLE_RULES.digSound);moleDigAudio.preload='auto';moleDigAudio.loop=false;
   let moleDigFallback=false,moleDigPending=false,moleDigToken=0;
+  const appleHotbar=Array(9).fill(null),appleFeedback=[];
+  const isAppleStack=item=>Boolean(item&&typeof item==='object'&&item.type==='apple');
   const helmetFrames=new Map();
   const inventoryState={open:false,page:0,slots:Array.from({length:72},(_,i)=>Object.keys(HELMET_VARIANTS)[i]||null)};
   for(const id of Object.keys(SWORD_VARIANTS)){const index=findSwordInventorySpace(inventoryState.slots);if(index>=0){inventoryState.slots[index]=id;inventoryState.slots[index+6]=SWORD_VARIANTS[id].tail;}}
@@ -2235,7 +2237,12 @@
     for(const [[x1,y1],[x2,y2]] of SOHL_WITCH_BLACK_LINES)if(sohlCrossed(a,b,{x:x1,y:y1},{x:x2,y:y2})&&Math.random()<.05){startSohlWitch();return;}
   }
   function startSohlWitch(){sohlWitch.triggered=true;const t=SOHL_TREE,start={x:-250,y:2812},target={x:t.x+t.width*.5,y:t.y+t.height*.30},end={x:t.rootX+1800,y:-650},contact=3.3/.9,exit=Math.hypot(end.x-target.x,end.y-target.y)/(Math.hypot(target.x-start.x,target.y-start.y)/contact);sohlWitch.event={age:0,cast:false,start,target,end,contact,duration:contact+exit,magicSound:false};const audio=new Audio('assets/audio/witch-laugh.mp3');audio.volume=1;const p=audio.play();if(p?.catch)p.catch(()=>{});}
-  function safeSohlAppleRoll(x,y,dx,dy){for(let i=0;i<=24;i++){const k=i/24,xx=x+dx*k,yy=y+dy*k;if(xx<0||xx>10000||yy<0||yy>5625||sohlLineAt(xx,yy))return false;}return true;}
+  function safeSohlAppleRoll(x,y,dx,dy){
+    // A continuous sweep including the visible apple's radius prevents crossing a thin rock line.
+    const clear=(px,py)=>px>=35&&px<=9965&&py>=35&&py<=5590&&[[0,0],[35,0],[-35,0],[0,35],[0,-35],[25,25],[-25,25],[25,-25],[-25,-25]].every(([ox,oy])=>!sohlLineAt(px+ox,py+oy));
+    const sweep=(ax,ay,bx,by)=>{const n=Math.ceil(Math.hypot(bx-ax,by-ay)/3);for(let i=0;i<=n;i++){const f=n?i/n:0;if(!clear(ax+(bx-ax)*f,ay+(by-ay)*f))return false;}return true;};
+    return sweep(SOHL_TREE.rootX,SOHL_TREE.depthY+70,x,y)&&sweep(x,y,x+dx,y+dy);
+  }
   function spawnSohlApple(temporary=false){const t=SOHL_TREE;for(let attempt=0;attempt<60;attempt++){const x=t.rootX+(Math.random()-.5)*t.width*.72,y=t.depthY+70+Math.random()*140,dx=(Math.random()-.5)*220,dy=Math.random()*120;if(!safeSohlAppleRoll(x,y,dx,dy))continue;sohlWitch.apples.push({x,y,dx,dy,fromY:t.y+t.height*(.12+Math.random()*.45),age:0,temporary,rotation:Math.random()*6});return;}}
   function sohlTreeCombo(pose,elapsed,duration){if(sohlWitch.bare)return;const cycle=`${attack.generation}:${Math.floor(elapsed/duration)}`;if(sohlWitch.hitCycle!==cycle){sohlWitch.hitCycle=cycle;sohlWitch.hitMask=0;}sohlWitch.hitMask|=1<<pose.index;if(pose.index===3&&sohlWitch.hitMask===15){sohlWitch.hitMask=16;if(Math.random()<.5)spawnSohlApple(false);}}
   function playSohlOneShot(src,volume=1){const sound=new Audio(src);sound.volume=volume;const playing=sound.play();if(playing?.catch)playing.catch(()=>{});}
@@ -2261,7 +2268,16 @@
     if(magic){ctx.save();ctx.fillStyle='#fff4ac';ctx.shadowColor='#ffbd28';ctx.shadowBlur=36;for(let i=0;i<32;i++){const phase=e.age*5+i*2.4,px=x+Math.sin(phase)*w*.48,py=y+Math.cos(phase*1.3)*h*.45,size=8+8*Math.abs(Math.sin(phase*1.7));ctx.globalAlpha=.4+.6*Math.abs(Math.sin(phase));ctx.fillRect(px-size/2,py-size*1.5,size,size*3);ctx.fillRect(px-size*1.5,py-size/2,size*3,size);}ctx.restore();}
     if(e.age>=e.contact-.5&&e.age<=e.contact){const progress=Math.min(1,(e.age-(e.contact-.5))/.5),ex=x+(t.rootX-x)*progress,ey=y+(t.rootY-y)*progress,dx=ex-x,dy=ey-y,len=Math.hypot(dx,dy)||1;ctx.save();ctx.strokeStyle='#fff8bd';ctx.lineWidth=13;ctx.shadowColor='#e9a83c';ctx.shadowBlur=30;ctx.beginPath();for(let i=0;i<=6;i++){const u=i/6,j=i===0||i===6?0:(i%2?20:-20),px=x+dx*u-dy/len*j,py=y+dy*u+dx/len*j;if(i)ctx.lineTo(px,py);else ctx.moveTo(px,py);}ctx.stroke();ctx.restore();}
   }
-  function drawSohlApples(ctx){const im=sohlWitchImages.apple;if(!im.complete||!im.naturalWidth)return;for(const a of sohlWitch.apples){const fall=Math.min(1,a.age/.55),roll=Math.max(0,Math.min(1,(a.age-.75)/.7)),ease=roll*roll*(3-2*roll),x=a.x+a.dx*ease,y=a.age<.55?a.fromY+(a.y-a.fromY)*fall*fall:a.y+a.dy*ease-(a.age<.75?20*Math.sin(Math.PI*(a.age-.55)/.2):0);ctx.save();ctx.translate(x,y);ctx.rotate(a.rotation+roll*Math.hypot(a.dx,a.dy)/42);ctx.drawImage(im,-35,-35,70,70);ctx.restore();}}
+  function sohlApplePosition(a){const fall=Math.min(1,a.age/.55),roll=Math.max(0,Math.min(1,(a.age-.75)/.7)),ease=roll*roll*(3-2*roll);return {x:a.x+a.dx*ease,y:a.age<.55?a.fromY+(a.y-a.fromY)*fall*fall:a.y+a.dy*ease-(a.age<.75?20*Math.sin(Math.PI*(a.age-.55)/.2):0),roll};}
+  function appleInReach(a){if(a.age<.55)return false;const p=sohlApplePosition(a);return Math.hypot(state.player.x-p.x,state.player.y-(p.y+35))<=135;}
+  function drawSohlApples(back,front){const im=sohlWitchImages.apple;if(!im.complete||!im.naturalWidth)return;for(const a of sohlWitch.apples){const {x,y,roll}=sohlApplePosition(a),ctx=state.player.y<=y+35?front:back;ctx.save();ctx.translate(x,y);ctx.rotate(a.rotation+roll*Math.hypot(a.dx,a.dy)/42);if(appleInReach(a)){ctx.shadowColor='#ffd13c';ctx.shadowBlur=45;ctx.drawImage(im,-35,-35,70,70);ctx.shadowBlur=0;}ctx.drawImage(im,-35,-35,70,70);ctx.restore();}}
+  function appleFeedbackAdd(gold){appleFeedback.push({x:state.player.x,y:state.player.y-TARGET_VISIBLE_HEIGHT-30,age:0,gold});}
+  function addAppleToBag(){let slot=inventoryState.slots.find(isAppleStack);if(!slot||slot.count>=50)slot=inventoryState.slots.find(v=>isAppleStack(v)&&v.count<50)||appleHotbar.find(v=>isAppleStack(v)&&v.count<50);if(slot){slot.count++;return true;}const index=inventoryState.slots.indexOf(null);if(index<0)return false;inventoryState.slots[index]={type:'apple',count:1};return true;}
+  function pickSohlApple(){if(activeMapId!=='sohlberg')return;let closest=null,distance=Infinity;for(const a of sohlWitch.apples){if(!appleInReach(a))continue;const p=sohlApplePosition(a),d=Math.hypot(p.x-state.player.x,p.y+35-state.player.y);if(d<distance){distance=d;closest=a;}}if(!closest||!addAppleToBag())return;sohlWitch.apples.splice(sohlWitch.apples.indexOf(closest),1);appleFeedbackAdd(true);renderInventory();hudRenderKey='';renderHud();}
+  function moveAppleToHotbar(index){const stack=inventoryState.slots[index],free=appleHotbar.indexOf(null);if(!isAppleStack(stack)||free<0)return;appleHotbar[free]=stack;inventoryState.slots[index]=null;renderInventory();hudRenderKey='';renderHud();}
+  function useAppleHotbar(index){const stack=appleHotbar[index];if(!isAppleStack(stack))return;updateHudStats({health:Math.min(state.stats.maxHealth,state.stats.health+1)});if(--stack.count<=0)appleHotbar[index]=null;appleFeedbackAdd(false);hudRenderKey='';renderHud();}
+  function renderAppleFeedback(ctx,dt){ctx.save();ctx.font='bold 76px Georgia, serif';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.lineWidth=8;for(let i=appleFeedback.length-1;i>=0;i--){const n=appleFeedback[i];if(state.playing&&!state.transitioning&&!inventoryState.open&&!teleportState.open&&!document.hidden)n.age+=dt;if(n.age>=1.1){appleFeedback.splice(i,1);continue;}const t=n.age/1.1,y=n.y-95*(1-(1-t)*(1-t));ctx.globalAlpha=Math.min(1,(1-t)*3);ctx.strokeStyle=n.gold?'#65400a':'#fff';ctx.fillStyle=n.gold?'#ffdb4c':'#080808';ctx.shadowColor=n.gold?'#ffc933':'#fff';ctx.shadowBlur=16;ctx.strokeText('+1',n.x,y);ctx.shadowBlur=0;ctx.fillText('+1',n.x,y);}ctx.restore();}
+
 
   let sohlTreeLastHit='',sohlTreeShakeAt=-Infinity;
   const sohlHitVoices=new Set();let sohlHitBag=[];
@@ -2362,7 +2378,7 @@
   const inventoryGlows=[...inventoryTabs,inventoryClose].map((b,i)=>{const im=new Image();im.src=`assets/ui/inventory-glow-${i<2?'tab-'+(i+1):'close'}.png`;im.className='inventory-glow';im.alt='';b.appendChild(im);return im;});
   const inventorySlots=Array.from({length:36},(_,i)=>{
     const b=inventoryButton(inventoryCellRect(i),`Inventarplatz ${i+1}`,'inventory-slot');b.setAttribute('data-slot',String(i));
-    b.addEventListener('contextmenu',e=>{e.preventDefault();const index=inventoryState.page*36+i;const id=inventoryState.slots[index];if(swordItemId(id))setSwordEquipped(true,swordItemId(id));else if(id&&Object.prototype.hasOwnProperty.call(HELMET_VARIANTS,id))setHelmetEquipped(true,id);});return b;
+    b.addEventListener('contextmenu',e=>{e.preventDefault();const index=inventoryState.page*36+i;const id=inventoryState.slots[index];if(isAppleStack(id))moveAppleToHotbar(index);else if(swordItemId(id))setSwordEquipped(true,swordItemId(id));else if(id&&Object.prototype.hasOwnProperty.call(HELMET_VARIANTS,id))setHelmetEquipped(true,id);});return b;
   });
   const inventoryEquipment=INVENTORY_LAYOUT.equipment.map(({id,label,rect})=>{
     const b=inventoryButton(rect,label,'inventory-equipment');b.setAttribute('data-equipment',id);
@@ -2371,11 +2387,11 @@
   const swordEquipment=inventoryButton([44,299,82,205],'Schwert – Rechtsklick zum Ablegen','inventory-equipment');
   swordEquipment.addEventListener('contextmenu',e=>{e.preventDefault();setSwordEquipped(false);});
   function renderInventoryItem(button,itemId){
-    const weapon=SWORD_VARIANTS[itemId],variant=weapon?{label:weapon.label,files:{front:weapon.inventory}}:itemId&&HELMET_VARIANTS[itemId];
-    button.setAttribute('data-item',variant?(weapon?'sword':'helmet'):'');button.setAttribute('data-helmet-id',variant&&!weapon?itemId:'');
+    const apple=isAppleStack(itemId),weapon=apple?null:SWORD_VARIANTS[itemId],variant=apple?{label:'Apfel',files:{front:'assets/props/sohl-apfel.webp'}}:weapon?{label:weapon.label,files:{front:weapon.inventory}}:itemId&&HELMET_VARIANTS[itemId];
+    button.setAttribute('data-item',variant?(apple?'apple':weapon?'sword':'helmet'):'');button.setAttribute('data-helmet-id',variant&&!weapon&&!apple?itemId:'');
     let holder=button._inventoryItem;
     if(variant&&!holder){holder=document.createElement('span');holder.className='inventory-item';const im=new Image();im.draggable=false;holder.appendChild(im);holder._image=im;button.appendChild(holder);button._inventoryItem=holder;}
-    if(holder){holder.style.display=variant?'flex':'none';if(variant){holder._image.src=variant.files.front;holder._image.alt=variant.label;}}
+    if(holder){holder.style.display=variant?'flex':'none';if(variant){holder._image.src=variant.files.front;holder._image.alt=variant.label;}if(!holder._count){holder._count=document.createElement('span');Object.assign(holder._count.style,{position:'absolute',right:'0',bottom:'0',color:'#fff',font:'bold 16px Georgia,serif',textShadow:'-1px -1px 2px #000,1px 1px 2px #000',lineHeight:'1'});holder.appendChild(holder._count);}holder._count.textContent=apple?String(itemId.count):'';}
   }
   function renderInventory(){
     inventoryArt.src=inventoryPages[inventoryState.page].src;inventoryArt.alt=`Inventar – Seite ${inventoryState.page===0?'I':'II'}`;
@@ -2384,7 +2400,7 @@
       const itemId=inventoryState.slots[inventoryState.page*36+i],tail=Boolean(itemId&&swordItemId(itemId)&&!SWORD_VARIANTS[itemId]),rect=inventoryCellRect(i),tall=Boolean(SWORD_VARIANTS[itemId]);
       b.style.height=`${(tall?rect[3]+inventoryCellRect(i+6)[3]:rect[3])/1241*100}%`;b.style.visibility=tail?'hidden':'visible';b.style.zIndex=tall?'2':'1';b.style.pointerEvents=tail?'none':'auto';
       b.setAttribute('aria-hidden',tail?'true':'false');renderInventoryItem(b,tail?null:itemId);
-      b.setAttribute('aria-label',itemId?`${tall||tail?'Schwert':'Helm'} – Rechtsklick zum Ausrüsten`:`Leerer Inventarplatz ${inventoryState.page*36+i+1}`);
+      b.setAttribute('aria-label',itemId?`${isAppleStack(itemId)?'Apfelstapel – Rechtsklick für Schnellleiste':(tall||tail?'Schwert':'Helm')+' – Rechtsklick zum Ausrüsten'}`:`Leerer Inventarplatz ${inventoryState.page*36+i+1}`);
     });
     inventoryEquipment.forEach((b,i)=>{const occupied=INVENTORY_LAYOUT.equipment[i].id==='helmet'&&helmetEquipped;renderInventoryItem(b,occupied?equippedHelmetId:null);if(occupied)b.setAttribute('aria-label','Helm – Rechtsklick zum Ablegen');else b.setAttribute('aria-label',INVENTORY_LAYOUT.equipment[i].label);});
     swordEquipment.style.display=swordEquipped?'block':'none';swordEquipment.setAttribute('aria-label',swordEquipped?`${SWORD_VARIANTS[equippedSwordId].label} – Rechtsklick zum Ablegen`:'Leerer Waffenplatz');renderInventoryItem(swordEquipment,swordEquipped?equippedSwordId:null);
@@ -2443,6 +2459,7 @@
   const hudMasks={status:HUD_LAYOUT.status.fills.map(f=>makeHudImage(f.image)),experience:HUD_LAYOUT.experience.fills.map(f=>makeHudImage(f.image))};
   const hudImages=[...Object.values(hudArt),...hudMasks.status,...hudMasks.experience];
   const hudScratch=document.createElement('canvas'),hudScratchContext=hudScratch.getContext('2d');let hudRenderKey='',hudVisibilityMap='';
+  sohlWitchImages.apple.addEventListener('load',()=>{hudRenderKey='';if(state.playing)renderHud();});
   function paintHudFill(ctx,mask,rect,fraction,color,vertical,w,h){
     if(fraction<=0)return;
     if(hudScratch.width!==w||hudScratch.height!==h){hudScratch.width=w;hudScratch.height=h;}
@@ -2460,11 +2477,13 @@
       canvas.style.display=enabled?'block':'none';canvas.style.transition=instant?'none':'opacity 180ms ease-in-out';canvas.style.opacity=covered?'0':'1';canvas.setAttribute('aria-hidden',!enabled||covered?'true':'false');
     }
     hudLevelTitle.textContent=`LV ${playerProgress.level} · ${playerRankTitle(playerProgress.level)}`;hudLevelTitle.style.display=hudExperience.style.display;hudLevelTitle.style.opacity=hudExperience.style.opacity;hudLevelTitle.style.transition=hudExperience.style.transition;
-    const values=hudValues({...state.stats,experience:playerExpSystem.display,experienceToNextLevel:1}),key=JSON.stringify(values);if(key===hudRenderKey||!hudImages.every(im=>im.complete&&im.naturalWidth))return;hudRenderKey=key;
+    const values=hudValues({...state.stats,experience:playerExpSystem.display,experienceToNextLevel:1}),key=JSON.stringify([values,appleHotbar.map(a=>a?.count||0)]);if(key===hudRenderKey||!hudImages.every(im=>im.complete&&im.naturalWidth))return;hudRenderKey=key;
     const statusCtx=hudStatus.getContext('2d'),expCtx=hudExperience.getContext('2d'),a=HUD_LAYOUT.status,b=HUD_LAYOUT.experience;
     statusCtx.clearRect(0,0,a.width,a.height);statusCtx.drawImage(hudArt.status,0,0,a.width,a.height);
     paintHudFill(statusCtx,hudMasks.status[0],a.fills[0].bounds,values.health,'red',false,a.width,a.height);
     paintHudFill(statusCtx,hudMasks.status[1],a.fills[1].bounds,values.blessing,'gold',false,a.width,a.height);
+    if(sohlWitchImages.apple.complete&&sohlWitchImages.apple.naturalWidth){appleHotbar.forEach((stack,i)=>{if(!stack)return;const x=755+i*135;statusCtx.drawImage(sohlWitchImages.apple,x+20,111,90,90);statusCtx.font='bold 33px Georgia,serif';statusCtx.textAlign='right';statusCtx.lineWidth=5;statusCtx.strokeStyle='#000';statusCtx.fillStyle='#fff';statusCtx.strokeText(String(stack.count),x+119,231);statusCtx.fillText(String(stack.count),x+119,231);});}
+
     expCtx.clearRect(0,0,b.width,b.height);
     values.shields.forEach((fraction,i)=>paintHudFill(expCtx,hudMasks.experience[i],b.fills[i].bounds,fraction,'exp-gold',true,b.width,b.height));
     expCtx.drawImage(hudArt.experience,0,0,b.width,b.height);
@@ -2622,9 +2641,9 @@
       const treeArt=sohlWitch.bare?sohlWitchImages.bare:sohlTreeImage,t=SOHL_TREE,ctx=state.player.y<t.depthY?sceneFrontContext:sceneBaseContext,age=(performance.now()-sohlTreeShakeAt)/1000,shake=age>=0&&age<.45?Math.sin(age*32)*Math.exp(-age*6)*24:0;
       ctx.save();ctx.translate(t.x+t.width/2,t.y+t.height);ctx.rotate(shake/1000);if(sohlGlow(state.player)){ctx.shadowColor='#ffcf43';ctx.shadowBlur=90;ctx.drawImage(treeArt,-t.width/2,-t.height,t.width,t.height);ctx.shadowBlur=0;}if(treeArt.complete&&treeArt.naturalWidth)ctx.drawImage(treeArt,-t.width/2,-t.height,t.width,t.height);ctx.restore();
     }
-    if(activeMapId==='sohlberg'){advanceSohlWitch(state.playing&&!teleportState.open&&!inventoryState.open?dt:0);drawSohlApples(sceneFrontContext);drawSohlWitch(sceneFrontContext);}
+    if(activeMapId==='sohlberg'){advanceSohlWitch(state.playing&&!teleportState.open&&!inventoryState.open?dt:0);drawSohlApples(sceneBaseContext,sceneFrontContext);drawSohlWitch(sceneFrontContext);}
     renderBears(sceneBaseContext,sceneFrontContext);
-    renderRabbits(sceneBaseContext,sceneFrontContext);renderPlayerExperience(sceneFrontContext);drawOpening(sceneFrontContext);
+    renderRabbits(sceneBaseContext,sceneFrontContext);renderAppleFeedback(sceneFrontContext,dt);renderPlayerExperience(sceneFrontContext);drawOpening(sceneFrontContext);
     drawOpeningBorders(sceneFrontContext,m,dpr);
   }
   const weatherCanvas=document.createElement('canvas');weatherCanvas.setAttribute('aria-hidden','true');
@@ -3137,6 +3156,8 @@
     if(event.code==='KeyT'){event.preventDefault();if(!event.repeat)toggleTeleport();return;}
     if(teleportState.open||inventoryState.open||state.transitioning)return;
     if(state.autoTravel)return;
+    if((event.key==='^'||event.code==='Backquote')&&!event.repeat){event.preventDefault();pickSohlApple();return;}
+    if(/^Digit[1-9]$/.test(event.code)&&!event.repeat){event.preventDefault();useAppleHotbar(Number(event.code.slice(5))-1);return;}
     if(event.code==='Space'){event.preventDefault();if(!event.repeat){if(towerGateAvailable())enterTowerView();else if(!castleGlowInteraction())startAttack();}return;}
     if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(event.code)) {
       event.preventDefault();keys.add(event.code);
